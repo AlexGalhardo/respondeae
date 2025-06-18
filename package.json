@@ -6,7 +6,7 @@
     "start": "next start",
     "lint:next": "next lint",
     "lint": "biome check app/ --fix --unsafe",
-    "format": "biome format app/ lib/ hooks/ contexts/ components/ prisma/ emails/ actions/ --fix",
+    "format": "biome format app/ lib/ hooks/ contexts/ components/ prisma/ emails/ actions/ types/ --fix",
     "husky": "npx husky",
     "prisma:generate:no-engine": "bunx prisma generate --no-engine",
     "prisma:generate": "bunx prisma generate",

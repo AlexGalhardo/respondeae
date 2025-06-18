@@ -1,0 +1,44 @@
+import { FollowingUserInterface } from "./FollowingUserInterface";
+
+export interface SessionUserInterface {
+	id: string;
+	avatar_url?: string | null;
+	name?: string | null;
+	nickname?: string | null;
+	email?: string | null;
+	description?: string | null;
+	website?: string | null;
+	public_questions_remaining_today?: number;
+	anonymous_questions_remaining_today?: number;
+	pix_key?: string | null;
+	twitter?: string | null;
+	instagram?: string | null;
+	youtube?: string | null;
+	tiktok?: string | null;
+	linkedin?: string | null;
+	twitch?: string | null;
+	facebook?: string | null;
+	github?: string | null;
+	api_key?: string;
+	privacy_accept_anonymous_questions?: boolean;
+	privacy_show_anonymous_questions_public?: boolean;
+	privacy_show_questions_answered_only_to_followers?: boolean;
+	privacy_show_value_received_from_answering_question?: boolean;
+	privacy_show_date_questions_was_answered?: boolean;
+	privacy_show_total_followers_public?: boolean;
+	privacy_show_total_questions_sent_public?: boolean;
+	privacy_show_likes_each_answer_public?: boolean;
+	privacy_show_dislikes_each_answer_public?: boolean;
+	privacy_show_total_likes_all_answers_public?: boolean;
+	privacy_show_total_questions_received_public?: boolean;
+	privacy_show_total_questions_answered_public?: boolean;
+	questions_received?: any[];
+	questions_sent?: any[];
+	followers: any[];
+	following: FollowingUserInterface[];
+	blocked_users: any[];
+	blocked_by_users: any[];
+	created_at?: Date | null;
+	updated_at?: Date | null;
+	deleted_at?: Date | null;
+}
