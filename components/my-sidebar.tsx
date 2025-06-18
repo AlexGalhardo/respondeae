@@ -62,10 +62,24 @@ export function MySidebar() {
 		];
 
 		if (isAuthenticated && session?.user) {
-			const pendingQuestions =
-				session.user.questions_received?.reduce((acc, question) => {
-					return question.question_is_awaiting_answer ? acc + 1 : acc;
-				}, 0) ?? 0;
+			// Calcular perguntas pendentes de forma mais robusta e segura
+			let pendingQuestions = 0;
+
+			try {
+				if (Array.isArray(session.user.questions_received)) {
+					pendingQuestions = session.user.questions_received.filter((question) => {
+						return (
+							question &&
+							typeof question === "object" &&
+							"question_is_awaiting_answer" in question &&
+							question.question_is_awaiting_answer === true
+						);
+					}).length;
+				}
+			} catch (error) {
+				console.warn("Erro ao calcular perguntas pendentes:", error);
+				pendingQuestions = 0;
+			}
 
 			items.push(
 				{
@@ -158,6 +172,28 @@ export function MySidebar() {
 	const toggleTheme = () => {
 		setTheme(theme === "light" ? "dark" : "light");
 		setSidebarOpen(false);
+	};
+
+	// Função para calcular badge de notificações (reutilizável)
+	const getPendingQuestionsCount = (): number => {
+		if (!isAuthenticated || !session?.user) return 0;
+
+		try {
+			if (Array.isArray(session.user.questions_received)) {
+				return session.user.questions_received.filter((question) => {
+					return (
+						question &&
+						typeof question === "object" &&
+						"question_is_awaiting_answer" in question &&
+						question.question_is_awaiting_answer === true
+					);
+				}).length;
+			}
+		} catch (error) {
+			console.warn("Erro ao calcular perguntas pendentes:", error);
+		}
+
+		return 0;
 	};
 
 	const renderNavItems = (items: SidebarItem[], isMobile = false) => (
@@ -277,9 +313,37 @@ export function MySidebar() {
 						<span className="text-xl font-bold">RespondeAê</span>
 					</div>
 
-					<Button variant="ghost" size="sm" onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
-						{theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-					</Button>
+					<div className="flex items-center space-x-2">
+						{/* Badge de notificações no header mobile */}
+						{isAuthenticated && session?.user && (
+							<div className="relative">
+								<Link href="/perguntas-recebidas">
+									<Button variant="ghost" size="sm">
+										<Bell className="h-4 w-4" />
+									</Button>
+								</Link>
+								{(() => {
+									const pendingCount = getPendingQuestionsCount();
+									return pendingCount > 0 ? (
+										<Badge
+											variant="destructive"
+											className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+										>
+											{pendingCount}
+										</Badge>
+									) : null;
+								})()}
+							</div>
+						)}
+
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+						>
+							{theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+						</Button>
+					</div>
 				</div>
 			</header>
 
