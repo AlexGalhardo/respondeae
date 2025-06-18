@@ -1,0 +1,207 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSession } from "next-auth/react";
+import { useRouter, useParams } from "next/navigation";
+import { useProfile } from "@/hooks/use-profile-queries";
+import LoadingScreen from "@/components/loading-screen";
+import { QuestionInterface } from "@/lib/interfaces";
+import { ProfileHeader } from "./profile-header";
+import { ProfilePagination } from "./profile-pagination";
+import { ProfileQuestionCard } from "./profile-question-card";
+import { ProfileQuestionForm } from "./profile-question-form";
+import { ProfilePaymentModal } from "./profile-payment-modal";
+
+const QUESTIONS_PER_PAGE = 10;
+
+export default function ProfileClient() {
+	const [currentPage, setCurrentPage] = useState(1);
+	const [currentStep, setCurrentStep] = useState<"closed" | "payment" | "pix">("closed");
+	const [newQuestion, setNewQuestion] = useState("");
+
+	const router = useRouter();
+	const params = useParams();
+	const slug = params?.slug as string;
+	const { data: session, status } = useSession();
+
+	const { data: profileFound, isLoading, error } = useProfile(slug);
+
+	const questionsData = useMemo(() => {
+		if (!profileFound?.questions_received) return [];
+		return profileFound.questions_received.map((q: any) => ({
+			...q,
+			owner: q.owner ?? profileFound,
+		}));
+	}, [profileFound]);
+
+	const isFollowing = useMemo(() => {
+		return session?.user?.following?.includes(profileFound?.nickname) ?? false;
+	}, [profileFound?.nickname, session?.user?.following]);
+
+	const isPublic = profileFound?.privacy_show_questions_answered_only_to_followers;
+
+	const { publicQuestions, topPaidQuestions, topLikedQuestions } = useMemo(() => {
+		const answered = questionsData.filter((q: QuestionInterface) => q.question_answered && isPublic);
+
+		const publicQuestions = [...answered].sort(
+			(a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+		);
+
+		const topPaidQuestions = [...answered].sort((a, b) => {
+			const amountComparison = b.amount_paid - a.amount_paid;
+			const dateComparison = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+			return amountComparison !== 0 ? amountComparison : dateComparison;
+		});
+
+		const topLikedQuestions = [...answered].sort((a, b) => {
+			const likesA = JSON.parse(a.liked_by_users || "[]").length || 0;
+			const likesB = JSON.parse(b.liked_by_users || "[]").length || 0;
+			const likesComparison = likesB - likesA;
+			const dateComparison = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+			return likesComparison !== 0 ? likesComparison : dateComparison;
+		});
+
+		return { publicQuestions, topPaidQuestions, topLikedQuestions };
+	}, [questionsData, isPublic]);
+
+	const getPaginatedQuestions = (questionsList: QuestionInterface[]) => {
+		const startIndex = (currentPage - 1) * QUESTIONS_PER_PAGE;
+		const endIndex = startIndex + QUESTIONS_PER_PAGE;
+		return questionsList.slice(startIndex, endIndex);
+	};
+
+	const getTotalPages = (questionsList: QuestionInterface[]) => {
+		return Math.ceil(questionsList.length / QUESTIONS_PER_PAGE);
+	};
+
+	const handleSubmitQuestion = (question: string) => {
+		setNewQuestion(question);
+		setCurrentStep("payment");
+	};
+
+	const handleTabChange = () => {
+		setCurrentPage(1);
+	};
+
+	if (status === "loading" || isLoading) {
+		return <LoadingScreen />;
+	}
+
+	if (error || !profileFound) {
+		router.push("/");
+		return null;
+	}
+
+	const wasBlockedByProfile = session?.user?.blocked_by_users?.some((block) => {
+		return block.blocker_id === profileFound?.id && block.blocked_id === session?.user?.id;
+	});
+
+	if (wasBlockedByProfile) {
+		router.push("/");
+		return null;
+	}
+
+	const renderQuestionsList = (questions: QuestionInterface[]) => {
+		if (questions.length === 0) {
+			return (
+				<div className="text-center py-12 text-gray-500">
+					<p className="text-base">Nenhuma resposta ainda.</p>
+				</div>
+			);
+		}
+
+		return (
+			<>
+				<ProfilePagination
+					currentPage={currentPage}
+					totalPages={getTotalPages(questions)}
+					onPageChange={setCurrentPage}
+				/>
+				<div className="space-y-3">
+					{getPaginatedQuestions(questions).map((question) => (
+						<ProfileQuestionCard key={question.id} question={question} />
+					))}
+				</div>
+				<ProfilePagination
+					currentPage={currentPage}
+					totalPages={getTotalPages(questions)}
+					onPageChange={setCurrentPage}
+				/>
+			</>
+		);
+	};
+
+	return (
+		<main className="p-4 lg:p-6">
+			<ProfileHeader profile={profileFound} isFollowing={isFollowing} hasPendingRequest={false} />
+
+			<ProfileQuestionForm profile={profileFound} session={session} onSubmitQuestion={handleSubmitQuestion} />
+
+			{session?.user?.id === profileFound.id && (
+				<div className="text-center py-4 rounded-lg border-2 border-blue-500 bg-blue-500 text-white shadow mb-6">
+					<p className="text-sm md:text-base font-medium">Esse é seu perfil público</p>
+				</div>
+			)}
+
+			{!session?.user?.id && (
+				<div className="text-center py-4 rounded-lg bg-orange-700 text-white shadow mb-6">
+					<p className="text-sm md:text-base font-medium">
+						Entre na sua conta para poder fazer perguntas a esse usuário.
+					</p>
+				</div>
+			)}
+
+			{!profileFound?.privacy_is_private_profile || session?.user?.id === profileFound.id ? (
+				<Tabs defaultValue="answered" className="w-full" onValueChange={handleTabChange}>
+					<TabsList className="flex flex-wrap justify-between gap-2 w-full bg-gray-100 dark:bg-neutral-800 rounded-lg p-1">
+						<TabsTrigger
+							value="answered"
+							className="flex-1 text-[0.7rem] sm:text-xs py-2 px-2 rounded-md text-center font-medium"
+						>
+							Últimas Respostas
+						</TabsTrigger>
+						<TabsTrigger
+							value="top"
+							className="flex-1 text-[0.7rem] sm:text-xs py-2 px-2 rounded-md text-center font-medium"
+						>
+							Top Respostas Pagas
+						</TabsTrigger>
+						<TabsTrigger
+							value="liked"
+							className="flex-1 text-[0.7rem] sm:text-xs py-2 px-2 rounded-md text-center font-medium"
+						>
+							Top Respostas Curtidas
+						</TabsTrigger>
+					</TabsList>
+
+					<TabsContent value="answered" className="mt-4">
+						{renderQuestionsList(publicQuestions)}
+					</TabsContent>
+
+					<TabsContent value="top" className="mt-4">
+						{renderQuestionsList(topPaidQuestions)}
+					</TabsContent>
+
+					<TabsContent value="liked" className="mt-4">
+						{renderQuestionsList(topLikedQuestions)}
+					</TabsContent>
+				</Tabs>
+			) : (
+				<div className="text-center py-4 px-4 rounded-lg bg-red-700 text-white shadow mb-6 dark:bg-white dark:text-black">
+					<p className="text-sm md:text-base font-medium">
+						Esse perfil é privado. Você precisa ser seguidor para ver as respostas desse perfil.
+					</p>
+				</div>
+			)}
+
+			<ProfilePaymentModal
+				currentStep={currentStep}
+				onStepChange={setCurrentStep}
+				question={newQuestion}
+				profile={profileFound}
+				session={session}
+			/>
+		</main>
+	);
+}

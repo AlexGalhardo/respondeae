@@ -224,8 +224,6 @@ export const authOptions: NextAuthOptions = {
 				session.user.blocked_users = dbUser?.blocked_users ?? [];
 				session.user.blocked_by_users = dbUser?.blocked_by_users ?? [];
 
-				console.log("session.user.blocked_users -> ", session.user.blocked_users);
-
 				session.user.created_at = dbUser?.created_at;
 				session.user.updated_at = dbUser?.updated_at;
 				session.user.deleted_at = dbUser?.deleted_at;

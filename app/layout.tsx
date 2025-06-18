@@ -9,6 +9,7 @@ import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MySidebar } from "@/components/my-sidebar";
+import { QueryProvider } from "./feed/QueryProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -64,15 +65,17 @@ export default function RootLayout({
 						enableSystem={false}
 						disableTransitionOnChange
 					>
-						<div className="min-h-screen bg-background">
-							<MySidebar />
-							<div className="lg:hidden">
-								<main className="pt-14">{children}</main>
+						<QueryProvider>
+							<div className="min-h-screen bg-background">
+								<MySidebar />
+								<div className="lg:hidden">
+									<main className="pt-14">{children}</main>
+								</div>
+								<div className="hidden lg:block">
+									<main className="max-w-7xl mx-auto pl-96 pr-6 min-h-screen">{children}</main>
+								</div>
 							</div>
-							<div className="hidden lg:block">
-								<main className="max-w-7xl mx-auto pl-96 pr-6 min-h-screen">{children}</main>
-							</div>
-						</div>
+						</QueryProvider>
 					</ThemeProvider>
 				</Providers>
 

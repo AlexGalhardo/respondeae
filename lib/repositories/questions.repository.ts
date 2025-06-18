@@ -337,8 +337,6 @@ class QuestionsRepository {
 			questionsToPayAmount: questionsAvailableForWithdraw,
 		};
 
-		console.log("getUserQuestionsSentPaymentDetails result -> ", result);
-
 		return result;
 	}
 }

@@ -1,9 +1,14 @@
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Users, MessageCircle, DollarSign, Shield } from "lucide-react";
+import { Users, MessageCircle, DollarSign, Shield } from "lucide-react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 export default function SobrePage() {
+	const { data: session } = useSession();
+
 	return (
 		<main className="p-4 lg:p-6">
 			<div className="space-y-6 max-w-4xl">
@@ -56,7 +61,8 @@ export default function SobrePage() {
 								</div>
 								<h4 className="font-bold text-foreground mb-2">1. Cadastre-se</h4>
 								<p className="text-sm text-muted-foreground">
-									Crie sua conta gratuita e configure seu perfil para começar a usar a plataforma.
+									Crie sua conta, configure sua chave pix, suas configurações de privacidade e seu
+									perfil público.
 								</p>
 							</div>
 							<div className="text-center">
@@ -75,8 +81,7 @@ export default function SobrePage() {
 								</div>
 								<h4 className="font-bold text-foreground mb-2">3. Responda e Ganhe</h4>
 								<p className="text-sm text-muted-foreground">
-									Responda perguntas da sua área de expertise e receba pagamentos pelas suas
-									respostas.
+									Responda perguntas e receba pagamentos pelas suas respostas.
 								</p>
 							</div>
 							<div className="text-center">
@@ -85,27 +90,30 @@ export default function SobrePage() {
 								</div>
 								<h4 className="font-bold text-foreground mb-2">4. Avalie</h4>
 								<p className="text-sm text-muted-foreground">
-									Sistema de avaliação que garante qualidade e confiabilidade nas interações.
+									Curta respostas que gerou valor, reporte perguntas e respotas problemáticas e ajude
+									a melhorar nossa comunidade.
 								</p>
 							</div>
 						</div>
 					</CardContent>
 				</Card>
 
-				<Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
-					<CardContent className="p-8 text-center">
-						<h3 className="text-2xl font-bold text-foreground mb-4">Pronto para começar?</h3>
-						<p className="text-muted-foreground mb-6">
-							Junte-se à nossa comunidade e comece a compartilhar seu conhecimento, experiências e
-							curiosidades com pessoas interessadas em saber o que você tem a dizer.
-						</p>
-						<div className="flex flex-col sm:flex-row gap-4 justify-center">
-							<Button className="bg-green-600 hover:bg-green-700 text-white">
-								Crie sua conta gratuitamente
-							</Button>
-						</div>
-					</CardContent>
-				</Card>
+				{!session && (
+					<Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+						<CardContent className="p-8 text-center">
+							<h3 className="text-2xl font-bold text-foreground mb-4">Pronto para começar?</h3>
+							<p className="text-muted-foreground mb-6">
+								Junte-se à nossa comunidade e comece a compartilhar seu conhecimento, experiências e
+								curiosidades com pessoas interessadas em saber o que você tem a dizer.
+							</p>
+							<div className="flex flex-col sm:flex-row gap-4 justify-center">
+								<Button asChild className="bg-green-600 hover:bg-green-700 text-white">
+									<Link href="/criar-conta">Crie sua conta gratuitamente</Link>
+								</Button>
+							</div>
+						</CardContent>
+					</Card>
+				)}
 			</div>
 		</main>
 	);

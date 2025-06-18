@@ -21,7 +21,7 @@ const toggleVariants = cva(
 			},
 		},
 		defaultVariants: {
-			variant: "default",
+			variant: "success",
 			size: "default",
 		},
 	},

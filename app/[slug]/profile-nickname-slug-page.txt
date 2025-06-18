@@ -736,15 +736,6 @@ export default function ProfileNicknameSlugPage() {
 
 	if (!profileFound) return null;
 
-	// const isBlockedByProfile = session?.user?.blocked_by_users?.some(block => {
-	// 	return block.blocker_id === profileFound?.id &&
-	// 		   block.blocked_id === session?.user?.id;
-	//   });
-
-	// if (isBlockedByProfile) {
-	// 	router.push('/');
-	// }
-
 	const wasBlockedByProfile = session?.user?.blocked_by_users?.some((block) => {
 		return block.blocker_id === profileFound?.id && block.blocked_id === session?.user?.id;
 	});

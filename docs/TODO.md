@@ -1,6 +1,7 @@
 
 ## ROADMAP
 
+- [ ] Filtro inicial do feed: seguindo, comunidade
 - [ ] Atualizar CNPJ e Nome fantasia na AbacatePay
 - [ ] Atualizar /politica-de-privacidade
 - [ ] Atualizar /termos-de-uso

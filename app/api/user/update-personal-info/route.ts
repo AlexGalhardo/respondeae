@@ -21,11 +21,14 @@ export const personalInfoSchema = z.object({
 		.refine((val) => !val || (val.length >= 32 && val.length <= 256), {
 			message: "A descrição deve ter entre 32 e 256 caracteres",
 		}),
+	userId: z.string().optional(), // Adicionar userId como opcional
 });
 
 export async function POST(req: NextRequest) {
 	try {
 		const session = await getServerSession(authOptions);
+
+		console.log("session, session.user.id ->> ", session, session?.user?.id);
 
 		if (!session || !session.user?.id) {
 			return NextResponse.json({ error: "Usuário não autenticado" }, { status: 401 });
@@ -47,11 +50,27 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		const { name, website, description } = parsed.data;
+		const { name, website, description, userId } = parsed.data;
+
+		// Verificar se o userId fornecido corresponde ao usuário da sessão
+		const targetUserId = userId || session.user.id;
+
+		if (targetUserId !== session.user.id) {
+			return NextResponse.json({ error: "Não autorizado a atualizar este usuário" }, { status: 403 });
+		}
+
+		// Verificar se o usuário existe
+		const existingUser = await prisma.user.findUnique({
+			where: { id: targetUserId },
+		});
+
+		if (!existingUser) {
+			return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
+		}
 
 		const updatedUser = await prisma.user.update({
 			where: {
-				id: session.user.id,
+				id: targetUserId,
 			},
 			data: {
 				name: name.trim(),
@@ -74,6 +93,7 @@ export async function POST(req: NextRequest) {
 			{ status: 200 },
 		);
 	} catch (error: any) {
+		console.error("Erro ao atualizar informações pessoais:", error);
 		return NextResponse.json({ error: error?.message ?? "Erro interno do servidor" }, { status: 500 });
 	}
 }

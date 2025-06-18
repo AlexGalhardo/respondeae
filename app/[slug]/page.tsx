@@ -1,12 +1,11 @@
+// ./app/[slug]/page.tsx
 import { Metadata } from "next";
-import ProfileNicknameSlugPage from "./profile-nickname-slug-page";
-
-type Props = {
-	params: { nickname: string };
-};
+import ProfileClient from "./profile";
 
 export async function generateMetadata({ params }: any): Promise<Metadata> {
-	const nickname = await params.slug;
+	// Aguarda o params antes de acessar suas propriedades
+	const resolvedParams = await params;
+	const nickname = resolvedParams.slug;
 
 	const title = `@${nickname} - Respondeae.com.br`;
 	const description = `Veja o perfil público de ${nickname} no Respondeae.com.br.`;
@@ -41,5 +40,5 @@ export async function generateMetadata({ params }: any): Promise<Metadata> {
 }
 
 export default async function ProfileNicknamePage() {
-	return <ProfileNicknameSlugPage />;
+	return <ProfileClient />;
 }
