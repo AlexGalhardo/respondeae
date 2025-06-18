@@ -1,11 +1,22 @@
+"use client";
+
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { QuestionInterface } from "@/lib/interfaces";
 import { getAllLatestDescPublicQuestionsAnswered } from "@/lib/repositories/questions.repository";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
+import {
+	answerQuestion,
+	declineQuestion,
+	deleteQuestion,
+	reportQuestion,
+	markQuestionExpired,
+} from "@/actions/question-actions";
 
 const QUESTIONS_PER_PAGE = 10;
 
-// Tipos para o hook useQuestions
 interface QuestionsPageData {
 	questions: QuestionInterface[];
 	nextCursor: number | undefined;
@@ -30,6 +41,7 @@ interface ApiResponse {
 	data?: any;
 }
 
+// Hook para perguntas do feed público
 export const useQuestions = () => {
 	const { toast } = useToast();
 
@@ -68,6 +80,32 @@ export const useQuestions = () => {
 	return queryResult;
 };
 
+// Hook para perguntas recebidas (da sessão)
+export function useReceivedQuestions() {
+	const { data: session } = useSession();
+	const [questions, setQuestions] = useState<QuestionInterface[]>([]);
+
+	useEffect(() => {
+		if (session?.user?.questions_received) {
+			setQuestions(
+				session.user.questions_received.map((q: any) => ({
+					...q,
+					owner: q.owner ?? null,
+					asked_by: q.asked_by ?? null,
+				})),
+			);
+		}
+	}, [session?.user?.questions_received]);
+
+	return {
+		data: questions,
+		setData: setQuestions,
+		isLoading: false,
+		error: null,
+	};
+}
+
+// Mutations para like/dislike (existentes)
 export const useLikeQuestion = () => {
 	const queryClient = useQueryClient();
 	const { toast } = useToast();
@@ -149,3 +187,103 @@ export const useDislikeQuestion = () => {
 		},
 	});
 };
+
+// Novas mutations para gerenciamento de perguntas recebidas
+export function useAnswerQuestion() {
+	return useMutation({
+		mutationFn: async ({
+			questionId,
+			nickname,
+			answerText,
+		}: {
+			questionId: string;
+			nickname: string;
+			answerText: string;
+		}) => {
+			await answerQuestion(questionId, nickname, answerText);
+			return { questionId, answerText };
+		},
+		onError: (error) => {
+			toast.error(error instanceof Error ? error.message : "Erro ao enviar resposta");
+		},
+		onSuccess: () => {
+			toast.success("Resposta enviada com sucesso!");
+		},
+	});
+}
+
+export function useDeclineQuestion() {
+	return useMutation({
+		mutationFn: async ({
+			questionId,
+			nickname,
+		}: {
+			questionId: string;
+			nickname: string;
+		}) => {
+			await declineQuestion(questionId, nickname);
+			return { questionId };
+		},
+		onError: (error) => {
+			toast.error(error instanceof Error ? error.message : "Erro ao recusar pergunta");
+		},
+		onSuccess: () => {
+			toast.success("Pergunta recusada");
+		},
+	});
+}
+
+export function useDeleteQuestion() {
+	return useMutation({
+		mutationFn: async ({
+			questionId,
+			nickname,
+		}: {
+			questionId: string;
+			nickname: string;
+		}) => {
+			await deleteQuestion(questionId, nickname);
+			return { questionId };
+		},
+		onError: (error) => {
+			toast.error(error instanceof Error ? error.message : "Erro ao deletar pergunta");
+		},
+		onSuccess: () => {
+			toast.success("Pergunta deletada");
+		},
+	});
+}
+
+export function useReportQuestion() {
+	return useMutation({
+		mutationFn: async ({
+			questionId,
+			nickname,
+			isOffensive,
+			isInappropriate,
+		}: {
+			questionId: string;
+			nickname: string;
+			isOffensive: boolean;
+			isInappropriate: boolean;
+		}) => {
+			await reportQuestion(questionId, nickname, isOffensive, isInappropriate);
+			return { questionId, isOffensive, isInappropriate };
+		},
+		onError: (error) => {
+			toast.error(error instanceof Error ? error.message : "Erro ao reportar pergunta");
+		},
+		onSuccess: () => {
+			toast.success("Pergunta reportada com sucesso");
+		},
+	});
+}
+
+export function useMarkQuestionExpired() {
+	return useMutation({
+		mutationFn: markQuestionExpired,
+		onError: (error) => {
+			console.error("Erro ao marcar pergunta como expirada:", error);
+		},
+	});
+}
