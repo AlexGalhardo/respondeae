@@ -1,0 +1,3 @@
+POST  https://api.abacatepay.com/v1/pixQrCode/simulate-payment?id=pix_char_WDG1TSKHn3h2Kf5h50CYLxeY
+Accept-Encoding: application/json
+Authorization: Bearer abc_dev_LTzBRSJ1r6njRFGLPDEM41bj

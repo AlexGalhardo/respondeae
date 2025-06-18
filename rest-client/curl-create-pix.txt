@@ -1,0 +1,18 @@
+curl -X POST https://api.abacatepay.com/v1/pix/create \
+  -H "Authorization: Bearer abc_dev_LTzBRSJ1r6njRFGLPDEM41bj" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 1000,
+    "expiresIn": 600,
+    "description": "Pergunta: pergunta aleatoria aqui"
+  }'
+
+curl --request POST \
+  --url https://api.abacatepay.com/v1/pix/create \
+  --header 'Authorization: Bearer abc_dev_LTzBRSJ1r6njRFGLPDEM41bj' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "amount": 123,
+  "expiresIn": 123,
+  "description": "Pergunta: pergunta aleatoria aqui"
+}'

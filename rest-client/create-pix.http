@@ -1,0 +1,9 @@
+POST https://api.abacatepay.com/v1/pix/create
+Content-Type: application/json
+Authorization: Bearer abc_dev_LTzBRSJ1r6njRFGLPDEM41bj
+
+{
+	"amount": 1000,
+	"expiresIn": 600,
+	"description": "Criação de PIX teste via rest-client"
+}

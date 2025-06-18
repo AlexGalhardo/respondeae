@@ -1,0 +1,1775 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/use-toast";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { FaTiktok, FaTwitch, FaXTwitter } from "react-icons/fa6";
+import {
+	ThumbsUp,
+	ThumbsDown,
+	Eye,
+	EyeOff,
+	ChevronLeft,
+	ChevronRight,
+	Facebook,
+	Instagram,
+	Github,
+	Linkedin,
+	Clock,
+	Check,
+	Copy,
+	Loader,
+	UserPlus,
+	UserCheck,
+	UserX,
+} from "lucide-react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { getUserByNickname } from "@/lib/repositories/users.repository";
+import { useParams } from "next/navigation";
+import LoadingScreen from "@/components/loading-screen";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { QuestionInterface } from "@/lib/interfaces";
+import { BlockUserButton } from "./block-user-button";
+
+const PRESET_AMOUNTS = [2, 5, 10, 20, 50];
+
+export default function ProfileNicknameSlugPage() {
+	const [profileFound, setProfileFound] = useState<any | null>(null);
+	const [loading, setLoading] = useState(false);
+	const [isFollowing, setIsFollowing] = useState(false);
+	const router = useRouter();
+	const { data: session, status, update } = useSession();
+	const { toast } = useToast();
+
+	const [newQuestion, setNewQuestion] = useState("");
+	const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+	const [pixData, setPixData] = useState<any>(null);
+	const [isLoadingPayment, setIsLoadingPayment] = useState(false);
+	const [isPrivateAnswer, setIsPrivateAnswer] = useState(false);
+	const [questionAmountPaidIsPrivate, setQuestionAmountPaidIsPrivate] = useState(false);
+	const [isAnonymousNewQuestion, setIsAnonymousNewQuestion] = useState(false);
+	const [currentPage, setCurrentPage] = useState(1);
+	const [profileFoundTotalFollowers, setProfileFoundTotalFollowers] = useState(0);
+	const [profileFoundTotalReceivedQuestions, setProfileFoundTotalReceivedQuestions] = useState(0);
+
+	const questionsPerPage = 10;
+
+	const params = useParams();
+	const slug = params?.slug;
+
+	const [questionsData, setQuestionsData] = useState<QuestionInterface[]>([]);
+
+	useEffect(() => {
+		async function fetchProfile() {
+			try {
+				setLoading(true);
+				const profile = await getUserByNickname(slug as string);
+
+				if (!profile) {
+					router.push("/");
+					setProfileFound(null);
+				} else {
+					setProfileFound(profile);
+					setQuestionsData(
+						(profile.questions_received || []).map((q: any) => ({
+							...q,
+							owner: q.owner ?? profile,
+						})),
+					);
+					setProfileFoundTotalFollowers(profileFound?.followers?.length);
+					setProfileFoundTotalReceivedQuestions(profileFound?.questions_received?.length);
+					await update();
+				}
+			} catch (error) {
+				console.error("Error fetching profile: ", error);
+				router.push("/");
+			} finally {
+				setLoading(false);
+			}
+		}
+
+		fetchProfile();
+	}, [slug]);
+
+	useEffect(() => {
+		setIsFollowing(session?.user?.following?.includes(profileFound?.nickname) ?? false);
+	}, [profileFound?.nickname, session?.user?.following]);
+
+	const [currentStep, setCurrentStep] = useState<"closed" | "payment" | "pix">("closed");
+
+	const [customAmount, setCustomAmount] = useState<string>("");
+	const [useCustomAmount, setUseCustomAmount] = useState(false);
+	const [copied, setCopied] = useState(false);
+	const [paymentStatus, setPaymentStatus] = useState<"PENDING" | "PAID" | "EXPIRED" | "CANCELLED" | "REFUNDED">(
+		"PENDING",
+	);
+	const [timeRemaining, setTimeRemaining] = useState<number>(0);
+
+	useEffect(() => {
+		if (!pixData || currentStep !== "pix") return;
+
+		const expiresAt = new Date(pixData.expiresAt);
+		const now = new Date();
+		const remaining = Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / 1000));
+		setTimeRemaining(remaining);
+
+		const timer = setInterval(() => {
+			setTimeRemaining((prev) => {
+				if (prev <= 1) {
+					setPaymentStatus("EXPIRED");
+					return 0;
+				}
+				return prev - 1;
+			});
+		}, 1000);
+
+		let statusInterval: ReturnType<typeof setInterval>;
+
+		const checkPaymentStatus = async () => {
+			try {
+				const response = await fetch(`/api/pix/check?id=${pixData.id}`);
+				const result = await response.json();
+
+				if (result.error) return;
+
+				const { status, expiresAt: newExpiresAt } = result;
+				setPaymentStatus(status);
+
+				if (status === "PAID") {
+					clearInterval(timer);
+					clearInterval(statusInterval);
+					setTimeout(() => {
+						handlePaymentSuccess();
+					}, 10000);
+				} else if (status === "EXPIRED" || status === "CANCELLED") {
+					clearInterval(timer);
+					clearInterval(statusInterval);
+				}
+
+				if (newExpiresAt) {
+					const newExpires = new Date(newExpiresAt);
+					const currentTime = new Date();
+					const newRemaining = Math.max(0, Math.floor((newExpires.getTime() - currentTime.getTime()) / 1000));
+					setTimeRemaining(newRemaining);
+				}
+			} catch (error) {
+				console.error("Erro ao verificar status do pagamento:", error);
+			}
+		};
+
+		checkPaymentStatus();
+		statusInterval = setInterval(checkPaymentStatus, 5000);
+
+		if (process.env.NEXT_PUBLIC_TEST_MODE === "true") {
+			setTimeout(() => {
+				fetch(`/api/pix/simulate-payment`, {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${process.env.NEXT_PUBLIC_ABACATEPAY_API_KEY}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ pixId: pixData.id }),
+				})
+					.then((res) => {
+						if (!res.ok) throw new Error("Falha na simulação de pagamento");
+					})
+					.catch((err) => console.error("Erro na simulação de pagamento:", err));
+			}, 5000);
+		}
+
+		return () => {
+			clearInterval(timer);
+			clearInterval(statusInterval);
+		};
+	}, [pixData, currentStep]);
+
+	const isGenerateButtonEnabled =
+		(useCustomAmount && customAmount && Number.parseFloat(customAmount) >= 2) ||
+		(!useCustomAmount && selectedAmount !== null && selectedAmount > 0);
+
+	const [canClose, setCanClose] = useState(false);
+
+	useEffect(() => {
+		if (paymentStatus === "PAID") {
+			const timer = setTimeout(() => {
+				setCanClose(true);
+			}, 10000); // 10 seconds
+
+			return () => clearTimeout(timer);
+		}
+
+		if (paymentStatus !== "PENDING") {
+			setCanClose(true);
+		} else {
+			setCanClose(false);
+		}
+	}, [paymentStatus]);
+
+	const handleOpenChangeModal = (isOpen: boolean) => {
+		if (!isOpen && canClose) {
+			closeModal();
+		}
+	};
+
+	const isPublic = profileFound?.privacy_show_questions_answered_only_to_followers;
+
+	const publicQuestions = [...(questionsData || [])]
+		.filter((question: QuestionInterface) => question?.question_answered && isPublic)
+		.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+	const topPaidQuestions = [...(questionsData || [])]
+		.filter((question) => question.question_answered && isPublic)
+		.sort((a, b) => {
+			const dateComparison = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+			const amountComparison = b.amount_paid - a.amount_paid;
+			return amountComparison !== 0 ? amountComparison : dateComparison;
+		});
+
+	const topLikedQuestions = [...(questionsData || [])]
+		.filter((question) => question.question_answered && isPublic)
+		.sort((a, b) => {
+			const dateComparison = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+			const likesComparison =
+				(JSON.parse(b.liked_by_users || "[]").length || 0) - (JSON.parse(a.liked_by_users || "[]").length || 0);
+			return likesComparison !== 0 ? likesComparison : dateComparison;
+		});
+
+	const getPaginatedQuestions = (questionsList: QuestionInterface[]) => {
+		const startIndex = (currentPage - 1) * questionsPerPage;
+		const endIndex = startIndex + questionsPerPage;
+		return questionsList.slice(startIndex, endIndex);
+	};
+
+	const getTotalPages = (questionsList: QuestionInterface[]) => {
+		return Math.ceil(questionsList.length / questionsPerPage);
+	};
+
+	const renderPagination = (questionsList: QuestionInterface[]) => {
+		const totalPages = getTotalPages(questionsList);
+		if (totalPages <= 1) return null;
+
+		return (
+			<div className="flex items-center justify-center gap-2 mt-6">
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+					disabled={currentPage === 1}
+				>
+					<ChevronLeft className="h-4 w-4" />
+				</Button>
+
+				<span className="text-sm text-gray-600">
+					Página {currentPage} de {totalPages}
+				</span>
+
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+					disabled={currentPage === totalPages}
+				>
+					<ChevronRight className="h-4 w-4" />
+				</Button>
+			</div>
+		);
+	};
+
+	const handleSubmitQuestion = () => {
+		if (newQuestion.length < 32) {
+			toast({
+				title: "Pergunta muito curta",
+				description: "A pergunta deve ter pelo menos 32 caracteres.",
+				variant: "error",
+			});
+			return;
+		}
+
+		if (newQuestion.length > 512) {
+			toast({
+				title: "Pergunta muito longa",
+				description: "A pergunta deve ter no máximo 512 caracteres.",
+				variant: "error",
+			});
+			return;
+		}
+
+		setCurrentStep("payment");
+	};
+
+	const handleCustomAmountChange = (value: string) => {
+		const sanitizedValue = value.replace(/[^0-9.]/g, "");
+
+		const parts = sanitizedValue.split(".");
+		if (parts.length > 2) {
+			return;
+		}
+
+		if (parts[1] && parts[1].length > 2) {
+			return;
+		}
+
+		setCustomAmount(sanitizedValue);
+
+		const numValue = Number.parseFloat(sanitizedValue);
+		if (!isNaN(numValue) && numValue >= 2) {
+			setSelectedAmount(numValue);
+		} else {
+			setSelectedAmount(0);
+		}
+	};
+
+	const handlePresetAmountClick = (amount: number) => {
+		if (!useCustomAmount) {
+			setCustomAmount("");
+			setSelectedAmount(amount);
+		}
+	};
+
+	const handleCustomAmountClick = () => {
+		setUseCustomAmount(true);
+		setSelectedAmount(0);
+	};
+
+	const handleGeneratePix = async () => {
+		if (!selectedAmount) return;
+
+		setIsLoadingPayment(true);
+		try {
+			const response = await fetch("/api/pix/create", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					amount: selectedAmount * 100,
+					nickname: profileFound.nickname,
+					question_text: newQuestion,
+				}),
+			});
+
+			const result = await response.json();
+
+			if (result.error) {
+				toast({
+					title: `Erro ao gerar PIX`,
+					description: "Tente novamente mais tarde",
+					variant: "error",
+				});
+			}
+
+			setPixData(result);
+			setPaymentStatus("PENDING");
+			setCurrentStep("pix");
+		} catch (error: any) {
+			toast({
+				title: "Erro ao gerar PIX",
+				description: error?.message ?? "Não foi possível gerar o código PIX. Tente novamente.",
+				variant: "error",
+			});
+		} finally {
+			setIsLoadingPayment(false);
+		}
+	};
+
+	const handlePaymentSuccess = async () => {
+		try {
+			const questionData = {
+				question_text: newQuestion,
+				amount_paid: (selectedAmount ?? 0) * 100,
+				is_anonymous: isAnonymousNewQuestion,
+				asker_want_answer_to_be_private: isPrivateAnswer,
+				amount_paid_is_private: questionAmountPaidIsPrivate,
+				pix_id: pixData?.id,
+				owner_user_id: profileFound.id,
+				asker_id: session?.user?.id,
+			};
+
+			const response = await fetch("/api/question/create", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(questionData),
+			});
+
+			const result = await response.json();
+
+			if (!response.ok || result.error) {
+				toast({
+					title: "Erro ao enviar pergunta",
+					description: result?.error ?? "Houve um erro ao enviar sua pergunta.",
+					variant: "error",
+				});
+				return;
+			}
+
+			setNewQuestion("");
+			setSelectedAmount(null);
+			setCustomAmount("");
+			setUseCustomAmount(false);
+			setPixData(null);
+			setCurrentStep("closed");
+			setIsAnonymousNewQuestion(false);
+			setIsPrivateAnswer(false);
+			setPaymentStatus("PAID");
+			setCopied(false);
+		} catch (error: any) {
+			toast({
+				title: "Erro ao enviar pergunta",
+				description: error?.message ?? "Houve um erro ao enviar sua pergunta.",
+				variant: "error",
+			});
+			return;
+		} finally {
+			toast({
+				title: "Pagamento confirmado!",
+				description: "Sua pergunta foi enviada com sucesso.",
+				variant: "success",
+			});
+			setProfileFoundTotalReceivedQuestions(profileFound.total_received_questions + 1);
+			await update();
+		}
+	};
+
+	const handleCopyCode = () => {
+		if (pixData?.brCode) {
+			navigator.clipboard.writeText(pixData.brCode);
+			setCopied(true);
+			setTimeout(() => setCopied(false), 2000);
+		}
+	};
+
+	const formatTime = (seconds: number) => {
+		const minutes = Math.floor(seconds / 60);
+		const remainingSeconds = seconds % 60;
+		return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+	};
+
+	const getStatusColor = () => {
+		switch (paymentStatus) {
+			case "PAID":
+				return "text-green-600";
+			case "EXPIRED":
+				return "text-red-600";
+			case "CANCELLED":
+				return "text-gray-600";
+			case "REFUNDED":
+				return "text-blue-600";
+			default:
+				return "text-orange-600";
+		}
+	};
+
+	const getStatusText = () => {
+		switch (paymentStatus) {
+			case "PAID":
+				return "Pagamento confirmado!";
+			case "EXPIRED":
+				return "PIX expirado";
+			case "CANCELLED":
+				return "PIX cancelado";
+			case "REFUNDED":
+				return "PIX reembolsado";
+			default:
+				return "Aguardando pagamento...";
+		}
+	};
+
+	const closeModal = () => {
+		setCurrentStep("closed");
+		setSelectedAmount(null);
+		setCustomAmount("");
+		setUseCustomAmount(false);
+		setPixData(null);
+		setPaymentStatus("PENDING");
+		setCopied(false);
+	};
+
+	const [isLoadingFollowing, setIsLoadingFollowing] = useState(false);
+	const [hasPendingRequest, setHasPendingRequest] = useState(false);
+
+	const handleFollow = async () => {
+		setIsLoadingFollowing(true);
+
+		try {
+			const response = await fetch("/api/user/follow", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					followingId: profileFound.id,
+					followerId: session?.user?.id,
+				}),
+			});
+
+			if (!response.ok) {
+				toast({
+					title: `Erro ao seguir @${profileFound?.nickname}`,
+					description: "Tente novamente mais tarde",
+					variant: "error",
+				});
+			}
+
+			const data = await response.json();
+
+			setIsFollowing(data.isFollowing);
+			setHasPendingRequest(data.hasPendingRequest);
+
+			if (data.isFollowing !== undefined) {
+				setProfileFoundTotalFollowers(
+					data.isFollowing ? profileFound.followers.length + 1 : profileFound.followers.length,
+				);
+			}
+
+			toast({
+				title: data.message,
+				variant: "success",
+			});
+		} catch (error) {
+			toast({
+				title: `Erro ao seguir @${profileFound?.nickname}`,
+				description: "Tente novamente mais tarde",
+				variant: "error",
+			});
+		} finally {
+			setIsLoadingFollowing(false);
+		}
+	};
+
+	const getInitials = (name: string) => {
+		return name
+			.split(" ")
+			.map((word) => word.charAt(0))
+			.join("")
+			.toUpperCase()
+			.slice(0, 2);
+	};
+
+	const hasUserLiked = (question: QuestionInterface) => {
+		if (!session?.user?.nickname) return false;
+		const likedUsers = JSON.parse(question.liked_by_users || "[]");
+		return likedUsers.some((slug: string) => slug === session.user.nickname);
+	};
+
+	const hasUserDisliked = (question: QuestionInterface) => {
+		if (!session?.user?.nickname) return false;
+		const dislikedUsers = JSON.parse(question.desliked_by_users || "[]");
+		return dislikedUsers.some((slug: string) => slug === session.user.nickname);
+	};
+
+	const handleLike = async (question: QuestionInterface) => {
+		if (!session?.user?.email || !session?.user?.name) return;
+
+		const userAlreadyLiked = hasUserLiked(question);
+		const userAlreadyDisliked = hasUserDisliked(question);
+
+		const previousQuestionsData = [...questionsData];
+
+		try {
+			setQuestionsData((prevQuestions) =>
+				prevQuestions.map((q) => {
+					if (q.id === question.id) {
+						let likedUsers = JSON.parse(q.liked_by_users || "[]");
+						let dislikedUsers = JSON.parse(q.desliked_by_users || "[]");
+
+						if (userAlreadyLiked) {
+							likedUsers = likedUsers.filter((slug: string) => slug !== session.user.nickname);
+						} else {
+							likedUsers.push(session.user.nickname);
+							if (userAlreadyDisliked) {
+								dislikedUsers = dislikedUsers.filter((slug: string) => slug !== session.user.nickname);
+							}
+						}
+
+						return {
+							...q,
+							liked_by_users: JSON.stringify(likedUsers),
+							desliked_by_users: JSON.stringify(dislikedUsers),
+						};
+					}
+					return q;
+				}),
+			);
+
+			const response = await fetch("/api/question/update-like", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					questionId: question.id,
+					nickname: session.user.nickname,
+				}),
+			});
+
+			if (!response.ok) {
+				toast({
+					title: `Erro ao curtir pergunta`,
+					description: "Tente novamente mais tarde",
+					variant: "error",
+				});
+			}
+		} catch (error) {
+			setQuestionsData(previousQuestionsData);
+			toast({
+				title: "Erro ao curtir pergunta!",
+				description: "Erro ao curtir pergunta",
+				variant: "error",
+			});
+		}
+	};
+
+	const handleDislike = async (question: QuestionInterface) => {
+		if (!session?.user?.email || !session?.user?.name) return;
+
+		const userAlreadyLiked = hasUserLiked(question);
+		const userAlreadyDisliked = hasUserDisliked(question);
+
+		const previousQuestionsData = [...questionsData];
+
+		try {
+			setQuestionsData((prevQuestions) =>
+				prevQuestions.map((q) => {
+					if (q.id === question.id) {
+						let likedUsers = JSON.parse(q.liked_by_users || "[]");
+						let dislikedUsers = JSON.parse(q.desliked_by_users || "[]");
+
+						if (userAlreadyDisliked) {
+							dislikedUsers = dislikedUsers.filter((slug: string) => slug !== session.user.nickname);
+						} else {
+							dislikedUsers.push(session.user.nickname);
+							if (userAlreadyLiked) {
+								likedUsers = likedUsers.filter((slug: string) => slug !== session.user.nickname);
+							}
+						}
+
+						return {
+							...q,
+							liked_by_users: JSON.stringify(likedUsers),
+							desliked_by_users: JSON.stringify(dislikedUsers),
+						};
+					}
+					return q;
+				}),
+			);
+
+			const response = await fetch("/api/question/update-deslike", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					questionId: question.id,
+					nickname: session.user.nickname,
+				}),
+			});
+
+			if (!response.ok) {
+				toast({
+					title: `Erro ao descurtir pergunta`,
+					description: "Tente novamente mais tarde",
+					variant: "error",
+				});
+			}
+		} catch (error) {
+			setQuestionsData(previousQuestionsData);
+			toast({
+				title: "Erro ao descurtir pergunta!",
+				description: "Erro ao descurtir pergunta",
+				variant: "error",
+			});
+		}
+	};
+
+	const socialLinks = [
+		{
+			icon: Instagram,
+			color: "text-pink-500 dark:text-white",
+			href: profileFound?.instagram ?? null,
+		},
+		{
+			icon: Facebook,
+			color: "text-blue-600 dark:text-white",
+			href: profileFound?.facebook ?? null,
+		},
+		{
+			icon: FaXTwitter,
+			color: "text-blue-400 dark:text-white",
+			href: profileFound?.twitter ?? null,
+		},
+		{
+			icon: Linkedin,
+			color: "text-blue-700 dark:text-white",
+			href: profileFound?.linkedin ?? null,
+		},
+		{
+			icon: Github,
+			color: "text-gray-800 dark:text-white",
+			href: profileFound?.github ?? null,
+		},
+		{
+			icon: FaTiktok,
+			color: "text-green-500 dark:text-white",
+			href: profileFound?.tiktok ?? null,
+		},
+		{
+			icon: FaTwitch,
+			color: "text-purple-500 dark:text-white",
+			href: profileFound?.twitch ?? null,
+		},
+	];
+
+	if (status === "loading" || loading) {
+		return <LoadingScreen />;
+	}
+
+	if (!profileFound) return null;
+
+	// const isBlockedByProfile = session?.user?.blocked_by_users?.some(block => {
+	// 	return block.blocker_id === profileFound?.id &&
+	// 		   block.blocked_id === session?.user?.id;
+	//   });
+
+	// if (isBlockedByProfile) {
+	// 	router.push('/');
+	// }
+
+	const wasBlockedByProfile = session?.user?.blocked_by_users?.some((block) => {
+		return block.blocker_id === profileFound?.id && block.blocked_id === session?.user?.id;
+	});
+
+	if (wasBlockedByProfile) {
+		router.push("/");
+	}
+
+	return (
+		<main className="p-4 lg:p-6">
+			<Card className="mb-6">
+				<CardContent className="p-4 sm:p-6">
+					<div className="flex flex-col items-center text-center">
+						<Avatar className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded shadow">
+							<AvatarImage src={profileFound.avatar_url || "/placeholder.svg"} alt={profileFound.name} />
+							<AvatarFallback className="text-2xl sm:text-3xl bg-gradient-to-r from-green-700 to-green-600 text-white rounded-2xl">
+								{profileFound.name.charAt(0)}
+							</AvatarFallback>
+						</Avatar>
+
+						<h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 mt-4 dark:text-white">
+							{profileFound.name}
+						</h1>
+						<h2 className="text-orange-600 dark:text-gray-300 text-lg sm:text-xl font-bold mb-2 break-all">
+							@{profileFound.nickname}
+						</h2>
+
+						<p className="text-muted-foreground mb-3 max-w-xs sm:max-w-md text-sm dark:text-gray-400">
+							{profileFound.description}
+						</p>
+
+						{profileFound.website && (
+							<Link
+								href={profileFound.website}
+								className="text-blue-600 dark:text-white hover:underline mb-4 break-words text-sm sm:text-base"
+							>
+								{profileFound.website}
+							</Link>
+						)}
+
+						<div className="flex flex-wrap justify-center gap-3 mb-4">
+							{socialLinks.map(
+								(social, index) =>
+									social.href && (
+										<Link key={index} href={social.href} target="_blank" rel="noopener noreferrer">
+											<Button variant="ghost" size="icon" className={`text-xl ${social.color}`}>
+												<social.icon className="h-5 w-5" />
+											</Button>
+										</Link>
+									),
+							)}
+						</div>
+
+						<div className="flex flex-wrap justify-center items-center gap-2 mb-5">
+							{session?.user?.id ? (
+								session.user.id !== profileFound.id ? (
+									<Button
+										variant={isFollowing ? "secondary" : "default"}
+										onClick={handleFollow}
+										disabled={isLoadingFollowing}
+										className={`px-3 py-1 text-sm font-medium flex items-center gap-1
+					${
+						isFollowing
+							? "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:border-gray-600"
+							: hasPendingRequest
+								? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border border-yellow-300 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-800 dark:border-yellow-600"
+								: "bg-green-600 hover:bg-green-700 text-white shadow dark:bg-white dark:text-black dark:hover:bg-gray-200"
+					}
+					${isLoadingFollowing ? "opacity-70 cursor-not-allowed" : ""}
+				`}
+									>
+										{isLoadingFollowing ? (
+											<div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+										) : isFollowing ? (
+											<>
+												<UserCheck className="h-4 w-4" />
+												Seguindo
+											</>
+										) : hasPendingRequest ? (
+											<>
+												<Clock className="h-4 w-4" />
+												Solicitado
+											</>
+										) : (
+											<>
+												<UserPlus className="h-4 w-4" />
+												Seguir
+											</>
+										)}
+									</Button>
+								) : null
+							) : (
+								<Button
+									variant="secondary"
+									disabled
+									className="px-3 py-1 text-sm flex items-center gap-1 opacity-50 cursor-not-allowed bg-gray-200 text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600"
+								>
+									<UserPlus className="h-4 w-4" />
+									Seguir
+								</Button>
+							)}
+
+							{session?.user?.id && session.user.id !== profileFound?.id && (
+								<BlockUserButton
+									sessionUser={{
+										id: session?.user?.id ?? "",
+										nickname: session?.user?.nickname ?? "",
+									}}
+									profileFound={{
+										id: profileFound.id,
+										nickname: profileFound.nickname ?? "",
+									}}
+									onBlockSuccess={() => {}}
+								/>
+							)}
+						</div>
+
+						<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 w-full max-w-2xl">
+							<div className="text-center">
+								<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
+									{profileFound.questions_received.reduce(
+										(total: number, question: QuestionInterface) =>
+											total + (question.question_answered ? 1 : 0),
+										0,
+									)}
+								</div>
+								<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
+									respondidas
+								</div>
+							</div>
+							<div className="text-center">
+								<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
+									{profileFound.questions_received.length}
+								</div>
+								<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
+									recebidas
+								</div>
+							</div>
+							<div className="text-center">
+								<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
+									{profileFound.questions_sent.length}
+								</div>
+								<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
+									enviadas
+								</div>
+							</div>
+							<div className="text-center">
+								<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
+									{profileFoundTotalFollowers ?? profileFound.followers.length}
+								</div>
+								<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
+									seguidores
+								</div>
+							</div>
+							<div className="text-center">
+								<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
+									{profileFound?.following?.length}
+								</div>
+								<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
+									seguindo
+								</div>
+							</div>
+						</div>
+					</div>
+				</CardContent>
+			</Card>
+
+			{session?.user?.id ? (
+				session.user.id !== profileFound.id ? (
+					(session.user.public_questions_remaining_today ?? 0) > 0 ||
+					(session.user.anonymous_questions_remaining_today ?? 0) > 0 ? (
+						<>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+								<Card className="bg-gradient-to-r from-blue-100 to-blue-50 border-blue-200 dark:bg-white dark:border-gray-300">
+									<CardContent className="p-3">
+										<div className="flex items-center gap-2">
+											<Eye className="h-6 w-6 text-blue-600 dark:text-black flex-shrink-0" />
+											<div>
+												<p className="md:text-base font-semibold text-blue-800 dark:text-black leading-tight">
+													Você tem {session?.user?.public_questions_remaining_today} perguntas
+													públicas restantes hoje
+												</p>
+											</div>
+										</div>
+									</CardContent>
+								</Card>
+
+								<Card className="bg-gradient-to-r from-purple-100 to-purple-50 border-purple-200 dark:bg-white dark:border-gray-300">
+									<CardContent className="p-3">
+										<div className="flex items-center gap-2">
+											<EyeOff className="h-6 w-6 text-purple-600 dark:text-black flex-shrink-0" />
+											<div>
+												{!profileFound?.privacy_accept_anonymous_questions ? (
+													<p className="text md:text-base font-semibold text-purple-800 dark:text-black leading-tight">
+														Esse perfil não aceita perguntas anônimas.
+													</p>
+												) : (
+													<p className="text-sm md:text-base font-semibold text-purple-800 dark:text-black leading-tight">
+														Você tem {session?.user?.anonymous_questions_remaining_today}{" "}
+														pergunta anônima restante hoje
+													</p>
+												)}
+											</div>
+										</div>
+									</CardContent>
+								</Card>
+							</div>
+							<Card className="mb-6">
+								<CardHeader className="pb-4">
+									<CardTitle className="text-center text-lg md:text-xl text-gray-700 dark:text-white">
+										Faça uma pergunta para{" "}
+										<span className="text-orange-600 font-bold">@{profileFound.nickname}</span>
+									</CardTitle>
+								</CardHeader>
+								<CardContent className="pt-0">
+									<div className="space-y-4">
+										<div className="space-y-2">
+											<Textarea
+												placeholder="Digite sua pergunta aqui..."
+												value={newQuestion}
+												onChange={(e) => setNewQuestion(e.target.value)}
+												className="text-base p-3 min-h-[100px] resize-none"
+												rows={4}
+											/>
+											<div className="flex justify-between text-xs text-gray-500">
+												<small>Mínimo: 32 | Máximo: 512 caracteres</small>
+												<small className={newQuestion.length > 512 ? "text-red-500" : ""}>
+													{newQuestion.length}/512
+												</small>
+											</div>
+										</div>
+
+										<Button
+											onClick={handleSubmitQuestion}
+											className="w-full bg-gradient-to-r from-green-700 to-green-600 hover:from-green-800 hover:to-green-700 text-white text-base py-4 md:py-6 dark:from-white dark:to-gray-100 dark:text-black dark:hover:from-gray-100 dark:hover:to-gray-200"
+											disabled={newQuestion.length < 32 || newQuestion.length > 512}
+										>
+											RESPONDE AÊ
+										</Button>
+									</div>
+								</CardContent>
+							</Card>
+						</>
+					) : null
+				) : (
+					<div className="text-center py-4 rounded-lg border-2 border-blue-500 bg-blue-500 text-white shadow mb-6">
+						<p className="text-sm md:text-base font-medium">Esse é seu perfil público</p>
+					</div>
+				)
+			) : (
+				<div className="text-center py-4 rounded-lg bg-orange-700 text-white shadow mb-6">
+					<p className="text-sm md:text-base font-medium">
+						Entre na sua conta para poder fazer perguntas a esse usuário.
+					</p>
+				</div>
+			)}
+
+			{!profileFound?.privacy_is_private_profile || session?.user?.id === profileFound.id ? (
+				<Tabs defaultValue="answered" className="w-full" onValueChange={() => setCurrentPage(1)}>
+					<TabsList className="flex flex-wrap justify-between gap-2 w-full bg-gray-100 dark:bg-neutral-800 rounded-lg p-1">
+						<TabsTrigger
+							value="answered"
+							className="flex-1 text-[0.7rem] sm:text-xs py-2 px-2 rounded-md text-center font-medium transition-all duration-200
+				data-[state=active]:bg-white data-[state=active]:shadow-sm
+				data-[state=inactive]:opacity-70
+				dark:data-[state=active]:bg-white dark:data-[state=active]:text-black
+				dark:data-[state=inactive]:bg-neutral-700 dark:data-[state=inactive]:text-neutral-300"
+						>
+							Últimas Respostas
+						</TabsTrigger>
+						<TabsTrigger
+							value="top"
+							className="flex-1 text-[0.7rem] sm:text-xs py-2 px-2 rounded-md text-center font-medium transition-all duration-200
+				data-[state=active]:bg-white data-[state=active]:shadow-sm
+				data-[state=inactive]:opacity-70
+				dark:data-[state=active]:bg-white dark:data-[state=active]:text-black
+				dark:data-[state=inactive]:bg-neutral-700 dark:data-[state=inactive]:text-neutral-300"
+						>
+							Top Respostas Pagas
+						</TabsTrigger>
+						<TabsTrigger
+							value="liked"
+							className="flex-1 text-[0.7rem] sm:text-xs py-2 px-2 rounded-md text-center font-medium transition-all duration-200
+				data-[state=active]:bg-white data-[state=active]:shadow-sm
+				data-[state=inactive]:opacity-70
+				dark:data-[state=active]:bg-white dark:data-[state=active]:text-black
+				dark:data-[state=inactive]:bg-neutral-700 dark:data-[state=inactive]:text-neutral-300"
+						>
+							Top Respostas Curtidas
+						</TabsTrigger>
+					</TabsList>
+
+					<TabsContent value="answered" className="space-y-3 mt-4">
+						{publicQuestions.length === 0 ? (
+							<div className="text-center py-12 text-gray-500">
+								<p className="text-base">Nenhuma resposta ainda.</p>
+							</div>
+						) : (
+							<>
+								{renderPagination(publicQuestions)}
+								{getPaginatedQuestions(publicQuestions).map((question) => (
+									<Card
+										key={question.id}
+										className="border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800"
+									>
+										<CardContent className="p-4 sm:p-6">
+											<div className="flex items-start gap-3 mb-4">
+												<Avatar className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
+													<AvatarImage
+														src={question.asked_by.avatar_url}
+														alt={question.asked_by.name}
+													/>
+													<AvatarFallback className="text-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+														{getInitials(question.asked_by.name)}
+													</AvatarFallback>
+												</Avatar>
+												<div className="flex-1 min-w-0">
+													<div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+														<span className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base truncate">
+															{question.asked_by.name}
+														</span>
+														<Link
+															href={`/${question.asked_by.nickname}`}
+															className="text-sm font-bold text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 truncate"
+														>
+															@{question.asked_by.nickname}
+														</Link>
+													</div>
+													<div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+														{question.owner
+															.privacy_show_value_received_from_answering_question &&
+															!question.amount_paid_is_private && (
+																<>
+																	<Badge
+																		variant="secondary"
+																		className="text-xs w-fit bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+																	>
+																		Pagou {formatCurrency(question.amount_paid)}
+																	</Badge>
+																	<span className="hidden sm:inline">•</span>
+																</>
+															)}
+														<span className="text-xs">
+															{formatDate(
+																typeof question.created_at === "string"
+																	? question.created_at
+																	: question.created_at.toISOString(),
+															)}
+														</span>
+													</div>
+												</div>
+											</div>
+
+											<div className="mb-4">
+												<h3 className="font-semibold text-base sm:text-lg text-gray-800 dark:text-gray-200 mb-2 leading-relaxed">
+													<span className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+														Perguntou
+													</span>
+													: {question.question_text}
+												</h3>
+											</div>
+
+											{question.question_answered && question.answer_text && (
+												<div className="bg-green-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4 border-l-4 border-green-400 dark:border-green-500 mb-4">
+													<div className="flex items-start gap-2 sm:gap-3 mb-3">
+														<Avatar className="h-8 w-8 flex-shrink-0">
+															<AvatarImage
+																src={question.owner.avatar_url}
+																alt={question.owner.name}
+															/>
+															<AvatarFallback className="text-xs bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-gray-100">
+																{getInitials(question.owner.name)}
+															</AvatarFallback>
+														</Avatar>
+														<div className="flex-1 min-w-0">
+															<div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+																<span className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
+																	{question.owner.name}
+																</span>
+																<Link
+																	href={`/${question.owner.nickname}`}
+																	className="text-sm font-bold text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 truncate"
+																>
+																	@{question.owner.nickname}
+																</Link>
+															</div>
+															<div className="flex flex-col sm:flex-row sm:items-center gap-1 text-xs text-green-600 dark:text-green-400">
+																<span>respondeu</span>
+																<span className="text-gray-500 dark:text-gray-400">
+																	{formatDate(
+																		typeof question.answered_at === "string"
+																			? question.answered_at
+																			: question.answered_at.toISOString(),
+																	)}
+																</span>
+															</div>
+														</div>
+													</div>
+													<p className="text-gray-700 dark:text-gray-300 text-sm sm:text-base leading-relaxed">
+														{question.answer_text}
+													</p>
+												</div>
+											)}
+
+											<div className="flex items-center gap-6 sm:gap-4 pt-2">
+												<Button
+													variant="ghost"
+													size="sm"
+													className={`p-2 h-auto ${
+														hasUserLiked(question)
+															? "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30"
+															: "text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
+													}`}
+													disabled={
+														!session?.user?.nickname ||
+														session.user.id === question.owner.id
+													}
+													onClick={() => handleLike(question)}
+												>
+													<ThumbsUp
+														className={`h-4 w-4 mr-2 ${hasUserLiked(question) ? "fill-current" : ""}`}
+													/>
+													{question.owner.privacy_show_likes_each_answer_public && (
+														<span className="text-sm font-medium">
+															{JSON.parse(question.liked_by_users || "[]").length}
+														</span>
+													)}
+												</Button>
+
+												<Button
+													variant="ghost"
+													size="sm"
+													className={`p-2 h-auto ${
+														hasUserDisliked(question)
+															? "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30"
+															: "text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+													}`}
+													disabled={
+														!session?.user?.nickname ||
+														session.user.id === question.owner.id
+													}
+													onClick={() => handleDislike(question)}
+												>
+													<ThumbsDown
+														className={`h-4 w-4 mr-2 ${
+															hasUserDisliked(question) ? "fill-current" : ""
+														}`}
+													/>
+													{question.owner.privacy_show_dislikes_each_answer_public && (
+														<span className="text-sm font-medium">
+															{JSON.parse(question.desliked_by_users || "[]").length}
+														</span>
+													)}
+												</Button>
+											</div>
+										</CardContent>
+									</Card>
+								))}
+								{renderPagination(publicQuestions)}
+							</>
+						)}
+					</TabsContent>
+
+					<TabsContent value="top" className="space-y-3 mt-4">
+						{topPaidQuestions.length === 0 ? (
+							<div className="text-center py-12 text-gray-500">
+								<p className="text-base">Nenhuma resposta ainda.</p>
+							</div>
+						) : (
+							<>
+								{renderPagination(topPaidQuestions)}
+								{getPaginatedQuestions(topPaidQuestions).map((question) => (
+									<Card
+										key={question.id}
+										className="border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800"
+									>
+										<CardContent className="p-4 sm:p-6">
+											<div className="flex items-start gap-3 mb-4">
+												<Avatar className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
+													<AvatarImage
+														src={question.asked_by.avatar_url}
+														alt={question.asked_by.name}
+													/>
+													<AvatarFallback className="text-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+														{getInitials(question.asked_by.name)}
+													</AvatarFallback>
+												</Avatar>
+												<div className="flex-1 min-w-0">
+													<div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+														<span className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base truncate">
+															{question.asked_by.name}
+														</span>
+														<Link
+															href={`/${question.asked_by.nickname}`}
+															className="text-sm font-bold text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 truncate"
+														>
+															@{question.asked_by.nickname}
+														</Link>
+													</div>
+													<div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+														{question.owner
+															.privacy_show_value_received_from_answering_question &&
+															!question.amount_paid_is_private && (
+																<>
+																	<Badge
+																		variant="secondary"
+																		className="text-xs w-fit bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+																	>
+																		Pagou {formatCurrency(question.amount_paid)}
+																	</Badge>
+																	<span className="hidden sm:inline">•</span>
+																</>
+															)}
+														<span className="text-xs">
+															{formatDate(
+																typeof question.created_at === "string"
+																	? question.created_at
+																	: question.created_at.toISOString(),
+															)}
+														</span>
+													</div>
+												</div>
+											</div>
+
+											<div className="mb-4">
+												<h3 className="font-semibold text-base sm:text-lg text-gray-800 dark:text-gray-200 mb-2 leading-relaxed">
+													<span className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+														Perguntou
+													</span>
+													: {question.question_text}
+												</h3>
+											</div>
+
+											{question.question_answered && question.answer_text && (
+												<div className="bg-green-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4 border-l-4 border-green-400 dark:border-green-500 mb-4">
+													<div className="flex items-start gap-2 sm:gap-3 mb-3">
+														<Avatar className="h-8 w-8 flex-shrink-0">
+															<AvatarImage
+																src={question.owner.avatar_url}
+																alt={question.owner.name}
+															/>
+															<AvatarFallback className="text-xs bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-gray-100">
+																{getInitials(question.owner.name)}
+															</AvatarFallback>
+														</Avatar>
+														<div className="flex-1 min-w-0">
+															<div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+																<span className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
+																	{question.owner.name}
+																</span>
+																<Link
+																	href={`/${question.owner.nickname}`}
+																	className="text-sm font-bold text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 truncate"
+																>
+																	@{question.owner.nickname}
+																</Link>
+															</div>
+															<div className="flex flex-col sm:flex-row sm:items-center gap-1 text-xs text-green-600 dark:text-green-400">
+																<span>respondeu</span>
+																<span className="text-gray-500 dark:text-gray-400">
+																	{formatDate(
+																		typeof question.answered_at === "string"
+																			? question.answered_at
+																			: question.answered_at.toISOString(),
+																	)}
+																</span>
+															</div>
+														</div>
+													</div>
+													<p className="text-gray-700 dark:text-gray-300 text-sm sm:text-base leading-relaxed">
+														{question.answer_text}
+													</p>
+												</div>
+											)}
+
+											<div className="flex items-center gap-6 sm:gap-4 pt-2">
+												<Button
+													variant="ghost"
+													size="sm"
+													className={`p-2 h-auto ${
+														hasUserLiked(question)
+															? "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30"
+															: "text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
+													}`}
+													disabled={
+														!session?.user?.nickname ||
+														session.user.id === question.owner.id
+													}
+													onClick={() => handleLike(question)}
+												>
+													<ThumbsUp
+														className={`h-4 w-4 mr-2 ${hasUserLiked(question) ? "fill-current" : ""}`}
+													/>
+													{question.owner.privacy_show_likes_each_answer_public && (
+														<span className="text-sm font-medium">
+															{JSON.parse(question.liked_by_users || "[]").length}
+														</span>
+													)}
+												</Button>
+
+												<Button
+													variant="ghost"
+													size="sm"
+													className={`p-2 h-auto ${
+														hasUserDisliked(question)
+															? "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30"
+															: "text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+													}`}
+													disabled={
+														!session?.user?.nickname ||
+														session.user.id === question.owner.id
+													}
+													onClick={() => handleDislike(question)}
+												>
+													<ThumbsDown
+														className={`h-4 w-4 mr-2 ${
+															hasUserDisliked(question) ? "fill-current" : ""
+														}`}
+													/>
+													{question.owner.privacy_show_dislikes_each_answer_public && (
+														<span className="text-sm font-medium">
+															{JSON.parse(question.desliked_by_users || "[]").length}
+														</span>
+													)}
+												</Button>
+											</div>
+										</CardContent>
+									</Card>
+								))}
+								{renderPagination(topPaidQuestions)}
+							</>
+						)}
+					</TabsContent>
+
+					<TabsContent value="liked" className="space-y-3 mt-4">
+						{topLikedQuestions.length === 0 ? (
+							<div className="text-center py-12 text-gray-500">
+								<p className="text-base">Nenhuma resposta ainda.</p>
+							</div>
+						) : (
+							<>
+								{renderPagination(topLikedQuestions)}
+								{getPaginatedQuestions(topLikedQuestions).map((question) => (
+									<Card
+										key={question.id}
+										className="border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800"
+									>
+										<CardContent className="p-4 sm:p-6">
+											<div className="flex items-start gap-3 mb-4">
+												<Avatar className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
+													<AvatarImage
+														src={question.asked_by.avatar_url}
+														alt={question.asked_by.name}
+													/>
+													<AvatarFallback className="text-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+														{getInitials(question.asked_by.name)}
+													</AvatarFallback>
+												</Avatar>
+												<div className="flex-1 min-w-0">
+													<div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+														<span className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base truncate">
+															{question.asked_by.name}
+														</span>
+														<Link
+															href={`/${question.asked_by.nickname}`}
+															className="text-sm font-bold text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 truncate"
+														>
+															@{question.asked_by.nickname}
+														</Link>
+													</div>
+													<div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+														{question.owner
+															.privacy_show_value_received_from_answering_question &&
+															!question.amount_paid_is_private && (
+																<>
+																	<Badge
+																		variant="secondary"
+																		className="text-xs w-fit bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+																	>
+																		Pagou {formatCurrency(question.amount_paid)}
+																	</Badge>
+																	<span className="hidden sm:inline">•</span>
+																</>
+															)}
+														<span className="text-xs">
+															{formatDate(
+																typeof question.created_at === "string"
+																	? question.created_at
+																	: question.created_at.toISOString(),
+															)}
+														</span>
+													</div>
+												</div>
+											</div>
+
+											<div className="mb-4">
+												<h3 className="font-semibold text-base sm:text-lg text-gray-800 dark:text-gray-200 mb-2 leading-relaxed">
+													<span className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+														Perguntou
+													</span>
+													: {question.question_text}
+												</h3>
+											</div>
+
+											{question.question_answered && question.answer_text && (
+												<div className="bg-green-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4 border-l-4 border-green-400 dark:border-green-500 mb-4">
+													<div className="flex items-start gap-2 sm:gap-3 mb-3">
+														<Avatar className="h-8 w-8 flex-shrink-0">
+															<AvatarImage
+																src={question.owner.avatar_url}
+																alt={question.owner.name}
+															/>
+															<AvatarFallback className="text-xs bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-gray-100">
+																{getInitials(question.owner.name)}
+															</AvatarFallback>
+														</Avatar>
+														<div className="flex-1 min-w-0">
+															<div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+																<span className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
+																	{question.owner.name}
+																</span>
+																<Link
+																	href={`/${question.owner.nickname}`}
+																	className="text-sm font-bold text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 truncate"
+																>
+																	@{question.owner.nickname}
+																</Link>
+															</div>
+															<div className="flex flex-col sm:flex-row sm:items-center gap-1 text-xs text-green-600 dark:text-green-400">
+																<span>respondeu</span>
+																<span className="text-gray-500 dark:text-gray-400">
+																	{formatDate(
+																		typeof question.answered_at === "string"
+																			? question.answered_at
+																			: question.answered_at.toISOString(),
+																	)}
+																</span>
+															</div>
+														</div>
+													</div>
+													<p className="text-gray-700 dark:text-gray-300 text-sm sm:text-base leading-relaxed">
+														{question.answer_text}
+													</p>
+												</div>
+											)}
+
+											<div className="flex items-center gap-6 sm:gap-4 pt-2">
+												<Button
+													variant="ghost"
+													size="sm"
+													className={`p-2 h-auto ${
+														hasUserLiked(question)
+															? "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30"
+															: "text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
+													}`}
+													disabled={
+														!session?.user?.nickname ||
+														session.user.id === question.owner.id
+													}
+													onClick={() => handleLike(question)}
+												>
+													<ThumbsUp
+														className={`h-4 w-4 mr-2 ${hasUserLiked(question) ? "fill-current" : ""}`}
+													/>
+													{question.owner.privacy_show_likes_each_answer_public && (
+														<span className="text-sm font-medium">
+															{JSON.parse(question.liked_by_users || "[]").length}
+														</span>
+													)}
+												</Button>
+
+												<Button
+													variant="ghost"
+													size="sm"
+													className={`p-2 h-auto ${
+														hasUserDisliked(question)
+															? "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30"
+															: "text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+													}`}
+													disabled={
+														!session?.user?.nickname ||
+														session.user.id === question.owner.id
+													}
+													onClick={() => handleDislike(question)}
+												>
+													<ThumbsDown
+														className={`h-4 w-4 mr-2 ${
+															hasUserDisliked(question) ? "fill-current" : ""
+														}`}
+													/>
+													{question.owner.privacy_show_dislikes_each_answer_public && (
+														<span className="text-sm font-medium">
+															{JSON.parse(question.desliked_by_users || "[]").length}
+														</span>
+													)}
+												</Button>
+											</div>
+										</CardContent>
+									</Card>
+								))}
+								{renderPagination(topLikedQuestions)}
+							</>
+						)}
+					</TabsContent>
+				</Tabs>
+			) : (
+				<div className="text-center py-4 px-4 rounded-lg bg-red-700 text-white shadow mb-6 dark:bg-white dark:text-black">
+					<p className="text-sm md:text-base font-medium">
+						Esse perfil é privado. Você precisa ser seguidor para ver as respostas desse perfil.
+					</p>
+				</div>
+			)}
+
+			<Dialog open={currentStep === "payment"} onOpenChange={closeModal}>
+				<DialogContent className="sm:max-w-md">
+					<DialogHeader>
+						<DialogTitle className="text-center text-xl">
+							Quanto você quer pagar para fazer essa pergunta?
+						</DialogTitle>
+					</DialogHeader>
+
+					<div className="py-4">
+						<div className="flex items-center justify-between mb-6 p-4 rounded-lg bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-neutral-100">
+							{!profileFound?.privacy_accept_anonymous_questions ? (
+								<span className="text-sm text-gray-500 dark:text-gray-400">
+									Esse perfil não aceita perguntas anônimas
+								</span>
+							) : session?.user?.anonymous_questions_remaining_today === 0 ? (
+								<span className="text-sm text-gray-500 dark:text-gray-400">
+									{session?.user?.anonymous_questions_remaining_today} perguntas anônimas restantes
+									hoje
+								</span>
+							) : (
+								<>
+									<div className="space-y-0.5">
+										<Label className="text-sm font-medium">Enviar pergunta anonimamente?</Label>
+										<p className="text-sm text-gray-500 dark:text-gray-400">
+											Sua identidade não será revelada
+										</p>
+									</div>
+									<Switch
+										checked={isAnonymousNewQuestion}
+										onCheckedChange={setIsAnonymousNewQuestion}
+										className="data-[state=checked]:bg-green-500 dark:data-[state=checked]:bg-green-400"
+									/>
+								</>
+							)}
+						</div>
+
+						<div className="flex items-center justify-between mb-6 p-4 rounded-lg bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-neutral-100">
+							<div className="space-y-0.5">
+								<Label className="text-sm font-medium">Quero que a resposta seja privada</Label>
+								<p className="text-sm text-gray-500 dark:text-gray-400">
+									A resposta não será mostrada publicamente
+								</p>
+							</div>
+							<Switch
+								checked={isPrivateAnswer}
+								onCheckedChange={setIsPrivateAnswer}
+								className="data-[state=checked]:bg-blue-500 dark:data-[state=checked]:bg-blue-400"
+							/>
+						</div>
+
+						<div className="flex items-center justify-between mb-6 p-4 rounded-lg bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-neutral-100">
+							<div className="space-y-0.5">
+								<Label className="text-sm font-medium">
+									Não quero que o valor que paguei nessa pergunta seja público
+								</Label>
+								<p className="text-sm text-gray-500 dark:text-gray-400">
+									O valor que você pagou por fazer essa pergunta não será mostrado publicamente
+								</p>
+							</div>
+							<Switch
+								checked={questionAmountPaidIsPrivate}
+								onCheckedChange={setQuestionAmountPaidIsPrivate}
+								className="data-[state=checked]:bg-purple-500 dark:data-[state=checked]:bg-purple-400"
+							/>
+						</div>
+
+						<div className="grid grid-cols-3 gap-2 mb-6">
+							{PRESET_AMOUNTS.map((amount) => (
+								<Button
+									key={amount}
+									variant={!useCustomAmount && selectedAmount === amount ? "default" : "outline"}
+									onClick={() => handlePresetAmountClick(amount)}
+									disabled={useCustomAmount}
+									className="h-16 text-lg"
+								>
+									{formatCurrency(amount * 100)}
+								</Button>
+							))}
+
+							<Button
+								variant={useCustomAmount ? "default" : "outline"}
+								onClick={handleCustomAmountClick}
+								className="h-16 text-lg"
+							>
+								Outro
+							</Button>
+						</div>
+
+						{useCustomAmount && (
+							<div className="space-y-2 mb-6">
+								<Label htmlFor="custom-amount">Digite o valor</Label>
+								<div className="relative">
+									<span className="absolute left-3 top-1/2 -translate-y-1/2">R$</span>
+									<Input
+										id="custom-amount"
+										value={customAmount}
+										onChange={(e) => handleCustomAmountChange(e.target.value)}
+										className="pl-10"
+										placeholder="0,00"
+										autoFocus
+									/>
+								</div>
+							</div>
+						)}
+
+						<Button
+							onClick={handleGeneratePix}
+							disabled={!isGenerateButtonEnabled || isLoadingPayment}
+							className="w-full flex items-center justify-center gap-2"
+						>
+							{isLoadingPayment ? (
+								<>
+									<Loader className="h-4 w-4 animate-spin" />
+									Gerando PIX...
+								</>
+							) : (
+								"Gerar PIX para Pagar"
+							)}
+						</Button>
+					</div>
+				</DialogContent>
+			</Dialog>
+
+			<Dialog open={currentStep === "pix"} onOpenChange={handleOpenChangeModal}>
+				<DialogContent className="sm:max-w-md">
+					<DialogHeader>
+						<DialogTitle className="text-center text-xl text-green-500">
+							{paymentStatus === "PAID" ? "Pagamento Confirmado!" : "Pague com PIX"}
+						</DialogTitle>
+					</DialogHeader>
+
+					<div className="py-4 flex flex-col items-center">
+						{paymentStatus === "PAID" ? (
+							<div className="flex flex-col items-center space-y-4">
+								<div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+									<Check className="w-8 h-8 text-green-600" />
+								</div>
+								<p className="text-orange-500 text-center">Sua pergunta foi enviada com sucesso!</p>
+								<p className="text-gray-600 text-center dark:text-white">
+									Esse modal se fechará automaticamente em 10 segundos.
+								</p>
+							</div>
+						) : (
+							<>
+								<div className="bg-white p-4 rounded-lg mb-4 w-64 h-64 flex items-center justify-center border">
+									{pixData?.brCodeBase64 ? (
+										<img src={pixData.brCodeBase64} alt="QR Code PIX" width={240} height={240} />
+									) : (
+										<div className="bg-gray-200 w-full h-full flex items-center justify-center">
+											<span className="text-gray-500">QR Code PIX</span>
+										</div>
+									)}
+								</div>
+
+								<div className="w-full space-y-4">
+									<div className="flex items-center justify-center space-x-2">
+										<Clock className="w-4 h-4 text-orange-600" />
+										<span className={`font-semibold ${getStatusColor()}`}>{getStatusText()}</span>
+									</div>
+
+									<div className="text-center">
+										<p className="text-sm text-gray-600 dark:text-white">
+											Valor a Pagar: {formatCurrency((selectedAmount ?? 0) * 100)}
+										</p>
+									</div>
+
+									{paymentStatus === "PENDING" && (
+										<div className="text-center">
+											<p className="text-sm text-gray-600 dark:text-red-500">
+												Tempo restante:{" "}
+												<span className="font-bold">{formatTime(timeRemaining)}</span>
+											</p>
+										</div>
+									)}
+
+									{paymentStatus === "PENDING" && (
+										<div className="flex items-center gap-2">
+											<Button
+												variant="outline"
+												className="flex-1 flex items-center justify-center gap-2"
+												onClick={handleCopyCode}
+											>
+												{copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+												{copied ? "Copiado!" : "Copiar código PIX"}
+											</Button>
+										</div>
+									)}
+
+									{paymentStatus === "PENDING" && (
+										<p className="text-sm text-center text-muted-foreground dark:text-white">
+											Escaneie o QR code ou copie o código PIX para pagar.
+										</p>
+									)}
+
+									{process.env.NEXT_PUBLIC_TEST_MODE === "true" && (
+										<p className="text-sm text-center text-muted-foreground">
+											Você está em teste mode. Esse PIX será pago automaticamente em alguns
+											segundos.
+										</p>
+									)}
+
+									{(paymentStatus === "EXPIRED" || paymentStatus === "CANCELLED") && (
+										<Button variant="destructive" className="w-full" onClick={closeModal}>
+											Fechar e tentar novamente
+										</Button>
+									)}
+								</div>
+							</>
+						)}
+					</div>
+				</DialogContent>
+			</Dialog>
+		</main>
+	);
+}
