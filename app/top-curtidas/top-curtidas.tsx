@@ -339,7 +339,7 @@ export default function TopCurtidasClient({ today, week, month, year, allTime }:
 			{isLoadingMore && (
 				<div className="flex justify-center items-center py-8">
 					<Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-					<span className="ml-2 text-gray-500">Carregando mais perguntas...</span>
+					<span className="ml-2 text-gray-500">Carregando mais respostas...</span>
 				</div>
 			)}
 

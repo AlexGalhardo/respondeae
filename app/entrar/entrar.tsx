@@ -228,7 +228,7 @@ export default function EntrarClient() {
 						>
 							{loading ? (
 								<>
-									<span className="ml-2 h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin dark:border-black dark:border-t-transparent"></span>
+									<span className="ml-2 h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin dark:border-black dark:border-t-transparent dark:text-white"></span>
 									Processando...
 								</>
 							) : (

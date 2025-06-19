@@ -156,8 +156,8 @@ export function BlockUserButton({ sessionUser, profileFound, onBlockSuccess }: B
 						disabled={isLoading}
 						className={
 							isBlocked
-								? "bg-red-600 hover:bg-red-700 focus:ring-red-600"
-								: "bg-red-600 hover:bg-red-700 focus:ring-red-600"
+								? "bg-red-600 hover:bg-red-700 focus:ring-red-600 text-white"
+								: "bg-red-600 hover:bg-red-700 focus:ring-red-600 text-white"
 						}
 					>
 						{isLoading
