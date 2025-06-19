@@ -1,11 +1,15 @@
+"use client";
+
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { QuestionInterface } from "@/lib/interfaces";
+import { QuestionInterface } from "@/types/QuestionInterface";
 import { getAllLatestDescPublicQuestionsAnswered } from "@/lib/repositories/questions.repository";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
 
 const QUESTIONS_PER_PAGE = 10;
 
-// Tipos para o hook useQuestions
 interface QuestionsPageData {
 	questions: QuestionInterface[];
 	nextCursor: number | undefined;
@@ -30,6 +34,7 @@ interface ApiResponse {
 	data?: any;
 }
 
+// Hook para perguntas do feed público
 export const useQuestions = () => {
 	const { toast } = useToast();
 
@@ -68,6 +73,106 @@ export const useQuestions = () => {
 	return queryResult;
 };
 
+// Hook para perguntas recebidas (da sessão) - CORRIGIDO COM TIPAGEM
+export function useReceivedQuestions() {
+	const { data: session } = useSession();
+	const [questions, setQuestions] = useState<QuestionInterface[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+
+	useEffect(() => {
+		if (session?.user?.questions_received) {
+			const formattedQuestions: QuestionInterface[] = session.user.questions_received.map((q: any) => ({
+				id: q.id,
+				is_seed: q.is_seed || false,
+				question_text: q.question_text,
+				answer_text: q.answer_text || null,
+				answered_at: q.answered_at || null,
+				amount_paid: q.amount_paid || 0,
+				amount_already_withdraw: q.amount_already_withdraw || false,
+				asker_want_answer_to_be_private: q.asker_want_answer_to_be_private || false,
+				asker_sent_anonymous_question: q.asker_sent_anonymous_question || false,
+				amount_paid_is_private: q.amount_paid_is_private || false,
+				onwer_wants_amount_paid_not_show_public: q.onwer_wants_amount_paid_not_show_public || false,
+				owner_user_nickname: q.owner_user_nickname,
+				asked_by_user_nickname: q.asked_by_user_nickname,
+				question_is_awaiting_answer: q.question_is_awaiting_answer || false,
+				question_answered: q.question_answered || false,
+				question_answer_was_recused: q.question_answer_was_recused || false,
+				question_answer_was_expired: q.question_answer_was_expired || false,
+				question_answer_recused_at: q.question_answer_recused_at || null,
+				question_answer_expired_at: q.question_answer_expired_at || null,
+				liked_by_users: q.liked_by_users || null,
+				desliked_by_users: q.desliked_by_users || null,
+				owner_reported_offensive_question: q.owner_reported_offensive_question || false,
+				onwer_reported_inadequate_question: q.onwer_reported_inadequate_question || false,
+				onwer_reported_question_at: q.onwer_reported_question_at || null,
+				asker_reported_answer: q.asker_reported_answer || false,
+				asker_reported_answer_reason: q.asker_reported_answer_reason || null,
+				asker_reported_answer_at: q.asker_reported_answer_at || null,
+				payment_withdraw_id: q.payment_withdraw_id || null,
+				created_at: q.created_at,
+				updated_at: q.updated_at || null,
+				deleted_at: q.deleted_at || null,
+				webhook_id: q.webhook_id,
+				owner: q.owner
+					? {
+							id: q.owner.id,
+							name: q.owner.name,
+							nickname: q.owner.nickname,
+							email: q.owner.email,
+							avatar_url: q.owner.avatar_url || null,
+							description: q.owner.description || null,
+							website: q.owner.website || null,
+							twitter: q.owner.twitter || null,
+							instagram: q.owner.instagram || null,
+							youtube: q.owner.youtube || null,
+							tiktok: q.owner.tiktok || null,
+							linkedin: q.owner.linkedin || null,
+							twitch: q.owner.twitch || null,
+							facebook: q.owner.facebook || null,
+							github: q.owner.github || null,
+							created_at: q.owner.created_at,
+						}
+					: null,
+				asked_by: q.asked_by
+					? {
+							id: q.asked_by.id,
+							name: q.asked_by.name,
+							nickname: q.asked_by.nickname,
+							email: q.asked_by.email,
+							avatar_url: q.asked_by.avatar_url || null,
+							description: q.asked_by.description || null,
+							website: q.asked_by.website || null,
+							twitter: q.asked_by.twitter || null,
+							instagram: q.asked_by.instagram || null,
+							youtube: q.asked_by.youtube || null,
+							tiktok: q.asked_by.tiktok || null,
+							linkedin: q.asked_by.linkedin || null,
+							twitch: q.asked_by.twitch || null,
+							facebook: q.asked_by.facebook || null,
+							github: q.asked_by.github || null,
+							created_at: q.asked_by.created_at,
+						}
+					: null,
+			}));
+
+			setQuestions(formattedQuestions);
+			setIsLoading(false);
+		} else if (session && !session.user?.questions_received) {
+			setQuestions([]);
+			setIsLoading(false);
+		}
+	}, [session?.user?.questions_received]);
+
+	return {
+		data: questions,
+		setData: setQuestions,
+		isLoading,
+		error: null,
+	};
+}
+
+// Mutations para like/dislike (mantidas)
 export const useLikeQuestion = () => {
 	const queryClient = useQueryClient();
 	const { toast } = useToast();
@@ -92,18 +197,15 @@ export const useLikeQuestion = () => {
 
 			return response.json();
 		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["questions"] });
+		},
 		onError: (error: QuestionsError) => {
 			toast({
 				title: "Erro ao curtir pergunta!",
 				description: error?.message || "Erro ao curtir pergunta",
 				variant: "error",
 			});
-
-			// Reverte o cache
-			queryClient.invalidateQueries({ queryKey: ["questions"] });
-		},
-		onSettled: () => {
-			// Atualiza o cache independente do resultado
 			queryClient.invalidateQueries({ queryKey: ["questions"] });
 		},
 	});
@@ -133,19 +235,198 @@ export const useDislikeQuestion = () => {
 
 			return response.json();
 		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["questions"] });
+		},
 		onError: (error: QuestionsError) => {
 			toast({
 				title: "Erro ao descurtir pergunta!",
 				description: error?.message || "Erro ao descurtir pergunta",
 				variant: "error",
 			});
-
-			// Reverte o cache
-			queryClient.invalidateQueries({ queryKey: ["questions"] });
-		},
-		onSettled: () => {
-			// Atualiza o cache independente do resultado
 			queryClient.invalidateQueries({ queryKey: ["questions"] });
 		},
 	});
 };
+
+export function useAnswerQuestion() {
+	const { toast } = useToast();
+
+	return useMutation({
+		mutationFn: async ({
+			questionId,
+			nickname,
+			answerText,
+		}: {
+			questionId: string;
+			nickname: string;
+			answerText: string;
+		}) => {
+			const response = await fetch("/api/question/answer", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					questionId,
+					nickname,
+					answerText,
+				}),
+			});
+
+			if (!response.ok) {
+				throw new Error("Erro ao enviar resposta");
+			}
+
+			return { questionId, answerText };
+		},
+		onError: (error) => {
+			toast({
+				title: "Erro ao responder pergunta",
+				description: error instanceof Error ? error.message : "Erro ao enviar resposta",
+				variant: "error",
+			});
+		},
+		onSuccess: () => {
+			toast({
+				title: "Pergunta respondida com sucesso!",
+				variant: "success",
+			});
+		},
+	});
+}
+
+export function useDeclineQuestion() {
+	return useMutation({
+		mutationFn: async ({
+			questionId,
+			nickname,
+		}: {
+			questionId: string;
+			nickname: string;
+		}) => {
+			const response = await fetch("/api/question/recused", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					questionId,
+					nickname,
+				}),
+			});
+
+			if (!response.ok) {
+				throw new Error("Erro ao recusar pergunta");
+			}
+
+			return { questionId };
+		},
+		onError: (error) => {
+			toast.error(error instanceof Error ? error.message : "Erro ao recusar pergunta");
+		},
+		onSuccess: () => {
+			toast.success("Pergunta recusada");
+		},
+	});
+}
+
+export function useDeleteQuestion() {
+	return useMutation({
+		mutationFn: async ({
+			questionId,
+			nickname,
+		}: {
+			questionId: string;
+			nickname: string;
+		}) => {
+			const response = await fetch("/api/question/delete", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					questionId,
+					nickname,
+				}),
+			});
+
+			if (!response.ok) {
+				throw new Error("Erro ao deletar pergunta");
+			}
+
+			return { questionId };
+		},
+		onError: (error) => {
+			toast.error(error instanceof Error ? error.message : "Erro ao deletar pergunta");
+		},
+		onSuccess: () => {
+			toast.success("Pergunta deletada");
+		},
+	});
+}
+
+export function useReportQuestion() {
+	return useMutation({
+		mutationFn: async ({
+			questionId,
+			nickname,
+			isOffensive,
+			isInappropriate,
+		}: {
+			questionId: string;
+			nickname: string;
+			isOffensive: boolean;
+			isInappropriate: boolean;
+		}) => {
+			const response = await fetch("/api/question/report-question", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					questionId,
+					nickname,
+					isOffensive,
+					isInappropriate,
+				}),
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || "Erro ao reportar pergunta");
+			}
+
+			return { questionId, isOffensive, isInappropriate };
+		},
+		onError: (error) => {
+			toast.error(error instanceof Error ? error.message : "Erro ao reportar pergunta");
+		},
+		onSuccess: () => {
+			toast.success("Pergunta reportada com sucesso");
+		},
+	});
+}
+
+export function useMarkQuestionExpired() {
+	return useMutation({
+		mutationFn: async (questionId: string) => {
+			const response = await fetch("/api/question/expired", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ questionId }),
+			});
+
+			if (!response.ok) {
+				throw new Error("Erro ao marcar pergunta como expirada");
+			}
+
+			return { success: true };
+		},
+		onError: (error) => {
+			console.error("Erro ao marcar pergunta como expirada:", error);
+		},
+	});
+}

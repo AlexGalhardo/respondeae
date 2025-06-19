@@ -24,6 +24,8 @@ class UsersRepository {
 		questions_sent: { include: { owner: true } },
 		blocked_by_users: { include: { blocked: true } },
 		blocked_users: { include: { blocked: true } },
+		follow_requests_sent: true,
+		follow_requests_received: true,
 	};
 
 	async getAllUsers() {

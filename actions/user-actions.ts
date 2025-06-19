@@ -322,17 +322,36 @@ export async function deleteAccount() {
 	}
 }
 
-// Cached functions
-export const getUserByNicknameAction = unstable_cache(
-	async (nickname: string) => {
-		return await getUserByNickname(nickname);
-	},
-	["user-profile"],
-	{
-		tags: ["user-profile"],
-		revalidate: 300, // 5 minutes
-	},
-);
+export const getUserByNicknameAction = async (nickname: string) => {
+	try {
+		const session = await getServerSession(authOptions);
+
+		const user = await getUserByNickname(nickname);
+
+		if (!user) {
+			return null;
+		}
+
+		let isFollowing = false;
+		let hasPendingRequest = false;
+
+		if (session?.user?.id) {
+			isFollowing = user.followers.some((follower) => follower.followerId === session.user.id);
+
+			hasPendingRequest =
+				user.follow_requests_received?.some((request) => request.senderId === session.user.id) || false;
+		}
+
+		return {
+			...user,
+			isFollowing,
+			hasPendingRequest,
+		};
+	} catch (error) {
+		console.error("Erro ao buscar usuário:", error);
+		return null;
+	}
+};
 
 export const followUserAction = async (followingId: string, followerId: string) => {
 	try {
@@ -351,6 +370,26 @@ export const followUserAction = async (followingId: string, followerId: string) 
 			},
 		});
 
+		// Verificar se há solicitação pendente (se o perfil for privado)
+		const followRequest = await prisma.followRequest.findUnique({
+			where: {
+				senderId_receiverId: {
+					senderId: followerId,
+					receiverId: followingId,
+				},
+			},
+		});
+
+		// Buscar dados do usuário que está sendo seguido para verificar se é privado
+		const targetUser = await prisma.user.findUnique({
+			where: { id: followingId },
+			select: { privacy_is_private_profile: true },
+		});
+
+		let isFollowing = false;
+		let hasPendingRequest = false;
+		let message = "";
+
 		if (existingFollow) {
 			// Unfollow
 			await prisma.follower.delete({
@@ -361,18 +400,72 @@ export const followUserAction = async (followingId: string, followerId: string) 
 					},
 				},
 			});
+
+			isFollowing = false;
+			hasPendingRequest = false;
+			message = "Você parou de seguir este usuário";
 		} else {
-			// Follow
-			await prisma.follower.create({
-				data: {
-					followerId: followerId,
-					followingId: followingId,
-				},
-			});
+			// Verificar se o perfil é privado
+			if (targetUser?.privacy_is_private_profile) {
+				if (followRequest) {
+					// Cancelar solicitação existente
+					await prisma.followRequest.delete({
+						where: {
+							senderId_receiverId: {
+								senderId: followerId,
+								receiverId: followingId,
+							},
+						},
+					});
+					hasPendingRequest = false;
+					message = "Solicitação cancelada";
+				} else {
+					// Criar nova solicitação
+					await prisma.followRequest.create({
+						data: {
+							senderId: followerId,
+							receiverId: followingId,
+						},
+					});
+					hasPendingRequest = true;
+					message = "Solicitação enviada";
+				}
+				isFollowing = false;
+			} else {
+				// Perfil público - seguir diretamente
+				await prisma.follower.create({
+					data: {
+						followerId: followerId,
+						followingId: followingId,
+					},
+				});
+
+				// Remover solicitação se existir
+				if (followRequest) {
+					await prisma.followRequest.delete({
+						where: {
+							senderId_receiverId: {
+								senderId: followerId,
+								receiverId: followingId,
+							},
+						},
+					});
+				}
+
+				isFollowing = true;
+				hasPendingRequest = false;
+				message = "Agora você está seguindo este usuário";
+			}
 		}
 
 		revalidateTag("user-profile");
-		return { success: true };
+
+		return {
+			success: true,
+			isFollowing,
+			hasPendingRequest,
+			message,
+		};
 	} catch (error: any) {
 		console.error("Erro ao seguir/desseguir usuário:", error);
 		return { error: error.message || "Erro ao seguir usuário" };

@@ -4,7 +4,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 
-interface SessionUser {
+interface SessionUserInterface {
 	id: string;
 	nickname: string;
 	questions_received?: Array<{
@@ -14,7 +14,7 @@ interface SessionUser {
 }
 
 interface VerifiedSession {
-	user: SessionUser;
+	user: SessionUserInterface;
 	expires: string;
 }
 

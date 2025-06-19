@@ -10,7 +10,7 @@ Eu quero que você faça para mim o seguinte:
 
 1. Use react-query para otimizar e melhorar requisições onde necessário, usando cache, auto refetch, etc, usando as melhores práticas dessa lib.
 
-2. Use também server actions ecache nativo do nextjs v15 onde você achar necessário, para melhorar performance e otimizar o code com as melhores práticas possíveis do nextjs v15.
+2. Use também server actions e cache nativo do nextjs v15 onde você achar necessário, para melhorar performance e otimizar o code com as melhores práticas possíveis do nextjs v15.
 
 3. Quebre esse código em sub components, para ficar mais modularizado e com uma melhor separação de responsabilidade.
 

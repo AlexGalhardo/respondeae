@@ -24,16 +24,52 @@ export const useFollowUser = () => {
 		mutationFn: ({ followingId, followerId }: { followingId: string; followerId: string }) =>
 			followUserAction(followingId, followerId),
 		onSuccess: (data, variables) => {
+			// Se houve erro, não atualiza o cache
+			if (data.error) {
+				return;
+			}
+
+			// Invalida as queries para recarregar os dados
 			queryClient.invalidateQueries({ queryKey: ["profile"] });
+
+			// Atualização otimista do cache (opcional)
 			queryClient.setQueryData(["profile", variables.followingId], (oldData: any) => {
 				if (!oldData) return oldData;
+
+				const currentFollowers = oldData.followers || [];
+
+				let updatedFollowers;
+				if (data.isFollowing) {
+					// Adiciona o seguidor se não existir
+					const followerExists = currentFollowers.some((f: any) => f.followerId === variables.followerId);
+					if (!followerExists) {
+						updatedFollowers = [
+							...currentFollowers,
+							{
+								id: `temp-${Date.now()}`,
+								followerId: variables.followerId,
+								followingId: variables.followingId,
+								follower: { id: variables.followerId },
+								created_at: new Date().toISOString(),
+								updated_at: new Date().toISOString(),
+							},
+						];
+					} else {
+						updatedFollowers = currentFollowers;
+					}
+				} else {
+					// Remove o seguidor
+					updatedFollowers = currentFollowers.filter((f: any) => f.followerId !== variables.followerId);
+				}
+
 				return {
 					...oldData,
-					followers: data.isFollowing
-						? [...oldData.followers, variables.followerId]
-						: oldData.followers.filter((id: string) => id !== variables.followerId),
+					followers: updatedFollowers,
 				};
 			});
+		},
+		onError: (error) => {
+			console.error("Erro na mutação de follow:", error);
 		},
 	});
 };
