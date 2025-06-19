@@ -75,8 +75,17 @@ export function useAcceptFollowRequest() {
 			}
 			toast.error(error instanceof Error ? error.message : "Erro ao aceitar seguidor");
 		},
-		onSuccess: () => {
+		onSuccess: (data) => {
 			toast.success("Seguidor aceito");
+
+			// Invalida os perfis específicos envolvidos na solicitação
+			if (data.senderId && data.receiverId) {
+				queryClient.invalidateQueries({ queryKey: ["profile", data.senderId] });
+				queryClient.invalidateQueries({ queryKey: ["profile", data.receiverId] });
+			}
+
+			// Invalida todas as queries de perfil para garantir
+			queryClient.invalidateQueries({ queryKey: ["profile"] });
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: ["follow-requests"] });
@@ -107,8 +116,16 @@ export function useRejectFollowRequest() {
 			}
 			toast.error(error instanceof Error ? error.message : "Erro ao rejeitar seguidor");
 		},
-		onSuccess: () => {
+		onSuccess: (data) => {
 			toast.success("Seguidor rejeitado");
+
+			if (data.senderId && data.receiverId) {
+				queryClient.invalidateQueries({ queryKey: ["profile", data.senderId] });
+				queryClient.invalidateQueries({ queryKey: ["profile", data.receiverId] });
+			}
+
+			// Invalida todas as queries de perfil para garantir
+			queryClient.invalidateQueries({ queryKey: ["profile"] });
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: ["follow-requests"] });

@@ -1,4 +1,3 @@
-// components/profile/profile-header.tsx
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useFollowUser } from "@/hooks/use-profile-queries";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UserPlus, UserCheck, Clock, Loader } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { BlockUserButton } from "./block-user-button";
@@ -14,16 +13,34 @@ import { ProfileSocialLinks } from "./profile-social-linkts";
 
 interface ProfileHeaderProps {
 	profile: any;
-	isFollowing: boolean;
-	hasPendingRequest: boolean;
 }
 
-export function ProfileHeader({ profile, isFollowing, hasPendingRequest }: ProfileHeaderProps) {
+export function ProfileHeader({ profile }: ProfileHeaderProps) {
 	const { data: session } = useSession();
 	const { toast } = useToast();
 	const followMutation = useFollowUser();
-	const [localIsFollowing, setLocalIsFollowing] = useState(isFollowing);
-	const [localHasPendingRequest, setLocalHasPendingRequest] = useState(hasPendingRequest);
+
+	// Use os dados que vêm do servidor como estado inicial
+	const [localIsFollowing, setLocalIsFollowing] = useState(profile.isFollowing || false);
+	const [localHasPendingRequest, setLocalHasPendingRequest] = useState(profile.hasPendingRequest || false);
+
+	// Atualiza os estados locais quando o profile muda (ex: após invalidação do cache)
+	useEffect(() => {
+		setLocalIsFollowing(profile.isFollowing || false);
+		setLocalHasPendingRequest(profile.hasPendingRequest || false);
+	}, [profile.isFollowing, profile.hasPendingRequest]);
+
+	// DEBUG: Adicione estes logs temporariamente para verificar os dados
+	useEffect(() => {
+		console.log("=== DEBUG PROFILE HEADER ===");
+		console.log("profile.isFollowing:", profile.isFollowing);
+		console.log("profile.hasPendingRequest:", profile.hasPendingRequest);
+		console.log("localIsFollowing:", localIsFollowing);
+		console.log("localHasPendingRequest:", localHasPendingRequest);
+		console.log("profile.follow_requests_received:", profile.follow_requests_received);
+		console.log("session?.user?.id:", session?.user?.id);
+		console.log("============================");
+	}, [profile, localIsFollowing, localHasPendingRequest, session]);
 
 	const handleFollow = async () => {
 		if (!session?.user?.id) return;
@@ -34,14 +51,26 @@ export function ProfileHeader({ profile, isFollowing, hasPendingRequest }: Profi
 				followerId: session.user.id,
 			});
 
-			setLocalIsFollowing(result.isFollowing);
-			setLocalHasPendingRequest(result.hasPendingRequest);
+			// Verifica se houve erro
+			if (result.error) {
+				toast({
+					title: "Erro",
+					description: result.error,
+					variant: "error",
+				});
+				return;
+			}
+
+			// Atualiza os estados locais
+			setLocalIsFollowing(result.isFollowing ?? false);
+			setLocalHasPendingRequest(result.hasPendingRequest ?? false);
 
 			toast({
 				title: result.message,
-				variant: "success",
+				variant: "default",
 			});
 		} catch (error) {
+			console.error("Erro no handleFollow:", error);
 			toast({
 				title: `Erro ao seguir @${profile?.nickname}`,
 				description: "Tente novamente mais tarde",
@@ -157,7 +186,7 @@ export function ProfileHeader({ profile, isFollowing, hasPendingRequest }: Profi
 					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 w-full max-w-2xl">
 						<div className="text-center">
 							<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
-								{profile.questions_received.filter((q: any) => q.question_answered).length}
+								{profile.questions_received?.filter((q: any) => q.question_answered).length || 0}
 							</div>
 							<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
 								respondidas
@@ -165,19 +194,19 @@ export function ProfileHeader({ profile, isFollowing, hasPendingRequest }: Profi
 						</div>
 						<div className="text-center">
 							<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
-								{profile.questions_received.length}
+								{profile.questions_received?.length || 0}
 							</div>
 							<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">recebidas</div>
 						</div>
 						<div className="text-center">
 							<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
-								{profile.questions_sent.length}
+								{profile.questions_sent?.length || 0}
 							</div>
 							<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">enviadas</div>
 						</div>
 						<div className="text-center">
 							<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
-								{profile.followers.length}
+								{profile.followers?.length || 0}
 							</div>
 							<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
 								seguidores
@@ -185,7 +214,7 @@ export function ProfileHeader({ profile, isFollowing, hasPendingRequest }: Profi
 						</div>
 						<div className="text-center">
 							<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
-								{profile?.following?.length}
+								{profile.following?.length || 0}
 							</div>
 							<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">seguindo</div>
 						</div>

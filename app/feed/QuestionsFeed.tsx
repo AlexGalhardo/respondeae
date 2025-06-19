@@ -17,14 +17,12 @@ export const QuestionsFeed = ({ userNickname, userId }: QuestionsFeedProps) => {
 	const likeQuestionMutation = useLikeQuestion();
 	const dislikeQuestionMutation = useDislikeQuestion();
 
-	// Flatten todas as páginas em uma única lista
 	const questions = useMemo(() => {
 		return (
 			(data?.pages as { questions: QuestionInterface[] }[] | undefined)?.flatMap((page) => page.questions) || []
 		);
 	}, [data]);
 
-	// Verificar se usuário curtiu uma pergunta
 	const hasUserLiked = useCallback(
 		(question: QuestionInterface) => {
 			if (!userNickname) return false;
@@ -34,7 +32,6 @@ export const QuestionsFeed = ({ userNickname, userId }: QuestionsFeedProps) => {
 		[userNickname],
 	);
 
-	// Verificar se usuário descurtiu uma pergunta
 	const hasUserDisliked = useCallback(
 		(question: QuestionInterface) => {
 			if (!userNickname) return false;
@@ -44,7 +41,6 @@ export const QuestionsFeed = ({ userNickname, userId }: QuestionsFeedProps) => {
 		[userNickname],
 	);
 
-	// Handlers para like/dislike
 	const handleLike = useCallback(
 		(question: QuestionInterface) => {
 			if (!userNickname) return;
@@ -69,7 +65,6 @@ export const QuestionsFeed = ({ userNickname, userId }: QuestionsFeedProps) => {
 		[userNickname, dislikeQuestionMutation],
 	);
 
-	// Infinite scroll
 	useEffect(() => {
 		const handleScroll = () => {
 			const scrollTop = window.scrollY;

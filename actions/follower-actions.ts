@@ -62,8 +62,13 @@ export async function acceptFollowRequest(requestId: string) {
 
 		revalidateTag("user-session");
 		revalidateTag("follow-requests");
+		revalidateTag("user-profile"); // Adiciona esta tag para invalidar perfis
 
-		return { success: true };
+		return {
+			success: true,
+			senderId: request.senderId,
+			receiverId: request.receiverId,
+		};
 	} catch (error) {
 		console.error("Erro ao aceitar solicitação:", error);
 		throw error;
@@ -78,14 +83,26 @@ export async function rejectFollowRequest(requestId: string) {
 			throw new Error("Usuário não autenticado");
 		}
 
-		// Remover a solicitação
+		const request = await prisma.followRequest.findUnique({
+			where: { id: requestId },
+		});
+
+		if (!request) {
+			throw new Error("Solicitação não encontrada");
+		}
+
 		await prisma.followRequest.delete({
 			where: { id: requestId },
 		});
 
 		revalidateTag("follow-requests");
+		revalidateTag("user-profile");
 
-		return { success: true };
+		return {
+			success: true,
+			senderId: request.senderId,
+			receiverId: request.receiverId,
+		};
 	} catch (error) {
 		console.error("Erro ao rejeitar solicitação:", error);
 		throw error;

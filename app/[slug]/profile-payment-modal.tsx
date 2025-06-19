@@ -450,11 +450,10 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 							</div>
 						)}
 
-						{/* Generate PIX Button */}
 						<Button
 							onClick={handleGeneratePix}
 							disabled={!isGenerateButtonEnabled || isLoadingPayment}
-							className="w-full flex items-center justify-center gap-2"
+							className="w-full flex items-center justify-center gap-2 bg-green-500 text-white dark:hover:bg-green-800"
 						>
 							{isLoadingPayment ? (
 								<>
