@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { QuestionInterface } from "@/lib/interfaces";
 import { QuestionCard } from "./QuestionCard";
@@ -11,8 +11,19 @@ interface QuestionsFeedProps {
 	userId?: string;
 }
 
+interface OptimisticState {
+	[questionId: string]: {
+		likeCount: number;
+		dislikeCount: number;
+		hasUserLiked: boolean;
+		hasUserDisliked: boolean;
+		timestamp: number; // Para controlar quando remover
+	};
+}
+
 export const QuestionsFeed = ({ userNickname, userId }: QuestionsFeedProps) => {
 	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error } = useQuestions();
+	const [optimisticStates, setOptimisticStates] = useState<OptimisticState>({});
 
 	const likeQuestionMutation = useLikeQuestion();
 	const dislikeQuestionMutation = useDislikeQuestion();
@@ -41,28 +52,108 @@ export const QuestionsFeed = ({ userNickname, userId }: QuestionsFeedProps) => {
 		[userNickname],
 	);
 
+	// Limpa estados otimísticos antigos (após 5 segundos)
+	useEffect(() => {
+		const interval = setInterval(() => {
+			const now = Date.now();
+			setOptimisticStates((prev) => {
+				const newState = { ...prev };
+				let hasChanges = false;
+
+				Object.keys(newState).forEach((questionId) => {
+					if (now - newState[questionId].timestamp > 5000) {
+						delete newState[questionId];
+						hasChanges = true;
+					}
+				});
+
+				return hasChanges ? newState : prev;
+			});
+		}, 1000);
+
+		return () => clearInterval(interval);
+	}, []);
+
 	const handleLike = useCallback(
 		(question: QuestionInterface) => {
 			if (!userNickname) return;
 
-			likeQuestionMutation.mutate({
-				questionId: question.id,
-				nickname: userNickname,
-			});
+			const currentLiked = hasUserLiked(question);
+			const currentDisliked = hasUserDisliked(question);
+			const currentLikeCount = JSON.parse(question.liked_by_users || "[]").length;
+			const currentDislikeCount = JSON.parse(question.desliked_by_users || "[]").length;
+
+			// Atualização otimística
+			setOptimisticStates((prev) => ({
+				...prev,
+				[question.id]: {
+					likeCount: currentLiked ? currentLikeCount - 1 : currentLikeCount + 1,
+					dislikeCount: currentDisliked ? currentDislikeCount - 1 : currentDislikeCount,
+					hasUserLiked: !currentLiked,
+					hasUserDisliked: false,
+					timestamp: Date.now(),
+				},
+			}));
+
+			likeQuestionMutation.mutate(
+				{
+					questionId: question.id,
+					nickname: userNickname,
+				},
+				{
+					onError: () => {
+						// Remove apenas em caso de erro
+						setOptimisticStates((prev) => {
+							const newState = { ...prev };
+							delete newState[question.id];
+							return newState;
+						});
+					},
+				},
+			);
 		},
-		[userNickname, likeQuestionMutation],
+		[userNickname, likeQuestionMutation, hasUserLiked, hasUserDisliked],
 	);
 
 	const handleDislike = useCallback(
 		(question: QuestionInterface) => {
 			if (!userNickname) return;
 
-			dislikeQuestionMutation.mutate({
-				questionId: question.id,
-				nickname: userNickname,
-			});
+			const currentLiked = hasUserLiked(question);
+			const currentDisliked = hasUserDisliked(question);
+			const currentLikeCount = JSON.parse(question.liked_by_users || "[]").length;
+			const currentDislikeCount = JSON.parse(question.desliked_by_users || "[]").length;
+
+			// Atualização otimística
+			setOptimisticStates((prev) => ({
+				...prev,
+				[question.id]: {
+					likeCount: currentLiked ? currentLikeCount - 1 : currentLikeCount,
+					dislikeCount: currentDisliked ? currentDislikeCount - 1 : currentDislikeCount + 1,
+					hasUserLiked: false,
+					hasUserDisliked: !currentDisliked,
+					timestamp: Date.now(),
+				},
+			}));
+
+			dislikeQuestionMutation.mutate(
+				{
+					questionId: question.id,
+					nickname: userNickname,
+				},
+				{
+					onError: () => {
+						// Remove apenas em caso de erro
+						setOptimisticStates((prev) => {
+							const newState = { ...prev };
+							delete newState[question.id];
+							return newState;
+						});
+					},
+				},
+			);
 		},
-		[userNickname, dislikeQuestionMutation],
+		[userNickname, dislikeQuestionMutation, hasUserLiked, hasUserDisliked],
 	);
 
 	useEffect(() => {
@@ -109,18 +200,26 @@ export const QuestionsFeed = ({ userNickname, userId }: QuestionsFeedProps) => {
 
 	return (
 		<div className="space-y-4 sm:space-y-6">
-			{questions.map((question) => (
-				<QuestionCard
-					key={question.id}
-					question={question}
-					userNickname={userNickname}
-					userId={userId}
-					onLike={handleLike}
-					onDislike={handleDislike}
-					hasUserLiked={hasUserLiked(question)}
-					hasUserDisliked={hasUserDisliked(question)}
-				/>
-			))}
+			{questions.map((question) => {
+				const optimisticState = optimisticStates[question.id];
+
+				return (
+					<QuestionCard
+						key={question.id}
+						question={question}
+						userNickname={userNickname}
+						userId={userId}
+						onLike={handleLike}
+						onDislike={handleDislike}
+						hasUserLiked={hasUserLiked(question)}
+						hasUserDisliked={hasUserDisliked(question)}
+						optimisticLikeCount={optimisticState?.likeCount}
+						optimisticDislikeCount={optimisticState?.dislikeCount}
+						optimisticHasUserLiked={optimisticState?.hasUserLiked}
+						optimisticHasUserDisliked={optimisticState?.hasUserDisliked}
+					/>
+				);
+			})}
 
 			{isFetchingNextPage && (
 				<div className="flex justify-center items-center py-8">

@@ -1,33 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import LoadingScreen from "@/components/loading-screen";
 import { QuestionsTabs } from "@/components/questions/questions-tabs";
 import {
-	useQuestions,
+	useReceivedQuestions,
 	useAnswerQuestion,
 	useDeclineQuestion,
 	useDeleteQuestion,
 	useReportQuestion,
+	useMarkQuestionExpired,
 } from "@/hooks/use-questions";
 import { QuestionInterface } from "@/types/QuestionInterface";
 import { ConfirmationModals } from "@/components/questions/question-confirmation-modals";
+import { isQuestionExpired } from "@/lib/utils/question-utils";
 
 export default function PerguntasRecebidasPage() {
 	const router = useRouter();
 	const { data: session, status } = useSession();
-	const { data: questionsData } = useQuestions();
-	const [questions, setQuestions] = useState<QuestionInterface[]>([]);
-
-	useEffect(() => {
-		if (Array.isArray(questionsData)) {
-			setQuestions(questionsData);
-		} else if (questionsData?.pages) {
-			setQuestions(questionsData.pages.flatMap((page: any) => page.questions));
-		}
-	}, [questionsData]);
+	const { data: questions, setData: setQuestions, isLoading } = useReceivedQuestions();
 
 	const answerMutation = useAnswerQuestion();
 	const declineMutation = useDeclineQuestion();
@@ -80,6 +73,7 @@ export default function PerguntasRecebidasPage() {
 				answerText: pendingAnswer,
 			});
 
+			// Atualizar estado local
 			setQuestions((prev) =>
 				prev.map((q) =>
 					q.id === selectedQuestion.id
@@ -219,7 +213,70 @@ export default function PerguntasRecebidasPage() {
 		}
 	};
 
-	if (status === "loading") return <LoadingScreen />;
+	const markExpiredMutation = useMarkQuestionExpired();
+
+	// Adicionar este useEffect para verificar perguntas expiradas
+	useEffect(() => {
+		const checkExpiredQuestions = () => {
+			questions.forEach((question) => {
+				if (
+					question.question_is_awaiting_answer &&
+					!question.question_answer_was_expired &&
+					isQuestionExpired(question.created_at)
+				) {
+					// Marcar como expirada no backend
+					markExpiredMutation.mutate(question.id);
+
+					// Atualizar estado local
+					setQuestions((prev) =>
+						prev.map((q) =>
+							q.id === question.id
+								? {
+										...q,
+										question_answer_was_expired: true,
+										question_is_awaiting_answer: false,
+										question_answer_expired_at: new Date(),
+									}
+								: q,
+						),
+					);
+				}
+			});
+		};
+
+		// Verificar a cada minuto
+		const interval = setInterval(checkExpiredQuestions, 60000);
+
+		// Verificar imediatamente ao carregar
+		checkExpiredQuestions();
+
+		return () => clearInterval(interval);
+	}, [questions, markExpiredMutation, setQuestions]);
+
+	// Adicionar esta função no perguntas-recebidas.tsx
+	const handleQuestionExpire = useCallback(
+		(questionId: string) => {
+			// Marcar como expirada no backend
+			markExpiredMutation.mutate(questionId);
+
+			// Atualizar estado local imediatamente
+			setQuestions((prev) =>
+				prev.map((q) =>
+					q.id === questionId
+						? {
+								...q,
+								question_answer_was_expired: true,
+								question_is_awaiting_answer: false,
+								question_answer_expired_at: new Date().toISOString(),
+							}
+						: q,
+				),
+			);
+		},
+		[markExpiredMutation, setQuestions],
+	);
+
+	if (status === "loading" || isLoading) return <LoadingScreen />;
 
 	if (!session) {
 		router.push("/entrar");
@@ -229,16 +286,7 @@ export default function PerguntasRecebidasPage() {
 	return (
 		<main className="p-4 lg:p-6">
 			<QuestionsTabs
-				questions={
-					Array.isArray(questions)
-						? questions
-						: questions &&
-								typeof questions === "object" &&
-								"pages" in questions &&
-								Array.isArray((questions as any).pages)
-							? (questions as any).pages.flatMap((page: any) => page.questions)
-							: []
-				}
+				questions={questions}
 				currentPage={currentPage}
 				questionsPerPage={questionsPerPage}
 				onPageChange={setCurrentPage}
@@ -246,7 +294,12 @@ export default function PerguntasRecebidasPage() {
 				onDecline={handleDecline}
 				onDelete={handleDelete}
 				onReport={handleReport}
-				loadingStates={loadingStates}
+				onExpire={handleQuestionExpire}
+				loadingStates={{
+					answering: answerMutation.isPending ? answerMutation.variables?.questionId : undefined,
+					declining: declineMutation.isPending ? declineMutation.variables?.questionId : undefined,
+					deleting: deleteMutation.isPending ? deleteMutation.variables?.questionId : undefined,
+				}}
 			/>
 
 			<ConfirmationModals

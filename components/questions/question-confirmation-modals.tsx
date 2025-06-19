@@ -46,13 +46,18 @@ export function ConfirmationModals({
 						<DialogTitle>Confirmar resposta?</DialogTitle>
 					</DialogHeader>
 					<div className="py-4">
-						<p className="text-sm text-gray-700">Essa resposta não pode ser editada depois de enviada.</p>
+						<p className="font-bold text-white-700">
+							Essa resposta não pode ser editada depois de enviada.
+						</p>
 					</div>
 					<DialogFooter className="flex justify-end gap-2">
-						<Button className="bg-red-600 text-white" onClick={() => onAnswerModalChange(false)}>
+						<Button
+							className="bg-red-500 hover:bg-red-800 text-white"
+							onClick={() => onAnswerModalChange(false)}
+						>
 							Cancelar
 						</Button>
-						<Button onClick={onConfirmAnswer} className="bg-green-600 text-white">
+						<Button onClick={onConfirmAnswer} className="bg-green-500 hover:bg-green-800 text-white">
 							Confirmar Resposta
 						</Button>
 					</DialogFooter>

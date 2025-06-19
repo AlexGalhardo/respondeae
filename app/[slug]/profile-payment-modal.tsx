@@ -265,8 +265,8 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 				variant: "success",
 			});
 
-			// Reset form after success
-			resetForm();
+			// fechar modal
+			onStepChange("closed");
 		} catch (error: any) {
 			toast({
 				title: "Erro ao enviar pergunta",
@@ -320,21 +320,21 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 		}
 	};
 
-	const resetForm = () => {
-		setSelectedAmount(null);
-		setCustomAmount("");
-		setUseCustomAmount(false);
-		setPixData(null);
-		setPaymentStatus("PENDING");
-		setCopied(false);
-		setIsAnonymousNewQuestion(false);
-		setIsPrivateAnswer(false);
-		setQuestionAmountPaidIsPrivate(false);
-	};
+	// const resetForm = () => {
+	// 	setSelectedAmount(null);
+	// 	setCustomAmount("");
+	// 	setUseCustomAmount(false);
+	// 	setPixData(null);
+	// 	setPaymentStatus();
+	// 	setCopied(false);
+	// 	setIsAnonymousNewQuestion(false);
+	// 	setIsPrivateAnswer(false);
+	// 	setQuestionAmountPaidIsPrivate(false);
+	// };
 
 	const closeModal = () => {
 		onStepChange("closed");
-		resetForm();
+		// resetForm();
 	};
 
 	return (

@@ -20,27 +20,13 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 	const { toast } = useToast();
 	const followMutation = useFollowUser();
 
-	// Use os dados que vêm do servidor como estado inicial
 	const [localIsFollowing, setLocalIsFollowing] = useState(profile.isFollowing || false);
 	const [localHasPendingRequest, setLocalHasPendingRequest] = useState(profile.hasPendingRequest || false);
 
-	// Atualiza os estados locais quando o profile muda (ex: após invalidação do cache)
 	useEffect(() => {
 		setLocalIsFollowing(profile.isFollowing || false);
 		setLocalHasPendingRequest(profile.hasPendingRequest || false);
 	}, [profile.isFollowing, profile.hasPendingRequest]);
-
-	// DEBUG: Adicione estes logs temporariamente para verificar os dados
-	useEffect(() => {
-		console.log("=== DEBUG PROFILE HEADER ===");
-		console.log("profile.isFollowing:", profile.isFollowing);
-		console.log("profile.hasPendingRequest:", profile.hasPendingRequest);
-		console.log("localIsFollowing:", localIsFollowing);
-		console.log("localHasPendingRequest:", localHasPendingRequest);
-		console.log("profile.follow_requests_received:", profile.follow_requests_received);
-		console.log("session?.user?.id:", session?.user?.id);
-		console.log("============================");
-	}, [profile, localIsFollowing, localHasPendingRequest, session]);
 
 	const handleFollow = async () => {
 		if (!session?.user?.id) return;

@@ -10,6 +10,7 @@ interface QuestionsListProps {
 	onDecline?: (questionId: string) => void;
 	onDelete?: (questionId: string) => void;
 	onReport?: (questionId: string) => void;
+	onExpire?: (questionId: string) => void; // NOVO
 	loadingStates?: {
 		answering?: string;
 		declining?: string;
@@ -24,10 +25,11 @@ export function QuestionsList({
 	onDecline,
 	onDelete,
 	onReport,
+	onExpire, // NOVO
 	loadingStates = {},
 }: QuestionsListProps) {
-	if (questions.length === 0) {
-		return <div className="text-center py-12 text-gray-500">Nenhuma pergunta encontrada.</div>;
+	if (!Array.isArray(questions) || questions.length === 0) {
+		return <div className="text-center py-12 text-gray-500 dark:text-gray-400">Nenhuma pergunta encontrada.</div>;
 	}
 
 	return (
@@ -41,6 +43,7 @@ export function QuestionsList({
 					onDecline={onDecline}
 					onDelete={onDelete}
 					onReport={onReport}
+					onExpire={onExpire} // NOVO
 					isAnswering={loadingStates.answering === question.id}
 					isDeclining={loadingStates.declining === question.id}
 					isDeleting={loadingStates.deleting === question.id}

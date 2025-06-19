@@ -15,10 +15,27 @@ interface QuestionCardProps {
 	onDislike: (question: QuestionInterface) => void;
 	hasUserLiked: boolean;
 	hasUserDisliked: boolean;
+	// Novos props para estados otimistas
+	optimisticLikeCount?: number;
+	optimisticDislikeCount?: number;
+	optimisticHasUserLiked?: boolean;
+	optimisticHasUserDisliked?: boolean;
 }
 
 export const QuestionCard = memo(
-	({ question, userNickname, userId, onLike, onDislike, hasUserLiked, hasUserDisliked }: QuestionCardProps) => {
+	({
+		question,
+		userNickname,
+		userId,
+		onLike,
+		onDislike,
+		hasUserLiked,
+		hasUserDisliked,
+		optimisticLikeCount,
+		optimisticDislikeCount,
+		optimisticHasUserLiked,
+		optimisticHasUserDisliked,
+	}: QuestionCardProps) => {
 		return (
 			<Card className="border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800">
 				<CardContent className="p-4 sm:p-6">
@@ -41,6 +58,10 @@ export const QuestionCard = memo(
 						onDislike={onDislike}
 						hasUserLiked={hasUserLiked}
 						hasUserDisliked={hasUserDisliked}
+						optimisticLikeCount={optimisticLikeCount}
+						optimisticDislikeCount={optimisticDislikeCount}
+						optimisticHasUserLiked={optimisticHasUserLiked}
+						optimisticHasUserDisliked={optimisticHasUserDisliked}
 					/>
 				</CardContent>
 			</Card>

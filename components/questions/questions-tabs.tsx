@@ -15,6 +15,7 @@ interface QuestionsTabsProps {
 	onDecline?: (questionId: string) => void;
 	onDelete?: (questionId: string) => void;
 	onReport?: (questionId: string) => void;
+	onExpire?: (questionId: string) => void; // NOVO
 	loadingStates?: {
 		answering?: string;
 		declining?: string;
@@ -31,13 +32,16 @@ export function QuestionsTabs({
 	onDecline,
 	onDelete,
 	onReport,
+	onExpire, // NOVO
 	loadingStates = {},
 }: QuestionsTabsProps) {
-	const pendingQuestions = filterQuestionsByStatus(questions, "pending");
-	const answeredQuestions = filterQuestionsByStatus(questions, "answered");
-	const declinedQuestions = filterQuestionsByStatus(questions, "declined");
-	const expiredQuestions = filterQuestionsByStatus(questions, "expired");
-	const reportedQuestions = filterQuestionsByStatus(questions, "reported");
+	const validQuestions = Array.isArray(questions) ? questions : [];
+
+	const pendingQuestions = filterQuestionsByStatus(validQuestions, "pending");
+	const answeredQuestions = filterQuestionsByStatus(validQuestions, "answered");
+	const declinedQuestions = filterQuestionsByStatus(validQuestions, "declined");
+	const expiredQuestions = filterQuestionsByStatus(validQuestions, "expired");
+	const reportedQuestions = filterQuestionsByStatus(validQuestions, "reported");
 
 	const renderTabContent = (
 		questionsList: QuestionInterface[],
@@ -59,6 +63,7 @@ export function QuestionsTabs({
 					onDecline={onDecline}
 					onDelete={onDelete}
 					onReport={onReport}
+					onExpire={onExpire} // NOVO
 					loadingStates={loadingStates}
 				/>
 				<QuestionsPagination
