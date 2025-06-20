@@ -39,11 +39,11 @@ export default function ProfileClient() {
 	const hasPendingRequest = profileFound?.hasPendingRequest ?? false;
 
 	const canViewQuestions = useMemo(() => {
-		if (!profileFound?.privacy_is_private_profile) return true;
+		// if (!profileFound?.privacy_is_private_profile) return true;
 
 		if (session?.user?.id === profileFound?.id) return true;
 
-		if (isFollowing && !profileFound?.privacy_show_questions_answered_only_to_followers) return true;
+		if (isFollowing && profileFound?.privacy_show_questions_answered_only_to_followers) return true;
 
 		return false;
 	}, [profileFound, session?.user?.id, isFollowing]);

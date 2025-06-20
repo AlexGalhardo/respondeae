@@ -2,7 +2,10 @@
 
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { QuestionInterface } from "@/types/QuestionInterface";
-import { getAllLatestDescPublicQuestionsAnswered } from "@/lib/repositories/questions.repository";
+import {
+	getAllLatestDescPublicQuestionsAnswered,
+	getFollowingQuestionsAnswered,
+} from "@/lib/repositories/questions.repository";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
@@ -22,7 +25,6 @@ interface QuestionsError {
 	status?: number;
 }
 
-// Tipos para as mutations
 interface LikeDislikeParams {
 	questionId: string;
 	nickname: string;
@@ -34,14 +36,22 @@ interface ApiResponse {
 	data?: any;
 }
 
-// Hook para perguntas do feed público
-export const useQuestions = () => {
+export type FeedType = "community" | "following";
+
+export const useQuestions = (feedType: FeedType = "community", userNickname?: string) => {
 	const { toast } = useToast();
 
 	const queryResult = useInfiniteQuery<QuestionsPageData, QuestionsError>({
-		queryKey: ["questions", "public", "answered"],
+		queryKey: ["questions", "public", "answered", feedType, userNickname],
 		queryFn: async ({ pageParam = 0 }): Promise<QuestionsPageData> => {
-			const allQuestions = await getAllLatestDescPublicQuestionsAnswered();
+			let allQuestions: QuestionInterface[] = [];
+
+			if (feedType === "following" && userNickname) {
+				allQuestions = await getFollowingQuestionsAnswered(userNickname);
+			} else {
+				allQuestions = await getAllLatestDescPublicQuestionsAnswered();
+			}
+
 			const start = (pageParam as number) * QUESTIONS_PER_PAGE;
 			const end = start + QUESTIONS_PER_PAGE;
 
@@ -60,6 +70,7 @@ export const useQuestions = () => {
 		retry: 3,
 		retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
 		throwOnError: false,
+		enabled: feedType === "community" || (feedType === "following" && !!userNickname),
 	});
 
 	if (queryResult.error) {
@@ -73,7 +84,6 @@ export const useQuestions = () => {
 	return queryResult;
 };
 
-// Hook para perguntas recebidas (da sessão) - CORRIGIDO COM TIPAGEM
 export function useReceivedQuestions() {
 	const { data: session } = useSession();
 	const [questions, setQuestions] = useState<QuestionInterface[]>([]);
@@ -172,7 +182,6 @@ export function useReceivedQuestions() {
 	};
 }
 
-// Mutations para like/dislike (mantidas)
 export const useLikeQuestion = () => {
 	const queryClient = useQueryClient();
 	const { toast } = useToast();

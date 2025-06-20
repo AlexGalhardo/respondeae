@@ -3,27 +3,33 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { QuestionInterface } from "@/lib/interfaces";
-import { QuestionCard } from "./QuestionCard";
-import { useQuestions, useLikeQuestion, useDislikeQuestion } from "@/hooks/use-questions";
+import { useQuestions, useLikeQuestion, useDislikeQuestion, type FeedType } from "@/hooks/use-questions";
+import { FeedTabs } from "./feed-tabs";
+import { FeedQuestionCard } from "./feed-question-card";
 
-interface QuestionsFeedProps {
+interface FeedQuestionsFeedProps {
 	userNickname?: string;
 	userId?: string;
 }
 
-interface OptimisticState {
+interface FeedOptimisticState {
 	[questionId: string]: {
 		likeCount: number;
 		dislikeCount: number;
 		hasUserLiked: boolean;
 		hasUserDisliked: boolean;
-		timestamp: number; // Para controlar quando remover
+		timestamp: number;
 	};
 }
 
-export const QuestionsFeed = ({ userNickname, userId }: QuestionsFeedProps) => {
-	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error } = useQuestions();
-	const [optimisticStates, setOptimisticStates] = useState<OptimisticState>({});
+export const FeedQuestionsFeed = ({ userNickname, userId }: FeedQuestionsFeedProps) => {
+	const [activeTab, setActiveTab] = useState<FeedType>("community");
+	const [optimisticStates, setOptimisticStates] = useState<FeedOptimisticState>({});
+
+	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error } = useQuestions(
+		activeTab,
+		userNickname,
+	);
 
 	const likeQuestionMutation = useLikeQuestion();
 	const dislikeQuestionMutation = useDislikeQuestion();
@@ -52,7 +58,6 @@ export const QuestionsFeed = ({ userNickname, userId }: QuestionsFeedProps) => {
 		[userNickname],
 	);
 
-	// Limpa estados otimísticos antigos (após 5 segundos)
 	useEffect(() => {
 		const interval = setInterval(() => {
 			const now = Date.now();
@@ -83,7 +88,6 @@ export const QuestionsFeed = ({ userNickname, userId }: QuestionsFeedProps) => {
 			const currentLikeCount = JSON.parse(question.liked_by_users || "[]").length;
 			const currentDislikeCount = JSON.parse(question.desliked_by_users || "[]").length;
 
-			// Atualização otimística
 			setOptimisticStates((prev) => ({
 				...prev,
 				[question.id]: {
@@ -124,7 +128,6 @@ export const QuestionsFeed = ({ userNickname, userId }: QuestionsFeedProps) => {
 			const currentLikeCount = JSON.parse(question.liked_by_users || "[]").length;
 			const currentDislikeCount = JSON.parse(question.desliked_by_users || "[]").length;
 
-			// Atualização otimística
 			setOptimisticStates((prev) => ({
 				...prev,
 				[question.id]: {
@@ -143,7 +146,6 @@ export const QuestionsFeed = ({ userNickname, userId }: QuestionsFeedProps) => {
 				},
 				{
 					onError: () => {
-						// Remove apenas em caso de erro
 						setOptimisticStates((prev) => {
 							const newState = { ...prev };
 							delete newState[question.id];
@@ -155,6 +157,11 @@ export const QuestionsFeed = ({ userNickname, userId }: QuestionsFeedProps) => {
 		},
 		[userNickname, dislikeQuestionMutation, hasUserLiked, hasUserDisliked],
 	);
+
+	const handleTabChange = useCallback((tab: FeedType) => {
+		setActiveTab(tab);
+		setOptimisticStates({}); // Limpa estados otimistas ao trocar de aba
+	}, []);
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -190,21 +197,39 @@ export const QuestionsFeed = ({ userNickname, userId }: QuestionsFeedProps) => {
 		);
 	}
 
+	const showTabs = questions.length > 0;
+
 	if (questions.length === 0) {
 		return (
 			<div className="text-center py-12">
-				<p className="text-gray-500 text-lg">Nenhuma pergunta encontrada no momento.</p>
+				{activeTab === "following" ? (
+					<>
+						<FeedTabs
+							activeTab={activeTab}
+							onTabChange={handleTabChange}
+							isLoggedIn={!!userNickname}
+							className="mb-8"
+						/>
+						<p className="text-gray-500 text-lg">
+							Você ainda não segue ninguém ou as pessoas que você segue não têm perguntas respondidas.
+						</p>
+					</>
+				) : (
+					<p className="text-gray-500 text-lg">Nenhuma pergunta encontrada no momento.</p>
+				)}
 			</div>
 		);
 	}
 
 	return (
 		<div className="space-y-4 sm:space-y-6">
+			{showTabs && <FeedTabs activeTab={activeTab} onTabChange={handleTabChange} isLoggedIn={!!userNickname} />}
+
 			{questions.map((question) => {
 				const optimisticState = optimisticStates[question.id];
 
 				return (
-					<QuestionCard
+					<FeedQuestionCard
 						key={question.id}
 						question={question}
 						userNickname={userNickname}

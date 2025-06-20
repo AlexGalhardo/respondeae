@@ -8,7 +8,7 @@ import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { UserPlus, UserCheck, Clock, Loader } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { BlockUserButton } from "./block-user-button";
+import { ProfileBlockUserButton } from "./profile-block-user-button";
 import { ProfileSocialLinks } from "./profile-social-linkts";
 
 interface ProfileHeaderProps {
@@ -18,7 +18,7 @@ interface ProfileHeaderProps {
 export function ProfileHeader({ profile }: ProfileHeaderProps) {
 	const { data: session } = useSession();
 	const { toast } = useToast();
-	const followMutation = useFollowUser();
+	const followMutation = useFollowUser() as ReturnType<typeof useFollowUser>;
 
 	const [localIsFollowing, setLocalIsFollowing] = useState(profile.isFollowing || false);
 	const [localHasPendingRequest, setLocalHasPendingRequest] = useState(profile.hasPendingRequest || false);
@@ -29,7 +29,14 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 	}, [profile.isFollowing, profile.hasPendingRequest]);
 
 	const handleFollow = async () => {
-		if (!session?.user?.id) return;
+		if (!session?.user?.id) {
+			toast({
+				title: "Login necessário",
+				description: "Você precisa estar logado para seguir usuários",
+				variant: "error",
+			});
+			return;
+		}
 
 		try {
 			const result = await followMutation.mutateAsync({
@@ -37,7 +44,6 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 				followerId: session.user.id,
 			});
 
-			// Verifica se houve erro
 			if (result.error) {
 				toast({
 					title: "Erro",
@@ -47,7 +53,6 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 				return;
 			}
 
-			// Atualiza os estados locais
 			setLocalIsFollowing(result.isFollowing ?? false);
 			setLocalHasPendingRequest(result.hasPendingRequest ?? false);
 
@@ -107,6 +112,9 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 		return "default";
 	};
 
+	// Verificar se deve mostrar os botões (não mostrar para o próprio usuário)
+	const shouldShowActionButtons = !session?.user?.id || session.user.id !== profile.id;
+
 	return (
 		<Card className="mb-6">
 			<CardContent className="p-4 sm:p-6">
@@ -142,19 +150,20 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 
 					<ProfileSocialLinks profile={profile} />
 
-					<div className="flex flex-wrap justify-center items-center gap-2 mb-5">
-						{session?.user?.id && session.user.id !== profile.id && (
-							<>
-								<Button
-									variant={getFollowButtonVariant()}
-									onClick={handleFollow}
-									disabled={followMutation.isPending}
-									className="px-3 py-1 text-sm font-medium flex items-center gap-1"
-								>
-									{getFollowButtonContent()}
-								</Button>
+					{shouldShowActionButtons && (
+						<div className="flex flex-wrap justify-center items-center gap-2 mb-5">
+							<Button
+								variant={getFollowButtonVariant()}
+								onClick={handleFollow}
+								disabled={followMutation.isPending || !session}
+								className="px-3 py-1 text-sm font-medium flex items-center gap-1"
+								title={!session ? "Faça login para seguir usuários" : ""}
+							>
+								{getFollowButtonContent()}
+							</Button>
 
-								<BlockUserButton
+							{session?.user && (
+								<ProfileBlockUserButton
 									sessionUser={{
 										id: session.user.id,
 										nickname: session.user.nickname ?? "",
@@ -165,9 +174,9 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 									}}
 									onBlockSuccess={() => {}}
 								/>
-							</>
-						)}
-					</div>
+							)}
+						</div>
+					)}
 
 					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 w-full max-w-2xl">
 						<div className="text-center">

@@ -3,9 +3,9 @@
 import { memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { QuestionInterface } from "@/lib/interfaces";
-import { QuestionHeader } from "./QuestionHeader";
-import { QuestionActions } from "./QuestionActions";
-import { QuestionAnswer } from "./QuestionAnswer";
+import { FeedQuestionHeader } from "./feed-question-header";
+import { FeedQuestionActions } from "./feed-question-actions";
+import { FeedQuestionAnswer } from "./feed-question-answer";
 
 interface QuestionCardProps {
 	question: QuestionInterface;
@@ -15,14 +15,13 @@ interface QuestionCardProps {
 	onDislike: (question: QuestionInterface) => void;
 	hasUserLiked: boolean;
 	hasUserDisliked: boolean;
-	// Novos props para estados otimistas
 	optimisticLikeCount?: number;
 	optimisticDislikeCount?: number;
 	optimisticHasUserLiked?: boolean;
 	optimisticHasUserDisliked?: boolean;
 }
 
-export const QuestionCard = memo(
+export const FeedQuestionCard = memo(
 	({
 		question,
 		userNickname,
@@ -39,7 +38,7 @@ export const QuestionCard = memo(
 		return (
 			<Card className="border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800">
 				<CardContent className="p-4 sm:p-6">
-					<QuestionHeader question={question} />
+					<FeedQuestionHeader question={question} />
 
 					<div className="mb-4">
 						<h3 className="font-semibold text-base sm:text-lg text-gray-800 dark:text-gray-200 mb-2 leading-relaxed">
@@ -48,9 +47,9 @@ export const QuestionCard = memo(
 						</h3>
 					</div>
 
-					{question.question_answered && question.answer_text && <QuestionAnswer question={question} />}
+					{question.question_answered && question.answer_text && <FeedQuestionAnswer question={question} />}
 
-					<QuestionActions
+					<FeedQuestionActions
 						question={question}
 						userNickname={userNickname}
 						userId={userId}
@@ -69,4 +68,4 @@ export const QuestionCard = memo(
 	},
 );
 
-QuestionCard.displayName = "QuestionCard";
+FeedQuestionCard.displayName = "QuestionCard";

@@ -7,65 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import {
-	ThumbsUp,
-	ThumbsDown,
-	LayoutDashboard,
-	Inbox,
-	Send,
-	Settings,
-	LogOut,
-	User2,
-	Loader2,
-	Trophy,
-} from "lucide-react";
+import { ThumbsUp, ThumbsDown, Loader2, Trophy } from "lucide-react";
 import Link from "next/link";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import LoadingScreen from "@/components/loading-screen";
-import { useToast } from "@/hooks/use-toast";
+import { getInitials } from "@/lib/functions";
+import { QuestionInterface } from "@/lib/interfaces";
 
 type DateStringOrDate = string | Date;
 type DateStringOrDateOrNull = string | Date | null;
-
-interface QuestionInterface {
-	id: string;
-	question_text: string;
-	answer_text: string | null;
-	answered_at: DateStringOrDateOrNull;
-	amount_paid: number;
-	amount_paid_is_private: boolean;
-	asker_want_answer_to_be_private: boolean;
-	asker_sent_anonymous_question: boolean;
-	owner_user_nickname: string;
-	asked_by_user_nickname: string;
-	question_is_awaiting_answer: boolean;
-	question_answered: boolean;
-	question_answer_was_recused: boolean;
-	question_answer_was_expired: boolean;
-	liked_by_users: string | null;
-	desliked_by_users: string | null;
-	created_at: DateStringOrDate;
-	updated_at: DateStringOrDateOrNull;
-	deleted_at: DateStringOrDateOrNull;
-	owner_user_id: string;
-	owner: {
-		id: string;
-		name: string;
-		nickname: string;
-		email: string;
-		avatar_url: string | null;
-		privacy_show_value_received_from_answering_question: boolean;
-		privacy_show_likes_each_answer_public: boolean;
-		privacy_show_dislikes_each_answer_public: boolean;
-	};
-	asked_by: {
-		id: string;
-		name: string;
-		nickname: string;
-		email: string;
-		avatar_url: string | null;
-	};
-}
 
 interface TopCurtidasProps {
 	today: QuestionInterface[];
@@ -76,7 +26,7 @@ interface TopCurtidasProps {
 }
 
 export default function TopCurtidasClient({ today, week, month, year, allTime }: TopCurtidasProps) {
-	const { data: session, status } = useSession();
+	const { status } = useSession();
 	const [activeTab, setActiveTab] = useState("today");
 	const [displayedQuestions, setDisplayedQuestions] = useState<QuestionInterface[]>([]);
 	const [currentData, setCurrentData] = useState<QuestionInterface[]>([]);
@@ -84,15 +34,6 @@ export default function TopCurtidasClient({ today, week, month, year, allTime }:
 	const [hasMoreQuestions, setHasMoreQuestions] = useState(true);
 
 	const questionsPerLoad = 10;
-
-	const getInitials = (name: string) => {
-		return name
-			.split(" ")
-			.map((word) => word.charAt(0))
-			.join("")
-			.toUpperCase()
-			.slice(0, 2);
-	};
 
 	const sortQuestionsByLikes = (questions: QuestionInterface[]) => {
 		return questions.sort((a, b) => {
@@ -178,18 +119,6 @@ export default function TopCurtidasClient({ today, week, month, year, allTime }:
 	}, []);
 
 	if (status === "loading") return <LoadingScreen />;
-
-	const getTabCounts = () => {
-		return {
-			today: today.length,
-			week: week.length,
-			month: month.length,
-			year: year.length,
-			allTime: allTime.length,
-		};
-	};
-
-	const counts = getTabCounts();
 
 	const renderQuestionCard = (question: QuestionInterface, index: number) => (
 		<Card key={question.id} className="border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800">
@@ -355,15 +284,6 @@ export default function TopCurtidasClient({ today, week, month, year, allTime }:
 
 	return (
 		<main className="p-4 lg:p-6">
-			{/* <div className="flex items-center space-x-4 mb-6">
-				<Link href="/">
-					<Button variant="ghost" size="sm">
-						<ArrowLeft className="h-4 w-4" />
-					</Button>
-				</Link>
-				<h1 className="text-2xl font-bold text-green-600 dark:text-foreground">Sobre o RespondeAê</h1>
-			</div> */}
-
 			<div className="mb-6 text-center mt-12">
 				<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2 dark:text-white">
 					<Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500 dark:text-yellow-400" />

@@ -1,11 +1,11 @@
 "use client";
 
-import { memo, useState, useEffect } from "react";
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { QuestionInterface } from "@/lib/interfaces";
 
-interface QuestionActionsProps {
+interface FeedQuestionActionsProps {
 	question: QuestionInterface;
 	userNickname?: string;
 	userId?: string;
@@ -13,14 +13,13 @@ interface QuestionActionsProps {
 	onDislike: (question: QuestionInterface) => void;
 	hasUserLiked: boolean;
 	hasUserDisliked: boolean;
-	// Novos props para estados otimistas
 	optimisticLikeCount?: number;
 	optimisticDislikeCount?: number;
 	optimisticHasUserLiked?: boolean;
 	optimisticHasUserDisliked?: boolean;
 }
 
-export const QuestionActions = memo(
+export const FeedQuestionActions = memo(
 	({
 		question,
 		userNickname,
@@ -33,11 +32,10 @@ export const QuestionActions = memo(
 		optimisticDislikeCount,
 		optimisticHasUserLiked,
 		optimisticHasUserDisliked,
-	}: QuestionActionsProps) => {
+	}: FeedQuestionActionsProps) => {
 		const isOwner = userId === question.owner.id;
 		const canInteract = userNickname && !isOwner;
 
-		// Use valores otimistas se disponíveis, senão use os valores reais
 		const likeCount = optimisticLikeCount ?? JSON.parse(question.liked_by_users || "[]").length;
 		const dislikeCount = optimisticDislikeCount ?? JSON.parse(question.desliked_by_users || "[]").length;
 		const userLiked = optimisticHasUserLiked ?? hasUserLiked;
@@ -87,4 +85,4 @@ export const QuestionActions = memo(
 	},
 );
 
-QuestionActions.displayName = "QuestionActions";
+FeedQuestionActions.displayName = "QuestionActions";

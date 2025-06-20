@@ -20,7 +20,7 @@ interface BlockUserButtonProps {
 	sessionUser: {
 		id: string;
 		nickname: string;
-	};
+	} | null;
 	profileFound: {
 		id: string;
 		nickname: string;
@@ -28,14 +28,18 @@ interface BlockUserButtonProps {
 	onBlockSuccess?: () => void;
 }
 
-export function BlockUserButton({ sessionUser, profileFound, onBlockSuccess }: BlockUserButtonProps) {
+export function ProfileBlockUserButton({ sessionUser, profileFound, onBlockSuccess }: BlockUserButtonProps) {
 	const [isLoading, setIsLoading] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 	const [isBlocked, setIsBlocked] = useState(false);
-	const [checkingBlockStatus, setCheckingBlockStatus] = useState(true);
+	const [checkingBlockStatus, setCheckingBlockStatus] = useState(!!sessionUser);
 
-	// Verificar se o usuário está bloqueado ao carregar o componente
 	useEffect(() => {
+		if (!sessionUser) {
+			setCheckingBlockStatus(false);
+			return;
+		}
+
 		const checkBlockStatus = async () => {
 			try {
 				const response = await fetch(`/api/user/block-status?targetNickname=${profileFound.nickname}`);
@@ -51,9 +55,14 @@ export function BlockUserButton({ sessionUser, profileFound, onBlockSuccess }: B
 		};
 
 		checkBlockStatus();
-	}, [profileFound.nickname]);
+	}, [profileFound.nickname, sessionUser]);
 
 	const handleBlockAction = async () => {
+		if (!sessionUser) {
+			toast.error("Você precisa estar logado para bloquear usuários");
+			return;
+		}
+
 		try {
 			setIsLoading(true);
 
@@ -87,6 +96,20 @@ export function BlockUserButton({ sessionUser, profileFound, onBlockSuccess }: B
 			setIsLoading(false);
 		}
 	};
+
+	if (!sessionUser) {
+		return (
+			<Button
+				variant="outline"
+				disabled
+				className="flex-1 min-w-[130px] opacity-50 text-red-600 border-red-200 dark:text-white dark:border-white"
+				title="Faça login para bloquear usuários"
+			>
+				<UserX className="h-4 w-4 mr-2" />
+				Bloquear
+			</Button>
+		);
+	}
 
 	if (checkingBlockStatus) {
 		return (
