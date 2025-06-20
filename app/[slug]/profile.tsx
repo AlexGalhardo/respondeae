@@ -35,25 +35,15 @@ export default function ProfileClient() {
 		}));
 	}, [profileFound]);
 
-	// REMOVA ESTAS LINHAS - os dados já vêm calculados do getUserByNicknameAction:
-	// const isFollowing = useMemo(() => {
-	// 	return session?.user?.following?.includes(profileFound?.nickname) ?? false;
-	// }, [profileFound?.nickname, session?.user?.following]);
-
-	// Use os dados que já vêm do servidor:
 	const isFollowing = profileFound?.isFollowing ?? false;
 	const hasPendingRequest = profileFound?.hasPendingRequest ?? false;
 
-	// Para verificar se deve mostrar as perguntas, use os dados corretos:
 	const canViewQuestions = useMemo(() => {
-		// Se não é privado, pode ver
-		if (!profileFound?.privacy_is_private_profile) return true;
+		// if (!profileFound?.privacy_is_private_profile) return true;
 
-		// Se é o próprio usuário, pode ver
 		if (session?.user?.id === profileFound?.id) return true;
 
-		// Se está seguindo, pode ver (se a configuração permitir)
-		if (isFollowing && !profileFound?.privacy_show_questions_answered_only_to_followers) return true;
+		if (isFollowing && profileFound?.privacy_show_questions_answered_only_to_followers) return true;
 
 		return false;
 	}, [profileFound, session?.user?.id, isFollowing]);
@@ -151,7 +141,6 @@ export default function ProfileClient() {
 
 	return (
 		<main className="p-4 lg:p-6">
-			{/* CORREÇÃO: Passe apenas o profile, os dados já vêm calculados */}
 			<ProfileHeader profile={profileFound} />
 
 			<ProfileQuestionForm profile={profileFound} session={session} onSubmitQuestion={handleSubmitQuestion} />
@@ -211,7 +200,7 @@ export default function ProfileClient() {
 						{isFollowing
 							? "Aguardando aprovação para ver as respostas deste perfil privado."
 							: hasPendingRequest
-								? "Solicitação de follow enviada. Aguardando aprovação."
+								? "Solicitação para seguir esse perfil enviada. Aguardando aprovação."
 								: "Esse perfil é privado. Você precisa ser seguidor para ver as respostas desse perfil."}
 					</p>
 				</div>

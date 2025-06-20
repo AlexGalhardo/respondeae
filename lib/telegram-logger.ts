@@ -4,9 +4,8 @@ class TelegramLogger {
 	private readonly baseUrl: string;
 
 	constructor(
-		private readonly token: string = process.env.TELEGRAM_BOT_HTTP_TOKEN ??
-			"8134576560:AAG7tRUzwFMS1GfahUw0XSaGxRr7teNdbqI",
-		private readonly channelId: number = parseInt(process.env.TELEGRAM_BOT_CHANNEL_ID as string) ?? 1477312913,
+		private readonly token: string = process.env.TELEGRAM_BOT_HTTP_TOKEN as string,
+		private readonly channelId: number = parseInt(process.env.TELEGRAM_BOT_CHANNEL_ID as string),
 	) {
 		this.isThereToken(token);
 		this.isThereChannelId(channelId);
@@ -63,7 +62,7 @@ class TelegramLogger {
 
 	async error(message: string) {
 		try {
-			await this.log(`🚨 ERROR NODE_ENV=${process.env.NODE_ENV} 🚨`, message);
+			await this.log(`🚨 ERROR 🚨`, message);
 		} catch (error) {
 			console.error("Failed to send error log to Telegram:", error);
 		}
@@ -71,7 +70,7 @@ class TelegramLogger {
 
 	async info(message: string) {
 		try {
-			await this.log(`💬 INFO NODE_ENV=${process.env.NODE_ENV} 💬`, message);
+			await this.log(`💬 INFO 💬`, message);
 		} catch (error) {
 			console.error("Failed to send info log to Telegram:", error);
 		}
@@ -79,7 +78,7 @@ class TelegramLogger {
 
 	async warning(message: string) {
 		try {
-			await this.log(`⚠️ WARNING NODE_ENV=${process.env.NODE_ENV} ⚠️`, message);
+			await this.log(`⚠️ WARNING ⚠️`, message);
 		} catch (error) {
 			console.error("Failed to send warning log to Telegram:", error);
 		}
@@ -87,7 +86,7 @@ class TelegramLogger {
 
 	async success(message: string) {
 		try {
-			await this.log(`✅ SUCCESS NODE_ENV=${process.env.NODE_ENV} ✅`, message);
+			await this.log(`✅ SUCCESS ✅`, message);
 		} catch (error) {
 			console.error("Failed to send success log to Telegram:", error);
 		}
@@ -95,8 +94,8 @@ class TelegramLogger {
 }
 
 const TelegramLog = new TelegramLogger(
-	process.env.TELEGRAM_BOT_HTTP_TOKEN ?? "8134576560:AAG7tRUzwFMS1GfahUw0XSaGxRr7teNdbqI",
-	parseInt(process.env.TELEGRAM_BOT_CHANNEL_ID ?? "1477312913"),
+	process.env.TELEGRAM_BOT_HTTP_TOKEN,
+	parseInt(process.env.TELEGRAM_BOT_CHANNEL_ID as string),
 );
 
 export default TelegramLog;

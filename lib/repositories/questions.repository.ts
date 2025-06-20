@@ -24,6 +24,51 @@ class QuestionsRepository {
 		return allQuestions;
 	}
 
+	async getFollowingQuestionsAnswered(userNickname: string): Promise<any[]> {
+		const followingUsers = await prisma.follower.findMany({
+			where: {
+				follower: {
+					nickname: userNickname,
+				},
+			},
+			select: {
+				following: {
+					select: {
+						nickname: true,
+					},
+				},
+			},
+		});
+
+		const followingNicknames = followingUsers.map((f) => f.following.nickname);
+
+		if (followingNicknames.length === 0) {
+			return [];
+		}
+
+		const followingQuestions = await prisma.question.findMany({
+			include: {
+				owner: true,
+				asked_by: true,
+			},
+			where: {
+				question_answered: true,
+				answered_at: {
+					not: null,
+				},
+				asker_want_answer_to_be_private: false,
+				owner_user_nickname: {
+					in: followingNicknames,
+				},
+			},
+			orderBy: {
+				answered_at: "desc",
+			},
+		});
+
+		return followingQuestions;
+	}
+
 	async getTopLikedAnswersToday(): Promise<any[]> {
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
@@ -345,6 +390,10 @@ const repo = new QuestionsRepository();
 
 export async function getAllLatestDescPublicQuestionsAnswered() {
 	return repo.getAllLatestDescPublicQuestionsAnswered();
+}
+
+export async function getFollowingQuestionsAnswered(userNickname: string) {
+	return repo.getFollowingQuestionsAnswered(userNickname);
 }
 
 export async function getTopLikedAnswersToday() {

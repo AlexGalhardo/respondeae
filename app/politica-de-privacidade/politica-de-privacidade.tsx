@@ -29,7 +29,7 @@ export default function PoliticaDePrivacidadeClient() {
 					<h2 className="text-xl font-bold text-foreground mb-4">3. Compartilhamento de Informações</h2>
 					<p className="mb-4">
 						Não vendemos, alugamos ou compartilhamos suas informações pessoais com terceiros, exceto quando
-						necessário para prover nossos serviços ou em cumprimento a obrigações legais.
+						há necessidade de cumprimento a obrigações legais.
 					</p>
 					<p className="mb-6">
 						Usamos ferramentas como Google Analytics e Microsoft Clarity para entender o comportamento dos

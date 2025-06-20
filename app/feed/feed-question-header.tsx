@@ -6,21 +6,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { QuestionInterface } from "@/lib/interfaces";
+import { getInitials } from "@/lib/functions";
 
-export const getInitials = (name: string) => {
-	return name
-		.split(" ")
-		.map((word) => word.charAt(0))
-		.join("")
-		.toUpperCase()
-		.slice(0, 2);
-};
-
-interface QuestionHeaderProps {
+interface FeedQuestionHeaderProps {
 	question: QuestionInterface;
 }
 
-export const QuestionHeader = memo(({ question }: QuestionHeaderProps) => {
+export const FeedQuestionHeader = memo(({ question }: FeedQuestionHeaderProps) => {
 	return (
 		<div className="flex items-start gap-3 mb-4">
 			<Avatar className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
@@ -67,4 +59,4 @@ export const QuestionHeader = memo(({ question }: QuestionHeaderProps) => {
 	);
 });
 
-QuestionHeader.displayName = "QuestionHeader";
+FeedQuestionHeader.displayName = "QuestionHeader";

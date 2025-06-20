@@ -49,7 +49,6 @@ export function MySidebar() {
 	const { theme, setTheme } = useTheme();
 	const pathname = usePathname();
 
-	// Memoizar os itens da sidebar para evitar recálculos desnecessários
 	const sidebarItems = useMemo((): SidebarItem[] => {
 		const items: SidebarItem[] = [
 			{
@@ -59,10 +58,16 @@ export function MySidebar() {
 				active: pathname === "/",
 				requiresAuth: false,
 			},
+			{
+				icon: Trophy,
+				label: "TOP 10 Curtidas",
+				href: "/top-curtidas",
+				active: pathname === "/top-curtidas",
+				requiresAuth: true,
+			},
 		];
 
 		if (isAuthenticated && session?.user) {
-			// Calcular perguntas pendentes de forma mais robusta e segura
 			let pendingQuestions = 0;
 
 			try {
@@ -102,13 +107,6 @@ export function MySidebar() {
 					href: "/perguntas-recebidas",
 					active: pathname === "/perguntas-recebidas",
 					badge: pendingQuestions > 0 ? pendingQuestions.toString() : undefined,
-					requiresAuth: true,
-				},
-				{
-					icon: Trophy,
-					label: "TOP 10 Curtidas",
-					href: "/top-curtidas",
-					active: pathname === "/top-curtidas",
 					requiresAuth: true,
 				},
 				{
@@ -347,7 +345,6 @@ export function MySidebar() {
 				</div>
 			</header>
 
-			{/* Desktop Sidebar */}
 			<aside
 				className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-80 lg:border-r lg:bg-background lg:z-40"
 				style={{ left: "calc(50% - 600px)" }}

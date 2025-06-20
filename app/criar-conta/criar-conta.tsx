@@ -389,7 +389,7 @@ export default function CriarContaClient() {
 
 						<Button
 							type="submit"
-							className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center dark:bg-white dark:text-black dark:hover:bg-gray-100"
+							className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center dark:bg-white dark:text-black dark:hover:bg-gray-100 text-white"
 							disabled={loading}
 						>
 							{loading ? (

@@ -5,13 +5,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { QuestionInterface } from "@/lib/interfaces";
-import { getInitials } from "./QuestionHeader";
+import { getInitials } from "@/lib/functions";
 
-interface QuestionAnswerProps {
+interface FeedQuestionAnswerProps {
 	question: QuestionInterface;
 }
 
-export const QuestionAnswer = memo(({ question }: QuestionAnswerProps) => {
+export const FeedQuestionAnswer = memo(({ question }: FeedQuestionAnswerProps) => {
 	if (!question.answer_text) return null;
 
 	return (
@@ -54,4 +54,4 @@ export const QuestionAnswer = memo(({ question }: QuestionAnswerProps) => {
 	);
 });
 
-QuestionAnswer.displayName = "QuestionAnswer";
+FeedQuestionAnswer.displayName = "QuestionAnswer";
