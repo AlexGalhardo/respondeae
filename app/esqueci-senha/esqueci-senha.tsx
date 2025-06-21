@@ -40,7 +40,7 @@ export default function EsqueciSenhaClient() {
 		setLoading(true);
 
 		try {
-			const response = await fetch("/api/alterar-senha/request", {
+			const response = await fetch("/api/reset-password/request", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -64,18 +64,12 @@ export default function EsqueciSenhaClient() {
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100  flex items-center justify-center p-4">
-			<Card className="w-full max-w-md">
+		<div className="min-h-screen  flex items-center justify-center p-4">
+			<Card className="w-full max-w-md border-none">
 				<CardHeader className="text-center">
-					<div className="flex justify-center mb-4">
-						<Link
-							href="/entrar"
-							className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent"
-						>
-							RespondeAê
-						</Link>
-					</div>
-					<CardDescription>Digite seu email que recerá o link para resetar sua senha</CardDescription>
+					<CardDescription className="text-2xl text-black dark:text-white">
+						Digite seu email que recerá o link para resetar sua senha
+					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-6">
 					<form onSubmit={handleSubmitForgetPassword} className="space-y-4">
@@ -107,7 +101,7 @@ export default function EsqueciSenhaClient() {
 
 						<Button
 							type="submit"
-							className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center"
+							className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white"
 							disabled={loading}
 						>
 							{loading ? (

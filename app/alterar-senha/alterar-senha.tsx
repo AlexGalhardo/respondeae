@@ -39,29 +39,19 @@ export default function ResetarSenhaComponent() {
 	const [passwordValid, setPasswordValid] = useState(false);
 
 	useEffect(() => {
-		if (session) {
-			router.push("/feed");
-			return;
-		}
+		if (session) return router.push("/feed");
 
-		if (!token || token.length !== 32) {
-			router.push("/");
-			return;
-		}
+		if (!token) return router.push("/");
 
 		const verifyToken = async () => {
 			try {
 				setTokenChecking(true);
-				const response = await fetch(`/api/alterar-senha/verify?token=${token}`);
+				const response = await fetch(`/api/reset-password/verify?token=${token}`);
 
-				if (!response.ok) {
-					router.push("/");
-					return;
-				}
+				if (!response.ok) return router.push("/");
 
 				setTokenValid(true);
 			} catch (error: any) {
-				TelegramLog.error(`Error verifying token: ${error?.message}`);
 				router.push("/");
 			} finally {
 				setTokenChecking(false);
@@ -72,7 +62,6 @@ export default function ResetarSenhaComponent() {
 	}, [token, router, session]);
 
 	useEffect(() => {
-		// Validar senha
 		const hasMinLength = password.length >= 8;
 		const hasUppercase = /[A-Z]/.test(password);
 		const hasNumber = /[0-9]/.test(password);
@@ -105,7 +94,7 @@ export default function ResetarSenhaComponent() {
 		setLoading(true);
 
 		try {
-			const response = await fetch("/api/alterar-senha/reset", {
+			const response = await fetch("/api/reset-password/reset", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -134,24 +123,19 @@ export default function ResetarSenhaComponent() {
 	if (tokenChecking) {
 		return (
 			<div className="min-h-screen flex items-center justify-center text-black">
-				<p>Verificando Token para redefinição de senha...</p>
+				<p>Verificando Link para Redefinição de Senha...</p>
 			</div>
 		);
 	}
 
-	if (!tokenValid && !tokenChecking) {
-		return router.push("/");
-	}
+	if (!tokenValid) return router.push("/");
 
 	return (
-		<div className="min-h-screen flex items-center justify-center text-black p-4 bg-blue-100">
+		<div className="min-h-screen flex items-center justify-center text-black p-4">
 			<div className="w-full max-w-md">
 				<Card className="border-0 text-black">
 					<CardHeader className="space-y-1">
-						<CardTitle className="text-2xl font-bold text-center">Resetar Senha</CardTitle>
-						<CardDescription className="text-center">
-							Crie uma nova para sua conta Respondeae.com.br
-						</CardDescription>
+						<CardTitle className="text-2xl font-bold text-center">Crie Sua Nova Senha</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-4">
 						{error && (
@@ -284,7 +268,7 @@ export default function ResetarSenhaComponent() {
 
 								<Button
 									type="submit"
-									className="w-full bg-blue-600 hover:bg-blue-700"
+									className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold"
 									disabled={loading}
 								>
 									{loading ? "Mudando senha..." : "Criar Nova Senha"}

@@ -59,16 +59,10 @@ export function ResetPasswordEmail({ name, resetLink }: ResetPasswordEmailProps)
 							Este link é válido por 1 hora. Após esse período, você precisará solicitar uma nova
 							redefinição de senha.
 						</Text>
-
-						<Text style={{ fontSize: "16px", lineHeight: "1.5", color: "#333333", marginTop: "30px" }}>
-							Atenciosamente,
-							<br />
-							Equipe Respondeae.com.br
-						</Text>
 					</Section>
 
 					<Text style={{ fontSize: "12px", color: "#666666", textAlign: "center", marginTop: "20px" }}>
-						© 2025 RespondeAê. Todos os direitos reservados.
+						© 2025 Respondeae.com.br
 					</Text>
 				</Container>
 			</Body>
