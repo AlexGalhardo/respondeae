@@ -31,16 +31,15 @@ export async function POST(request: Request) {
 			data: {
 				reset_password_token: token,
 				reset_password_token_expires_at: expiresAt,
-				updated_at: new Date(),
 			},
 		});
 
-		const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/resetar-senha?token=${token}`;
+		const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/alterar-senha?token=${token}`;
 
 		await resend.emails.send({
 			from: "onboarding@resend.dev",
 			to: "aleexgvieira@gmail.com", //[email]
-			subject: "Resete sua de Senha - Respondeae.com.br",
+			subject: "Crie Sua Nova Senha - Respondeae.com.br",
 			react: ResetPasswordEmail({ name: user.name, resetLink }),
 		});
 

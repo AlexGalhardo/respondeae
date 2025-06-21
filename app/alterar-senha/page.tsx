@@ -2,7 +2,7 @@
 
 import LoadingScreen from "@/components/loading-screen";
 import { Suspense } from "react";
-import ResetarSenhaComponent from "./ResetartSenhaComponent";
+import ResetarSenhaComponent from "./alterar-senha";
 
 export default function ResetarSenhaPage() {
 	return (
