@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 		const { data, error } = await resend.emails.send({
 			from: "onboarding@resend.dev",
 			to: ["aleexgvieira@gmail.com"],
-			subject: `Respondeae.com.br Contato - ${email} -${subject}`,
+			subject: `Respondeae.com.br - ${email} - ${subject}`,
 			react: ContactEmail({ name, email, subject, message }),
 		});
 

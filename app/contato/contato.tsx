@@ -106,7 +106,19 @@ export default function ContatoClient() {
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		const { name, value } = e.target;
-		setFormData((prev) => ({ ...prev, [name]: value }));
+
+		let transformedValue = value;
+
+		if (name === "name") {
+			transformedValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, "");
+
+			transformedValue = transformedValue
+				.split(" ")
+				.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+				.join(" ");
+		}
+
+		setFormData((prev) => ({ ...prev, [name]: transformedValue }));
 	};
 
 	const handleSelectChange = (value: string) => {
@@ -133,6 +145,8 @@ export default function ContatoClient() {
 									<Input
 										id="name"
 										name="name"
+										minLength={4}
+										maxLength={24}
 										placeholder="Digite seu nome"
 										value={formData.name}
 										onChange={handleChange}
@@ -149,6 +163,8 @@ export default function ContatoClient() {
 										id="email"
 										name="email"
 										type="email"
+										minLength={12}
+										maxLength={48}
 										placeholder="seuemail@email.com"
 										value={formData.email}
 										onChange={handleChange}
@@ -184,6 +200,7 @@ export default function ContatoClient() {
 									name="message"
 									placeholder="Digite sua mensagem"
 									rows={6}
+									maxLength={1024}
 									value={formData.message}
 									onChange={handleChange}
 									className={`${errors.message ? "border-red-500" : ""}`}
@@ -191,11 +208,6 @@ export default function ContatoClient() {
 								{errors.message && (
 									<p className="text-red-500 text-sm">A mensagem deve ter pelo menos 32 caracteres</p>
 								)}
-								<div className="flex justify-between items-center">
-									<p className="text-sm text-muted-foreground">
-										Caracteres: {formData.message.length}/32 mínimo
-									</p>
-								</div>
 							</div>
 
 							<Button
