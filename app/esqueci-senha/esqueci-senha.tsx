@@ -68,7 +68,7 @@ export default function EsqueciSenhaClient() {
 			<Card className="w-full max-w-md border-none">
 				<CardHeader className="text-center">
 					<CardDescription className="text-2xl text-black dark:text-white">
-						Digite seu email que recerá o link para resetar sua senha
+						Digite o email que receberá o link para criar nova senha
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-6">
