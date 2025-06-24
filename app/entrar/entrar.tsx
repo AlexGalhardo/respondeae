@@ -11,7 +11,7 @@ import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function EntrarClient() {
 	const router = useRouter();
@@ -98,6 +98,17 @@ export default function EntrarClient() {
 			<span className={`text-sm ${met ? "text-green-500" : "text-gray-400"}`}>{text}</span>
 		</div>
 	);
+
+	const turnstileRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if ((window as any).turnstile && turnstileRef.current) {
+			(window as any).turnstile.render(turnstileRef.current, {
+				sitekey: "0x4AAAAAABiCEoK5rM8dg1Xm",
+				callback: function (token: string) {},
+			});
+		}
+	}, []);
 
 	return (
 		<>
@@ -238,11 +249,7 @@ export default function EntrarClient() {
 								)}
 							</div>
 
-							<div
-								className="cf-turnstile w-full"
-								data-sitekey="0x4AAAAAABiCEoK5rM8dg1Xm"
-								data-callback="javascriptCallback"
-							></div>
+							<div className="w-full" ref={turnstileRef}></div>
 
 							{error && error !== "Callback" && (
 								<Alert

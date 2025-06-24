@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { contactSchema } from "@/app/api/send-contact-email/route";
 import Script from "next/script";
 
@@ -133,6 +133,17 @@ export default function ContatoClient() {
 		setFormData((prev) => ({ ...prev, subject: value }));
 	};
 
+	const turnstileRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if ((window as any).turnstile && turnstileRef.current) {
+			(window as any).turnstile.render(turnstileRef.current, {
+				sitekey: "0x4AAAAAABiCEoK5rM8dg1Xm",
+				callback: function (token: string) {},
+			});
+		}
+	}, []);
+
 	return (
 		<>
 			<Script
@@ -231,11 +242,7 @@ export default function ContatoClient() {
 									)}
 								</div>
 
-								<div
-									className="cf-turnstile w-full"
-									data-sitekey="0x4AAAAAABiCEoK5rM8dg1Xm"
-									data-callback="javascriptCallback"
-								></div>
+								<div className="w-full" ref={turnstileRef}></div>
 
 								<Button
 									type="submit"
