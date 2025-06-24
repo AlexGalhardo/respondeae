@@ -37,17 +37,17 @@ export default function TermosDeUsoClient() {
 						serviços da plataforma. A taxa por pergunta varia por valor da pergunta, sendo:
 					</p>
 					<ul className="list-disc pl-6 mb-6">
-						<li>50% quando o valor da pergunta é R$ 20 reais ou menos.</li>
-						<li>30% quando o valor da pergunta é acima de R$ 20 reais.</li>
+						<li>50% quando o valor da pergunta é R$ 5 reais ou menos.</li>
+						<li>30% quando o valor da pergunta é acima de R$ 5 reais.</li>
 						<li>
-							Exemplo 1: João pagou R$ 10 reais para fazer uma pergunta a Ana. A taxa desse valor será
-							50%, logo, R$ 5 reais. Caso Ana venha responder corretamente essa pergunta, ela receberá R$
-							5 reais.
+							Exemplo 1: João pagou R$ 5 reais para fazer uma pergunta a Ana. A taxa desse valor será 50%,
+							logo, R$ 2,50 reais. Caso Ana venha responder corretamente essa pergunta, ela receberá R$
+							2,50 reais.
 						</li>
 						<li>
-							Exemplo 2: Pedro pagou R$ 50 reais para fazer uma pergunta a Maria. A taxa desse valor será
-							30%, logo, R$ 15 reais. Caso Maria venha responder corretamente essa pergunta, ela receberá
-							R$ 35 reais.
+							Exemplo 2: Pedro pagou R$ 10 reais para fazer uma pergunta a Maria. A taxa desse valor será
+							30%, logo, R$ 3 reais. Caso Maria venha responder corretamente essa pergunta, ela receberá
+							R$ 7 reais.
 						</li>
 					</ul>
 

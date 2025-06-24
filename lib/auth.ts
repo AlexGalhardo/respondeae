@@ -119,9 +119,35 @@ export const authOptions: NextAuthOptions = {
 			credentials: {
 				email: { label: "Email", type: "email" },
 				password: { label: "Password", type: "password" },
+				captchaToken: { label: "Captcha Token", type: "text" },
 			},
-			async authorize(credentials) {
-				if (!credentials?.email || !credentials?.password) {
+			async authorize(credentials: Record<"email" | "password" | "captchaToken", string> | undefined) {
+				if (!credentials?.email || !credentials?.password || !credentials?.captchaToken) {
+					console.error("Credenciais ausentes");
+					return null;
+				}
+
+				const turnstileSecret = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
+				const verifyUrl = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+
+				try {
+					const res = await fetch(verifyUrl, {
+						method: "POST",
+						headers: { "Content-Type": "application/x-www-form-urlencoded" },
+						body: new URLSearchParams({
+							secret: turnstileSecret ?? "",
+							response: credentials.captchaToken,
+						}),
+					});
+
+					const data = await res.json();
+
+					if (!data.success) {
+						console.warn("Captcha inválido", data);
+						return null;
+					}
+				} catch (err) {
+					console.error("Erro na verificação do CAPTCHA", err);
 					return null;
 				}
 
