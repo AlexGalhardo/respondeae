@@ -20,7 +20,8 @@ export default function TermosDeUsoClient() {
 						O RespondeAê é uma plataforma onde os usuários podem fazer perguntas pagas para outras pessoas e
 						receber respostas. As perguntas devem ter valor mínimo de R$2,00, com pagamento via PIX, e os
 						valores sugeridos são: R$2, R$5, R$10, R$20, R$50 ou outro valor inteiro definido pelo usuário.
-						Ao responder de forma adequada, o autor da resposta recebe o valor pago.
+						Ao responder de forma adequada, o autor da resposta recebe o valor pago pela pergunta
+						descontando taxas como descrito na seção 4 - Pagamentos.
 					</p>
 
 					<h2 className="text-xl font-bold text-foreground mb-4">3. Limites de Uso Diário</h2>
@@ -60,9 +61,9 @@ export default function TermosDeUsoClient() {
 
 					<h2 className="text-xl font-bold text-foreground mb-4">6. Validade das Perguntas</h2>
 					<p className="mb-6">
-						Cada pergunta enviada tem uma validade individual de <strong>7 dias corridos</strong> para ser
-						respondida. Após esse prazo, a pergunta é considerada expirada e não poderá mais ser respondida.
-						O valor pago pela pergunta será automaticamente devolvido à conta do pagador.
+						Cada pergunta enviada tem uma validade individual de <strong>7 dias corridos</strong> para serem
+						respondidas. Após esse prazo, a pergunta é considerada expirada e não poderá mais ser
+						respondida. O valor pago pela pergunta será automaticamente devolvido à conta do pagador.
 					</p>
 
 					<h2 className="text-xl font-bold text-foreground mb-4">7. Regras de Conduta e Conteúdo Proibido</h2>
@@ -70,7 +71,7 @@ export default function TermosDeUsoClient() {
 						Não é permitido publicar ou enviar conteúdo ilegal, ofensivo, difamatório, obsceno, com violação
 						de direitos autorais, spam ou assédio. Os usuários são responsáveis por todo o conteúdo que
 						publicarem e pelo uso adequado da plataforma. Nos damos o direito de remover qualquer pergunta
-						ou resposta, e banir usuários que violem essas regras.
+						ou resposta inadequada e ofensiva, e banir usuários que violarem essas regras.
 					</p>
 
 					<h2 className="text-xl font-bold text-foreground mb-4">8. Sistema de Reports e Penalidades</h2>
@@ -88,9 +89,14 @@ export default function TermosDeUsoClient() {
 
 					<h2 className="text-xl font-bold text-foreground mb-4">9. Pagamentos e Reembolsos</h2>
 					<p className="mb-6">
-						Os pagamentos são processados exclusivamente via PIX. Só é possível receber o valor de uma
-						pergunta quando ela for respondida de maneira adequada. Reembolsos automáticos ocorrem em caso
-						de perguntas expiradas ou que foram recusadas a serem respondidas por quem recebeu a pergunta.
+						Saques: Os pagamentos para saque são processados exclusivamente via PIX, enviada para a chave
+						PIX configurada na sua conta. É necessário acumular pelo menos R$ 100 para poder fazer a
+						solicitação de saque na plataforma.
+						<br />
+						Reembolsos: Perguntas que você pagou e que foram recusadas a serem respondidas ou expiradas, o
+						montante é acumulado na sua conta para que você possa sacar quando acumulado a partir de R$ 100
+						também. Não é possível usar esse dinheiro para fazer novas perguntas nesse momento, porque cada
+						pergunta paga é atrelado ao pagamento de um PIX específico.
 					</p>
 
 					<h2 className="text-xl font-bold text-foreground mb-4">10. Limitação de Responsabilidade</h2>
@@ -101,18 +107,26 @@ export default function TermosDeUsoClient() {
 						manter um ambiente saudável e produtivo.
 					</p>
 
-					<h2 className="text-xl font-bold text-foreground mb-4">11. Modificações nos Termos</h2>
+					<h2 className="text-xl font-bold text-foreground mb-4">11. Contas Inativas</h2>
+					<p className="mb-6">
+						Contas que passarem de 730 dias (2 anos) corridos sem serem acessadas (o usuário não entrou em
+						sua conta durante esse período), serão consideradas inativas e apagadas da plataforma. Serão
+						enviados 2 emails de aviso: o primeiro 7 dias antes, o segundo 48 horas antes da possível
+						exclusão da conta, para que o usuário fique ciente.
+					</p>
+
+					<h2 className="text-xl font-bold text-foreground mb-4">12. Modificações nos Termos</h2>
 					<p className="mb-6">
 						Estes termos podem ser alterados a qualquer momento. Recomendamos que o usuário revise esta
 						página periodicamente. Alterações entram em vigor imediatamente após a publicação.
 					</p>
 
-					<h2 className="text-xl font-bold text-foreground mb-4">12. Contato</h2>
+					<h2 className="text-xl font-bold text-foreground mb-4">13. Contato</h2>
 					<p className="mb-4">
 						Em caso de dúvidas, sugestões ou problemas relacionados a estes Termos de Uso, entre em contato
 						com nossa equipe de suporte através do e-mail:{" "}
-						<a href="mailto:suporte@respondeae.com.br" className="text-blue-600 underline">
-							suporte@respondeae.com.br
+						<a href="mailto:contato@respondeae.com.br" className="text-blue-600 underline">
+							contato@respondeae.com.br
 						</a>
 						.
 					</p>

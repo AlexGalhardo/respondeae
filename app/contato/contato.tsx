@@ -167,11 +167,13 @@ export default function ContatoClient() {
 										<SelectValue placeholder="Selecione um tópico" />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="suporte">Problemas Técnicos</SelectItem>
-										<SelectItem value="pagamentos">Problemas com Pagamentos</SelectItem>
-										<SelectItem value="conta">Problemas com Conta</SelectItem>
-										<SelectItem value="sugestao">Sugestões & Feedbacks</SelectItem>
-										<SelectItem value="outro">Outros</SelectItem>
+										<SelectItem value="Problemas Técnicos">Problemas Técnicos</SelectItem>
+										<SelectItem value="Problemas Com Pagamentos">
+											Problemas com Pagamentos
+										</SelectItem>
+										<SelectItem value="Problemas com Conta">Problemas com Conta</SelectItem>
+										<SelectItem value="Sugestões e Feedbacks">Sugestões & Feedbacks</SelectItem>
+										<SelectItem value="Outros">Outros</SelectItem>
 									</SelectContent>
 								</Select>
 								{errors.subject && <p className="text-red-500 text-sm">Selecione um assunto válido</p>}

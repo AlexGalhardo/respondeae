@@ -1,7 +1,13 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { verifyCredentials, createUser, getUserByEmail, reactiveDeletedAccount } from "./repositories/users.repository";
+import {
+	verifyCredentials,
+	createUser,
+	getUserByEmail,
+	reactiveDeletedAccount,
+	updateLastLoginAt,
+} from "./repositories/users.repository";
 import slugify from "slugify";
 import { QuestionInterface } from "./interfaces";
 
@@ -160,6 +166,8 @@ export const authOptions: NextAuthOptions = {
 
 					await handleDeletedAccount(user);
 
+					await updateLastLoginAt(user.nickname);
+
 					return {
 						id: user.id,
 						name: user.name ?? null,
@@ -201,6 +209,8 @@ export const authOptions: NextAuthOptions = {
 				}
 
 				await handleDeletedAccount(dbUser);
+
+				await updateLastLoginAt(dbUser.nickname);
 
 				Object.assign(session.user, mapUserToSession(dbUser));
 
