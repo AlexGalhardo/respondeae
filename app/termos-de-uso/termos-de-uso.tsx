@@ -37,7 +37,7 @@ export default function TermosDeUsoClient() {
 						serviços da plataforma. A taxa por pergunta varia por valor da pergunta, sendo:
 					</p>
 					<ul className="list-disc pl-6 mb-6">
-						<li>50% quando o valor da pergunta é R$ 20 5 ou menos.</li>
+						<li>50% quando o valor da pergunta é R$ 5 reais ou menos.</li>
 						<li>30% quando o valor da pergunta é acima de R$ 5 reais.</li>
 						<li>
 							Exemplo 1: João pagou R$ 5 reais para fazer uma pergunta a Ana. A taxa desse valor será 50%,
