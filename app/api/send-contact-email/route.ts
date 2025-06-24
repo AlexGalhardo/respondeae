@@ -13,9 +13,12 @@ export const contactSchema = z.object({
 		.max(24, "Nome deve ter no máximo 24 caracteres")
 		.trim(),
 	email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
-	subject: z.enum(["suporte", "pagamentos", "conta", "sugestao", "outro"], {
-		errorMap: () => ({ message: "Assunto inválido" }),
-	}),
+	subject: z.enum(
+		["Problemas Técnicos", "Problemas Com Pagamentos", "Problemas com Conta", "Sugestões e Feedbacks", "Outros"],
+		{
+			errorMap: () => ({ message: "Assunto inválido" }),
+		},
+	),
 	message: z.string().min(32, "Mensagem deve ter pelo menos 32 caracteres").trim(),
 });
 
@@ -45,7 +48,7 @@ export async function POST(request: Request) {
 		const { data, error } = await resend.emails.send({
 			from: "onboarding@resend.dev",
 			to: ["aleexgvieira@gmail.com"],
-			subject: `Formulário de Contact: ${subject}`,
+			subject: `Respondeae.com.br Contato - ${email} -${subject}`,
 			react: ContactEmail({ name, email, subject, message }),
 		});
 
