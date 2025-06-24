@@ -45,6 +45,7 @@ CREATE TABLE "users" (
     "banned_reason" TEXT,
     "banned_until" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "last_login_at" TIMESTAMP(3),
     "updated_at" TIMESTAMP(3),
     "deleted_at" TIMESTAMP(3),
 

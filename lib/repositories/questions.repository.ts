@@ -271,7 +271,7 @@ class QuestionsRepository {
 		});
 
 		const calculatePayment = (amount: number) => {
-			if (amount <= 2000) {
+			if (amount <= 500) {
 				return Math.ceil(amount * 0.5);
 			} else {
 				return Math.ceil(amount * 0.7);
@@ -355,7 +355,7 @@ class QuestionsRepository {
 		});
 
 		const calculateRefund = (amount: number) => {
-			if (amount <= 2000) {
+			if (amount <= 500) {
 				return Math.ceil(amount * 0.5);
 			} else {
 				return Math.ceil(amount * 0.7);
