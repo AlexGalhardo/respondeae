@@ -1,4 +1,3 @@
-// components/profile/question-card.tsx
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,6 +11,7 @@ import { useLikeQuestion, useDislikeQuestion } from "@/hooks/use-profile-queries
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/use-toast";
 import { QuestionInterface } from "@/lib/interfaces";
+import { getInitials } from "@/lib/functions";
 
 interface QuestionCardProps {
 	question: QuestionInterface;
@@ -22,15 +22,6 @@ export function ProfileQuestionCard({ question }: QuestionCardProps) {
 	const { toast } = useToast();
 	const likeMutation = useLikeQuestion();
 	const dislikeMutation = useDislikeQuestion();
-
-	const getInitials = (name: string) => {
-		return name
-			.split(" ")
-			.map((word) => word.charAt(0))
-			.join("")
-			.toUpperCase()
-			.slice(0, 2);
-	};
 
 	const hasUserLiked = () => {
 		if (!session?.user?.nickname) return false;
