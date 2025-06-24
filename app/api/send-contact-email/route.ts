@@ -26,7 +26,12 @@ export async function POST(request: Request) {
 	try {
 		const body = await request.json();
 
-		const validationResult = contactSchema.safeParse(body);
+		const validationResult = contactSchema.safeParse({
+			name: body.name,
+			email: body.email,
+			subject: body.subject,
+			message: body.message,
+		});
 
 		if (!validationResult.success) {
 			const errors = validationResult.error.errors.map((error) => ({
@@ -41,6 +46,30 @@ export async function POST(request: Request) {
 				},
 				{ status: 400 },
 			);
+		}
+
+		const turnstileSecret = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
+		const verifyUrl = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+
+		try {
+			const res = await fetch(verifyUrl, {
+				method: "POST",
+				headers: { "Content-Type": "application/x-www-form-urlencoded" },
+				body: new URLSearchParams({
+					secret: turnstileSecret ?? "",
+					response: body?.captchaToken,
+				}),
+			});
+
+			const data = await res.json();
+
+			if (!data.success) {
+				console.warn("Captcha inválido: ", data);
+				return NextResponse.json({ error: "Captcha inválido" }, { status: 500 });
+			}
+		} catch (err) {
+			console.error("Erro na verificação do CAPTCHA: ", err);
+			return NextResponse.json({ error: "Erro na verificação do CAPTCHA" }, { status: 500 });
 		}
 
 		const { name, email, subject, message } = validationResult.data;

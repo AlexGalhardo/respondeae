@@ -153,7 +153,7 @@ export const authOptions: NextAuthOptions = {
 						return null;
 					}
 				} catch (err) {
-					console.error("Erro na verificação do CAPTCHA", err);
+					console.error("Erro na verificação do CAPTCHA: ", err);
 					return null;
 				}
 

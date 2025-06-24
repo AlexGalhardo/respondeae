@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { contactSchema } from "@/app/api/send-contact-email/route";
+import Script from "next/script";
 
 export default function ContatoClient() {
 	const [formData, setFormData] = useState({
@@ -63,13 +64,20 @@ export default function ContatoClient() {
 
 		setLoading(true);
 
+		const token = (window as any).turnstile?.getResponse?.();
+
+		if (!token) {
+			setLoading(false);
+			return;
+		}
+
 		try {
 			const response = await fetch("/api/send-contact-email", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify(formData),
+				body: JSON.stringify({ ...formData, captchaToken: token }),
 			});
 
 			if (response.ok) {
@@ -126,107 +134,127 @@ export default function ContatoClient() {
 	};
 
 	return (
-		<main className="p-4 lg:p-6">
-			<div className="max-w-6xl mx-auto">
-				<div className="text-center mb-8 dark:text-white p-8 rounded-lg">
-					<h2 className="text-3xl font-bold text-foreground mb-4">Contato</h2>
-					<p className="text-lg text-muted-foreground">
-						Tem alguma dúvida? Encontrou algum problema? Envie nos uma mensagem e retornaremos o mais breve
-						possível.
-					</p>
-				</div>
+		<>
+			<Script
+				src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback"
+				async
+				defer
+				onLoad={() => console.log("Turnstile script carregado")}
+			/>
+			<main className="p-4 lg:p-6">
+				<div className="max-w-6xl mx-auto">
+					<div className="text-center mb-8 dark:text-white p-8 rounded-lg">
+						<h2 className="text-3xl font-bold text-foreground mb-4">Contato</h2>
+						<p className="text-lg text-muted-foreground">
+							Tem alguma dúvida? Encontrou algum problema? Envie nos uma mensagem e retornaremos o mais
+							breve possível.
+						</p>
+					</div>
 
-				<Card>
-					<CardContent className="p-6">
-						<form onSubmit={handleSubmit} className="space-y-6">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<Card>
+						<CardContent className="p-6">
+							<form onSubmit={handleSubmit} className="space-y-6">
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+									<div className="space-y-2">
+										<Label htmlFor="name">Seu Nome</Label>
+										<Input
+											id="name"
+											name="name"
+											minLength={4}
+											maxLength={24}
+											placeholder="Digite seu nome"
+											value={formData.name}
+											onChange={handleChange}
+											className={`${errors.name ? "border-red-500" : ""}`}
+										/>
+										{errors.name && (
+											<p className="text-red-500 text-sm">
+												Nome deve ter entre 4 e 24 caracteres
+											</p>
+										)}
+									</div>
+
+									<div className="space-y-2">
+										<Label htmlFor="email">Seu Email</Label>
+										<Input
+											id="email"
+											name="email"
+											type="email"
+											minLength={12}
+											maxLength={48}
+											placeholder="seuemail@email.com"
+											value={formData.email}
+											onChange={handleChange}
+											className={`${errors.email ? "border-red-500" : ""}`}
+										/>
+										{errors.email && <p className="text-red-500 text-sm">Email inválido</p>}
+									</div>
+								</div>
+
 								<div className="space-y-2">
-									<Label htmlFor="name">Seu Nome</Label>
-									<Input
-										id="name"
-										name="name"
-										minLength={4}
-										maxLength={24}
-										placeholder="Digite seu nome"
-										value={formData.name}
-										onChange={handleChange}
-										className={`${errors.name ? "border-red-500" : ""}`}
-									/>
-									{errors.name && (
-										<p className="text-red-500 text-sm">Nome deve ter entre 4 e 24 caracteres</p>
+									<Label htmlFor="subject">Assunto</Label>
+									<Select value={formData.subject} onValueChange={handleSelectChange}>
+										<SelectTrigger className={`${errors.subject ? "border-red-500" : ""}`}>
+											<SelectValue placeholder="Selecione um tópico" />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="Problemas Técnicos">Problemas Técnicos</SelectItem>
+											<SelectItem value="Problemas Com Pagamentos">
+												Problemas com Pagamentos
+											</SelectItem>
+											<SelectItem value="Problemas com Conta">Problemas com Conta</SelectItem>
+											<SelectItem value="Sugestões e Feedbacks">Sugestões & Feedbacks</SelectItem>
+											<SelectItem value="Outros">Outros</SelectItem>
+										</SelectContent>
+									</Select>
+									{errors.subject && (
+										<p className="text-red-500 text-sm">Selecione um assunto válido</p>
 									)}
 								</div>
 
 								<div className="space-y-2">
-									<Label htmlFor="email">Seu Email</Label>
-									<Input
-										id="email"
-										name="email"
-										type="email"
-										minLength={12}
-										maxLength={48}
-										placeholder="seuemail@email.com"
-										value={formData.email}
+									<Label htmlFor="message">Mensagem</Label>
+									<Textarea
+										id="message"
+										name="message"
+										placeholder="Digite sua mensagem"
+										rows={6}
+										maxLength={1024}
+										value={formData.message}
 										onChange={handleChange}
-										className={`${errors.email ? "border-red-500" : ""}`}
+										className={`${errors.message ? "border-red-500" : ""}`}
 									/>
-									{errors.email && <p className="text-red-500 text-sm">Email inválido</p>}
+									{errors.message && (
+										<p className="text-red-500 text-sm">
+											A mensagem deve ter pelo menos 32 caracteres
+										</p>
+									)}
 								</div>
-							</div>
 
-							<div className="space-y-2">
-								<Label htmlFor="subject">Assunto</Label>
-								<Select value={formData.subject} onValueChange={handleSelectChange}>
-									<SelectTrigger className={`${errors.subject ? "border-red-500" : ""}`}>
-										<SelectValue placeholder="Selecione um tópico" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="Problemas Técnicos">Problemas Técnicos</SelectItem>
-										<SelectItem value="Problemas Com Pagamentos">
-											Problemas com Pagamentos
-										</SelectItem>
-										<SelectItem value="Problemas com Conta">Problemas com Conta</SelectItem>
-										<SelectItem value="Sugestões e Feedbacks">Sugestões & Feedbacks</SelectItem>
-										<SelectItem value="Outros">Outros</SelectItem>
-									</SelectContent>
-								</Select>
-								{errors.subject && <p className="text-red-500 text-sm">Selecione um assunto válido</p>}
-							</div>
+								<div
+									className="cf-turnstile w-full"
+									data-sitekey="0x4AAAAAABiCEoK5rM8dg1Xm"
+									data-callback="javascriptCallback"
+								></div>
 
-							<div className="space-y-2">
-								<Label htmlFor="message">Mensagem</Label>
-								<Textarea
-									id="message"
-									name="message"
-									placeholder="Digite sua mensagem"
-									rows={6}
-									maxLength={1024}
-									value={formData.message}
-									onChange={handleChange}
-									className={`${errors.message ? "border-red-500" : ""}`}
-								/>
-								{errors.message && (
-									<p className="text-red-500 text-sm">A mensagem deve ter pelo menos 32 caracteres</p>
-								)}
-							</div>
-
-							<Button
-								type="submit"
-								className="w-full bg-green-600 hover:bg-green-700 text-white"
-								disabled={loading}
-							>
-								{loading ? "Enviando Mensagem..." : "Enviar Mensagem"}
-							</Button>
-						</form>
-					</CardContent>
-				</Card>
-				<p className="text-sm text-muted-foreground mt-12 text-center">
-					Rua Pais Leme 215. C1713 E1 VG PINHEIROS THERA FARIA LIMA CEP 05424-150
-				</p>
-				<p className="text-center text-sm text-muted-foreground mt-3">
-					CNPJ 61.414.573/0001-56 Galhardo Tecnologia da Informação LTDA
-				</p>
-			</div>
-		</main>
+								<Button
+									type="submit"
+									className="w-full bg-green-600 hover:bg-green-700 text-white"
+									disabled={loading}
+								>
+									{loading ? "Enviando Mensagem..." : "Enviar Mensagem"}
+								</Button>
+							</form>
+						</CardContent>
+					</Card>
+					<p className="text-sm text-muted-foreground mt-12 text-center">
+						Rua Pais Leme 215. C1713 E1 VG PINHEIROS THERA FARIA LIMA CEP 05424-150
+					</p>
+					<p className="text-center text-sm text-muted-foreground mt-3">
+						CNPJ 61.414.573/0001-56 Galhardo Tecnologia da Informação LTDA
+					</p>
+				</div>
+			</main>
+		</>
 	);
 }
