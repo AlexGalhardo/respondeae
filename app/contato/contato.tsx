@@ -7,8 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, MapPin, Mail, Clock } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 import { contactSchema } from "@/app/api/send-contact-email/route";
 
@@ -40,7 +38,6 @@ export default function ContatoClient() {
 			return true;
 		}
 
-		// Mapear erros do Zod para o estado de errors
 		const newErrors = {
 			name: false,
 			email: false,
@@ -78,6 +75,7 @@ export default function ContatoClient() {
 			if (response.ok) {
 				toast({
 					title: "Mensagem enviada com sucesso",
+					description: "Vamos responder em breve.",
 					variant: "success",
 				});
 				setFormData({
