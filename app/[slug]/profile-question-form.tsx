@@ -61,8 +61,7 @@ export function ProfileQuestionForm({ profile, session, onSubmitQuestion }: Ques
 							<Eye className="h-6 w-6 text-blue-600 dark:text-black flex-shrink-0" />
 							<div>
 								<p className="md:text-base font-semibold text-blue-800 dark:text-black leading-tight">
-									Você tem {session?.user?.public_questions_remaining_today} perguntas públicas
-									restantes hoje
+									{session?.user?.public_questions_remaining_today} perguntas públicas restantes hoje
 								</p>
 							</div>
 						</div>
@@ -79,9 +78,9 @@ export function ProfileQuestionForm({ profile, session, onSubmitQuestion }: Ques
 										Esse perfil não aceita perguntas anônimas.
 									</p>
 								) : (
-									<p className="text-sm md:text-base font-semibold text-purple-800 dark:text-black leading-tight">
-										Você tem {session?.user?.anonymous_questions_remaining_today} pergunta anônima
-										restante hoje
+									<p className="md:text-base font-semibold text-purple-800 dark:text-black leading-tight">
+										{session?.user?.anonymous_questions_remaining_today} pergunta anônima restante
+										hoje
 									</p>
 								)}
 							</div>

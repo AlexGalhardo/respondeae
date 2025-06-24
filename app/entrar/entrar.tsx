@@ -88,7 +88,7 @@ export default function EntrarClient() {
 			setError("Ocorreu um erro ao fazer login. Tente novamente.");
 		} finally {
 			setLoading(false);
-			(window as any).turnstile?.reset();
+			(window as any).turnstile?.reset(); // Reseta o CAPTCHA após o envio
 		}
 	};
 
