@@ -183,6 +183,13 @@ export async function reactiveDeletedAccount(userId: string) {
 	return repo.reactiveDeletedAccount(userId);
 }
 
+export async function updateLastLoginAt(userNickname: string) {
+	return prisma.user.update({
+		where: { nickname: userNickname },
+		data: { last_login_at: new Date() },
+	});
+}
+
 export async function getUserById(id: string) {
 	return repo.getUserById(id);
 }
