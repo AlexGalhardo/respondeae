@@ -1,8 +1,8 @@
-// hooks/use-session-verification.ts
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { toast } from "./use-toast";
 
 interface SessionUserInterface {
 	id: string;
@@ -37,11 +37,11 @@ export function useSessionVerification() {
 			});
 
 			if (!response.ok) {
-				if (response.status === 401) {
-					// Sessão expirada ou inválida
-					return null;
-				}
-				throw new Error("Erro ao verificar sessão");
+				if (response.status === 401) return null;
+				toast({
+					title: "Erro ao verificar sessão",
+					variant: "error",
+				});
 			}
 
 			return response.json();
@@ -50,7 +50,6 @@ export function useSessionVerification() {
 		staleTime: 5 * 60 * 1000, // 5 minutos
 		gcTime: 10 * 60 * 1000, // 10 minutos
 		retry: (failureCount, error: any) => {
-			// Não retry em caso de 401 (não autorizado)
 			if (error?.message?.includes("401")) return false;
 			return failureCount < 2;
 		},

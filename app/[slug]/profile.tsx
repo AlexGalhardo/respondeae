@@ -195,7 +195,7 @@ export default function ProfileClient() {
 					</TabsContent>
 				</Tabs>
 			) : (
-				<div className="text-center py-4 px-4 rounded-lg bg-red-700 text-white shadow mb-6 dark:bg-white dark:text-black">
+				<div className="text-center py-4 px-4  text-gray-700 mb-6 dark:text-white">
 					<p className="text-sm md:text-base font-medium">
 						{isFollowing
 							? "Aguardando aprovação para ver as respostas deste perfil privado."

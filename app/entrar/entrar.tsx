@@ -53,12 +53,16 @@ export default function EntrarClient() {
 		setError("");
 		setLoading(true);
 
-		const token = (window as any).turnstile?.getResponse?.();
+		let token = null;
 
-		if (!token) {
-			setError("Por favor, verifique o CAPTCHA.");
-			setLoading(false);
-			return;
+		if (process.env.NEXT_PUBLIC_NODE_ENV === "production") {
+			token = (window as any).turnstile?.getResponse?.();
+
+			if (!token) {
+				setError("Por favor, verifique o CAPTCHA.");
+				setLoading(false);
+				return;
+			}
 		}
 
 		try {
@@ -84,7 +88,7 @@ export default function EntrarClient() {
 			setError("Ocorreu um erro ao fazer login. Tente novamente.");
 		} finally {
 			setLoading(false);
-			(window as any).turnstile?.reset(); // Reseta o CAPTCHA após o envio
+			(window as any).turnstile?.reset();
 		}
 	};
 

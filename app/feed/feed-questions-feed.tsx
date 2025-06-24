@@ -106,7 +106,6 @@ export const FeedQuestionsFeed = ({ userNickname, userId }: FeedQuestionsFeedPro
 				},
 				{
 					onError: () => {
-						// Remove apenas em caso de erro
 						setOptimisticStates((prev) => {
 							const newState = { ...prev };
 							delete newState[question.id];
@@ -160,7 +159,7 @@ export const FeedQuestionsFeed = ({ userNickname, userId }: FeedQuestionsFeedPro
 
 	const handleTabChange = useCallback((tab: FeedType) => {
 		setActiveTab(tab);
-		setOptimisticStates({}); // Limpa estados otimistas ao trocar de aba
+		setOptimisticStates({});
 	}, []);
 
 	useEffect(() => {

@@ -27,10 +27,10 @@ export class SeedOrchestrator {
 
 			await this.databaseCleaner.cleanAll();
 
-			const systemUsers = await this.userService.createSystemUsers();
+			await this.userService.createSystemUsers();
 
 			const randomUsers = await this.userService.createRandomUsers(this.config.totalUsers);
-			const allUsers = [...systemUsers, ...randomUsers];
+			const allUsers = [...randomUsers];
 
 			await this.followerService.createFollowerRelations(allUsers, this.config.totalFollowers);
 
