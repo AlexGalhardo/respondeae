@@ -284,7 +284,10 @@ export function useAnswerQuestion() {
 			});
 
 			if (!response.ok) {
-				throw new Error("Erro ao enviar resposta");
+				toast({
+					title: "Erro ao responder pergunta",
+					variant: "error",
+				});
 			}
 
 			return { questionId, answerText };

@@ -16,6 +16,7 @@ import {
 import { QuestionInterface } from "@/types/QuestionInterface";
 import { ConfirmationModals } from "@/components/questions/question-confirmation-modals";
 import { isQuestionExpired } from "@/lib/utils/question-utils";
+import { toast } from "@/hooks/use-toast";
 
 export default function PerguntasRecebidasPage() {
 	const router = useRouter();
@@ -30,7 +31,6 @@ export default function PerguntasRecebidasPage() {
 	const [currentPage, setCurrentPage] = useState(1);
 	const questionsPerPage = 10;
 
-	// Modal states
 	const [isAnswerModalOpen, setIsAnswerModalOpen] = useState(false);
 	const [isDeclineModalOpen, setIsDeclineModalOpen] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -39,7 +39,6 @@ export default function PerguntasRecebidasPage() {
 	const [reportReason, setReportReason] = useState("");
 	const [pendingAnswer, setPendingAnswer] = useState("");
 
-	// Loading states
 	const [loadingStates, setLoadingStates] = useState({
 		answering: "",
 		declining: "",
@@ -73,7 +72,6 @@ export default function PerguntasRecebidasPage() {
 				answerText: pendingAnswer,
 			});
 
-			// Atualizar estado local
 			setQuestions((prev) =>
 				prev.map((q) =>
 					q.id === selectedQuestion.id
@@ -88,7 +86,10 @@ export default function PerguntasRecebidasPage() {
 				),
 			);
 		} catch (error) {
-			// Error handled by mutation
+			toast({
+				title: "Ocorreu um erro ao responder a pergunta. Por favor, tente novamente.",
+				variant: "error",
+			});
 		} finally {
 			setLoadingStates((prev) => ({ ...prev, answering: "" }));
 			setIsAnswerModalOpen(false);
@@ -129,7 +130,10 @@ export default function PerguntasRecebidasPage() {
 				),
 			);
 		} catch (error) {
-			// Error handled by mutation
+			toast({
+				title: "Ocorreu um erro ao recusar a pergunta. Por favor, tente novamente.",
+				variant: "error",
+			});
 		} finally {
 			setLoadingStates((prev) => ({ ...prev, declining: "" }));
 			setIsDeclineModalOpen(false);
@@ -158,7 +162,10 @@ export default function PerguntasRecebidasPage() {
 
 			setQuestions((prev) => prev.filter((q) => q.id !== selectedQuestion.id));
 		} catch (error) {
-			// Error handled by mutation
+			toast({
+				title: "Ocorreu um erro ao deletar a pergunta. Por favor, tente novamente.",
+				variant: "error",
+			});
 		} finally {
 			setLoadingStates((prev) => ({ ...prev, deleting: "" }));
 			setIsDeleteModalOpen(false);
@@ -205,7 +212,10 @@ export default function PerguntasRecebidasPage() {
 				),
 			);
 		} catch (error) {
-			// Error handled by mutation
+			toast({
+				title: "Ocorreu um erro ao reportar a pergunta. Por favor, tente novamente.",
+				variant: "error",
+			});
 		} finally {
 			setIsReportModalOpen(false);
 			setSelectedQuestion(null);
@@ -215,7 +225,6 @@ export default function PerguntasRecebidasPage() {
 
 	const markExpiredMutation = useMarkQuestionExpired();
 
-	// Adicionar este useEffect para verificar perguntas expiradas
 	useEffect(() => {
 		const checkExpiredQuestions = () => {
 			questions.forEach((question) => {
@@ -224,10 +233,8 @@ export default function PerguntasRecebidasPage() {
 					!question.question_answer_was_expired &&
 					isQuestionExpired(question.created_at)
 				) {
-					// Marcar como expirada no backend
 					markExpiredMutation.mutate(question.id);
 
-					// Atualizar estado local
 					setQuestions((prev) =>
 						prev.map((q) =>
 							q.id === question.id
@@ -244,22 +251,17 @@ export default function PerguntasRecebidasPage() {
 			});
 		};
 
-		// Verificar a cada minuto
 		const interval = setInterval(checkExpiredQuestions, 60000);
 
-		// Verificar imediatamente ao carregar
 		checkExpiredQuestions();
 
 		return () => clearInterval(interval);
 	}, [questions, markExpiredMutation, setQuestions]);
 
-	// Adicionar esta função no perguntas-recebidas.tsx
 	const handleQuestionExpire = useCallback(
 		(questionId: string) => {
-			// Marcar como expirada no backend
 			markExpiredMutation.mutate(questionId);
 
-			// Atualizar estado local imediatamente
 			setQuestions((prev) =>
 				prev.map((q) =>
 					q.id === questionId

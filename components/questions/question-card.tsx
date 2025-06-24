@@ -19,7 +19,7 @@ interface QuestionCardProps {
 	onDecline?: (questionId: string) => void;
 	onDelete?: (questionId: string) => void;
 	onReport?: (questionId: string) => void;
-	onExpire?: (questionId: string) => void; // NOVO: callback para quando pergunta expira
+	onExpire?: (questionId: string) => void;
 	isAnswering?: boolean;
 	isDeclining?: boolean;
 	isDeleting?: boolean;
@@ -32,14 +32,14 @@ export function QuestionCard({
 	onDecline,
 	onDelete,
 	onReport,
-	onExpire, // NOVO
+	onExpire,
 	isAnswering = false,
 	isDeclining = false,
 	isDeleting = false,
 }: QuestionCardProps) {
 	const [answerText, setAnswerText] = useState("");
 	const [timeRemaining, setTimeRemaining] = useState("");
-	const [hasExpired, setHasExpired] = useState(false); // NOVO: controle local de expiração
+	const [hasExpired, setHasExpired] = useState(false);
 	const status = getQuestionStatus(question);
 
 	useEffect(() => {
@@ -47,27 +47,20 @@ export function QuestionCard({
 			const interval = setInterval(() => {
 				const timeData = getTimeRemaining(question.created_at.toString());
 
-				// CORRIGIDO: Verificar se é objeto ou string
 				if (typeof timeData === "object" && timeData.isExpired) {
-					// Pergunta expirou agora
 					setHasExpired(true);
 					setTimeRemaining("Expirado");
-
-					// Chamar callback para marcar como expirada
 					onExpire?.(question.id);
 
 					clearInterval(interval);
 				} else if (typeof timeData === "object") {
-					// Ainda não expirou, mostrar tempo restante
 					const { hours, minutes, seconds } = timeData;
 					setTimeRemaining(`${hours}h ${minutes}m ${seconds}s restantes`);
 				} else {
-					// Fallback se timeData for string
 					setTimeRemaining(timeData);
 				}
 			}, 1000);
 
-			// Verificar imediatamente se já expirou
 			const initialTimeData = getTimeRemaining(question.created_at.toString());
 			if (typeof initialTimeData === "object" && initialTimeData.isExpired) {
 				setHasExpired(true);
@@ -86,7 +79,6 @@ export function QuestionCard({
 
 	const isAnswerValid = answerText.trim().length >= 32 && answerText.length <= 512;
 
-	// NOVO: Não renderizar se a pergunta expirou localmente mas ainda não foi atualizada no estado
 	if (hasExpired && status === "pending") {
 		return null;
 	}

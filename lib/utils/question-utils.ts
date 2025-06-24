@@ -126,7 +126,6 @@ export function getDeleteTimer(declinedAt: string): string {
 
 export function sortQuestionsByDate(questions: QuestionInterface[]): QuestionInterface[] {
 	return [...questions].sort((a, b) => {
-		// Para perguntas respondidas, usar answered_at
 		if (a.question_answered && b.question_answered) {
 			const dateA = new Date(a.answered_at || a.created_at);
 			const dateB = new Date(b.answered_at || b.created_at);
@@ -157,7 +156,6 @@ export function sortQuestionsByDate(questions: QuestionInterface[]): QuestionInt
 			return dateB.getTime() - dateA.getTime(); // DESC
 		}
 
-		// Para perguntas pendentes ou casos mistos, usar created_at
 		const dateA = new Date(a.created_at);
 		const dateB = new Date(b.created_at);
 		return dateB.getTime() - dateA.getTime(); // DESC
@@ -220,6 +218,5 @@ export function filterQuestionsByStatus(questions: QuestionInterface[], status: 
 			filteredQuestions = questions;
 	}
 
-	// APLICAR ORDENAÇÃO DESC
 	return sortQuestionsByDate(filteredQuestions);
 }

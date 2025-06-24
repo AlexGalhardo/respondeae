@@ -23,15 +23,15 @@ export class SeedHelpers {
 	}
 
 	static generateRandomAmount(): number {
-		return faker.number.int({ min: 2, max: 100 }) * 100;
+		return faker.number.int({ min: 2, max: 50 }) * 100;
 	}
 
 	static calculateFee(amount: number): number {
-		return Math.floor(amount * 0.05);
+		return Math.floor(amount * 0.5);
 	}
 
 	static generateSocialMediaUrl(platform: string, nickname: string): string | null {
-		if (!faker.datatype.boolean({ probability: 0.7 })) return null;
+		if (!faker.datatype.boolean({ probability: 0.2 })) return null;
 
 		const urls = {
 			twitter: `https://twitter.com/${nickname}`,

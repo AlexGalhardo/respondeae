@@ -46,7 +46,7 @@ model User {
 
   api_key String @unique
 
-  privacy_is_private_profile                          Boolean @default(true)
+  privacy_is_private_profile                          Boolean @default(false)
   privacy_accept_anonymous_questions                  Boolean @default(false)
   privacy_show_anonymous_questions_public             Boolean @default(false)
   privacy_show_questions_answered_only_to_followers   Boolean @default(false)
@@ -65,9 +65,10 @@ model User {
   banned_reason      String?
   banned_until       DateTime?
 
-  created_at DateTime  @default(now())
-  updated_at DateTime? @updatedAt
-  deleted_at DateTime?
+  created_at    DateTime  @default(now())
+  last_login_at DateTime?
+  updated_at    DateTime? @updatedAt
+  deleted_at    DateTime?
 
   followers Follower[] @relation("UserFollowers")
   following Follower[] @relation("UserFollowing")
@@ -185,7 +186,7 @@ model Question {
   owner    User @relation("QuestionOwner", fields: [owner_user_nickname], references: [nickname], onDelete: Cascade)
   asked_by User @relation("QuestionAsker", fields: [asked_by_user_nickname], references: [nickname], onDelete: Cascade)
 
-  payment_withdraw PaymentWithdraw? @relation(fields: [payment_withdraw_id], references: [id])
+  payment_withdraw PaymentWithdraw? @relation(fields: [payment_withdraw_id], references: [id], onDelete: Cascade)
 
   @@map("questions")
 }

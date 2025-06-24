@@ -112,11 +112,10 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 		return "default";
 	};
 
-	// Verificar se deve mostrar os botões (não mostrar para o próprio usuário)
 	const shouldShowActionButtons = !session?.user?.id || session.user.id !== profile.id;
 
 	return (
-		<Card className="mb-6">
+		<Card className="mb-6 shadow">
 			<CardContent className="p-4 sm:p-6">
 				<div className="flex flex-col items-center text-center">
 					<Avatar className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded shadow">

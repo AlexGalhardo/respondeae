@@ -152,8 +152,8 @@ export default function ProfileClient() {
 			)}
 
 			{!session?.user?.id && (
-				<div className="text-center py-4 rounded-lg bg-orange-700 text-white shadow mb-6">
-					<p className="text-sm md:text-base font-medium">
+				<div className="text-center py-4 rounded-lg dark:text-white mb-6 font-bold text-gray-700">
+					<p className="md:text-base font-bold">
 						Entre na sua conta para poder fazer perguntas a esse usuário.
 					</p>
 				</div>
@@ -195,8 +195,8 @@ export default function ProfileClient() {
 					</TabsContent>
 				</Tabs>
 			) : (
-				<div className="text-center py-4 px-4 rounded-lg bg-red-700 text-white shadow mb-6 dark:bg-white dark:text-black">
-					<p className="text-sm md:text-base font-medium">
+				<div className="text-center py-4 px-4  text-gray-700 mb-6 dark:text-white">
+					<p className="text-sm md:text-base font-bold">
 						{isFollowing
 							? "Aguardando aprovação para ver as respostas deste perfil privado."
 							: hasPendingRequest

@@ -45,6 +45,7 @@ CREATE TABLE "users" (
     "banned_reason" TEXT,
     "banned_until" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "last_login_at" TIMESTAMP(3),
     "updated_at" TIMESTAMP(3),
     "deleted_at" TIMESTAMP(3),
 
@@ -224,7 +225,7 @@ ALTER TABLE "questions" ADD CONSTRAINT "questions_owner_user_nickname_fkey" FORE
 ALTER TABLE "questions" ADD CONSTRAINT "questions_asked_by_user_nickname_fkey" FOREIGN KEY ("asked_by_user_nickname") REFERENCES "users"("nickname") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "questions" ADD CONSTRAINT "questions_payment_withdraw_id_fkey" FOREIGN KEY ("payment_withdraw_id") REFERENCES "payment_withdraws"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "questions" ADD CONSTRAINT "questions_payment_withdraw_id_fkey" FOREIGN KEY ("payment_withdraw_id") REFERENCES "payment_withdraws"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "payment_withdraws" ADD CONSTRAINT "payment_withdraws_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

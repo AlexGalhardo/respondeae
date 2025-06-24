@@ -13,9 +13,12 @@ export const contactSchema = z.object({
 		.max(24, "Nome deve ter no máximo 24 caracteres")
 		.trim(),
 	email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
-	subject: z.enum(["suporte", "pagamentos", "conta", "sugestao", "outro"], {
-		errorMap: () => ({ message: "Assunto inválido" }),
-	}),
+	subject: z.enum(
+		["Problemas Técnicos", "Problemas Com Pagamentos", "Problemas com Conta", "Sugestões e Feedbacks", "Outros"],
+		{
+			errorMap: () => ({ message: "Assunto inválido" }),
+		},
+	),
 	message: z.string().min(32, "Mensagem deve ter pelo menos 32 caracteres").trim(),
 });
 
@@ -23,7 +26,12 @@ export async function POST(request: Request) {
 	try {
 		const body = await request.json();
 
-		const validationResult = contactSchema.safeParse(body);
+		const validationResult = contactSchema.safeParse({
+			name: body.name,
+			email: body.email,
+			subject: body.subject,
+			message: body.message,
+		});
 
 		if (!validationResult.success) {
 			const errors = validationResult.error.errors.map((error) => ({
@@ -40,12 +48,36 @@ export async function POST(request: Request) {
 			);
 		}
 
+		const turnstileSecret = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
+		const verifyUrl = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+
+		try {
+			const res = await fetch(verifyUrl, {
+				method: "POST",
+				headers: { "Content-Type": "application/x-www-form-urlencoded" },
+				body: new URLSearchParams({
+					secret: turnstileSecret ?? "",
+					response: body?.captchaToken,
+				}),
+			});
+
+			const data = await res.json();
+
+			if (!data.success) {
+				console.warn("Captcha inválido: ", data);
+				return NextResponse.json({ error: "Captcha inválido" }, { status: 500 });
+			}
+		} catch (err) {
+			console.error("Erro na verificação do CAPTCHA: ", err);
+			return NextResponse.json({ error: "Erro na verificação do CAPTCHA" }, { status: 500 });
+		}
+
 		const { name, email, subject, message } = validationResult.data;
 
 		const { data, error } = await resend.emails.send({
 			from: "onboarding@resend.dev",
 			to: ["aleexgvieira@gmail.com"],
-			subject: `Formulário de Contact: ${subject}`,
+			subject: `Respondeae.com.br - ${email} - ${subject}`,
 			react: ContactEmail({ name, email, subject, message }),
 		});
 
