@@ -4,13 +4,24 @@ import { subDays } from "date-fns";
 
 async function deleteOldUsers(): Promise<number> {
 	const thirtyDaysAgo = subDays(new Date(), 30);
+	const twoYearsAgo = subDays(new Date(), 730);
 
 	const usersToDelete = await prisma.user.findMany({
 		where: {
-			deleted_at: {
-				not: null,
-				lt: thirtyDaysAgo,
-			},
+			OR: [
+				{
+					deleted_at: {
+						not: null,
+						lt: thirtyDaysAgo,
+					},
+				},
+				{
+					last_login_at: {
+						not: null,
+						lt: twoYearsAgo,
+					},
+				},
+			],
 		},
 	});
 
@@ -40,7 +51,7 @@ async function deleteOldUsers(): Promise<number> {
 	return usersToDelete.length;
 }
 
-export async function GET(request: Request) {
+export async function GET(_: Request) {
 	const now = new Date();
 	const formattedNow = now.toLocaleString("pt-BR");
 
@@ -54,7 +65,7 @@ export async function GET(request: Request) {
 	const deletedCount = await deleteOldUsers();
 
 	await TelegramLog.info(
-		`🕒 Cronjob executado em ${formattedNow}\n🔁 Contadores resetados para ${resetResult.count} usuários.\n🗑️ Usuários deletados após 30 dias: ${deletedCount}`,
+		`🕒 Cronjob executado em ${formattedNow}\n🔁 Contadores resetados para ${resetResult.count} usuários.\n🗑️ Usuários deletados (30 dias marcados como deletados ou 2 anos sem login): ${deletedCount}`,
 	);
 
 	return new Response("OK");

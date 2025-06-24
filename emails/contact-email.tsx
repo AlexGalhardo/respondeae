@@ -15,7 +15,7 @@ export function ContactEmail({ name, email, subject, message }: ContactEmailProp
 				<Container style={{ padding: "20px", maxWidth: "600px" }}>
 					<Section style={{ marginBottom: "20px" }}>
 						<Heading className="font-semibold text-[24px] text-indigo-400 leading-[32px]">
-							RespondeAE.com.br - Formulário de contato
+							Formulário de Contato do RespondeAe
 						</Heading>
 					</Section>
 					<Section style={{ marginBottom: "10px" }}>
