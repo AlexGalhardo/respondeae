@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import TelegramLog from "@/lib/telegram-logger";
 import { formatCurrency } from "@/lib/utils";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/prisma/prisma-client";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -57,22 +55,43 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: "Usuário que fez o pagamento não encontrado" }, { status: 404 });
 		}
 
-		const webhook = await prisma.webhookAbacatePay.findUnique({
-			where: { pix_id: pix_id },
-		});
+		let webhook,
+			existingQuestion = null;
 
-		if (!webhook) {
-			await TelegramLog.error("Question Create: ❌ Webhook não encontrado");
-			return NextResponse.json({ error: "Webhook não encontrado" }, { status: 404 });
-		}
+		if (process.env.NEXT_PUBLIC_TEST_MODE !== "true") {
+			webhook = await prisma.webhookAbacatePay.findUnique({
+				where: { pix_id: pix_id },
+			});
 
-		const existingQuestion = await prisma.question.findFirst({
-			where: { webhook_id: webhook.id },
-		});
+			if (!webhook) {
+				await TelegramLog.error("Question Create: ❌ Webhook não encontrado");
+				return NextResponse.json({ error: "Webhook não encontrado" }, { status: 404 });
+			}
 
-		if (existingQuestion) {
-			await TelegramLog.error("Question Create: ❌ Já existe uma pergunta associada a este pagamento");
-			return NextResponse.json({ error: "Já existe uma pergunta associada a este pagamento" }, { status: 400 });
+			existingQuestion = await prisma.question.findFirst({
+				where: { webhook_id: webhook.id },
+			});
+
+			if (existingQuestion) {
+				await TelegramLog.error("Question Create: ❌ Já existe uma pergunta associada a este pagamento");
+				return NextResponse.json(
+					{ error: "Já existe uma pergunta associada a este pagamento" },
+					{ status: 400 },
+				);
+			}
+		} else {
+			webhook = await prisma.webhookAbacatePay.create({
+				data: {
+					pix_id,
+					status: "completed",
+					amount: amount_paid,
+					fee: 0,
+					kind: "payment",
+					event_status: "received",
+					dev_mode: true,
+					complete_event: "payment.completed",
+				},
+			});
 		}
 
 		if (is_anonymous) {
@@ -167,7 +186,5 @@ export async function POST(request: NextRequest) {
 	} catch (error: any) {
 		await TelegramLog.error(`Question Create catch error: ${error?.message}`);
 		return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
-	} finally {
-		await prisma.$disconnect();
 	}
 }

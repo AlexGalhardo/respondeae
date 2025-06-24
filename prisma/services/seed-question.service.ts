@@ -34,7 +34,6 @@ export class SeedQuestionService {
 						`    🔄 Pergunta ${created + 1}/${totalQuestions}: @${askerUser.nickname} → @${ownerUser.nickname} (${state}) - R$ ${(amount / 100).toFixed(2)}`,
 					);
 
-					// Criar webhook
 					const webhookData = SeedWebhookFactory.create(pixId, amount);
 					SeedLogger.info(`      💳 Criando webhook: ${pixId}`);
 

@@ -54,11 +54,10 @@ export function useProcessWithdraw() {
 		onSuccess: (data, variables) => {
 			toast({
 				title: "Saque realizado com sucesso",
-				description: `Valor de R$ ${(variables.amount / 100).toFixed(2)} será enviado para sua chave PIX.`,
+				description: `Valor de R$ ${(variables.amount / 100).toFixed(2)} será enviado para a conta associada a essa chave PIX em breve.`,
 				variant: "success",
 			});
 
-			// Invalidate and refetch payment data
 			queryClient.invalidateQueries({
 				queryKey: ["payment-data", "answered", session?.user?.nickname],
 			});

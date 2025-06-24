@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { isAfter, subDays } from "date-fns";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -72,17 +73,22 @@ export function MySidebar() {
 
 			try {
 				if (Array.isArray(session.user.questions_received)) {
+					console.log("session.user.questions_received -> ", session.user.questions_received);
 					pendingQuestions = session.user.questions_received.filter((question) => {
 						return (
 							question &&
 							typeof question === "object" &&
 							"question_is_awaiting_answer" in question &&
-							question.question_is_awaiting_answer === true
+							"question_answer_was_expired" in question &&
+							"created_at" in question &&
+							(question as any).question_is_awaiting_answer === true &&
+							(question as any).question_answer_was_expired === false &&
+							((question as any).question_answer_expired_at === null ||
+								isAfter(new Date((question as any).created_at), subDays(new Date(), 7)))
 						);
 					}).length;
 				}
 			} catch (error) {
-				console.warn("Erro ao calcular perguntas pendentes:", error);
 				pendingQuestions = 0;
 			}
 
@@ -172,7 +178,6 @@ export function MySidebar() {
 		setSidebarOpen(false);
 	};
 
-	// Função para calcular badge de notificações (reutilizável)
 	const getPendingQuestionsCount = (): number => {
 		if (!isAuthenticated || !session?.user) return 0;
 
@@ -293,7 +298,6 @@ export function MySidebar() {
 
 	return (
 		<>
-			{/* Mobile Header */}
 			<header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-14 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 				<div className="flex h-full items-center justify-between px-4">
 					<Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
@@ -312,28 +316,6 @@ export function MySidebar() {
 					</div>
 
 					<div className="flex items-center space-x-2">
-						{/* Badge de notificações no header mobile */}
-						{isAuthenticated && session?.user && (
-							<div className="relative">
-								<Link href="/perguntas-recebidas">
-									<Button variant="ghost" size="sm">
-										<Bell className="h-4 w-4" />
-									</Button>
-								</Link>
-								{(() => {
-									const pendingCount = getPendingQuestionsCount();
-									return pendingCount > 0 ? (
-										<Badge
-											variant="destructive"
-											className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-										>
-											{pendingCount}
-										</Badge>
-									) : null;
-								})()}
-							</div>
-						)}
-
 						<Button
 							variant="ghost"
 							size="sm"
@@ -367,7 +349,6 @@ export function MySidebar() {
 				</div>
 			</aside>
 
-			{/* Mobile Sidebar */}
 			{sidebarOpen && (
 				<div className="lg:hidden fixed inset-0 z-50 flex">
 					<div className="fixed inset-0 bg-black/20" onClick={() => setSidebarOpen(false)} />

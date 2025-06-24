@@ -1,10 +1,9 @@
-// app/api/auth/verify-session/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getUserById } from "@/lib/repositories/users.repository";
 
-export async function GET(request: NextRequest) {
+export async function GET(_: NextRequest) {
 	try {
 		const session = await getServerSession(authOptions);
 
@@ -12,8 +11,6 @@ export async function GET(request: NextRequest) {
 			return NextResponse.json({ error: "Sessão não encontrada ou expirada" }, { status: 401 });
 		}
 
-		// Aqui você pode adicionar verificações adicionais
-		// como verificar se o usuário ainda existe no banco de dados
 		const user = await getUserById(session.user.id);
 		if (!user) {
 			return NextResponse.json({ error: "Usuário não encontrado" }, { status: 401 });

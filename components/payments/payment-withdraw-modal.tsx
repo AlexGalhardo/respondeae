@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -9,6 +10,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { formatCurrency, validatePixKey } from "@/lib/utils/payment-utils";
 
 interface WithdrawModalProps {
@@ -28,7 +30,10 @@ export function PaymentWithdrawModal({
 	onConfirmWithdraw,
 	isProcessing = false,
 }: WithdrawModalProps) {
+	const [confirmationInput, setConfirmationInput] = useState("");
+
 	const hasValidPixKey = validatePixKey(pixKey);
+	const isInputMatching = confirmationInput === pixKey;
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -61,12 +66,26 @@ export function PaymentWithdrawModal({
 							</DialogDescription>
 						</DialogHeader>
 
+						<div className="mt-4 space-y-2">
+							<label htmlFor="confirmPixKey" className="text-base font-medium">
+								Digite a chave PIX acima para confirmar:
+							</label>
+							<Input
+								id="confirmPixKey"
+								type="text"
+								placeholder="Digite exatamente como está acima"
+								value={confirmationInput}
+								onChange={(e) => setConfirmationInput(e.target.value)}
+								className="text-lg"
+							/>
+						</div>
+
 						<DialogFooter>
 							<Button
 								type="button"
 								onClick={onConfirmWithdraw}
 								className="bg-green-500 text-white hover:bg-green-800 font-bold px-6 py-6 text-2xl mt-6 w-full"
-								disabled={isProcessing}
+								disabled={isProcessing || !isInputMatching}
 							>
 								{isProcessing ? "Processando Saque..." : "Confirmar Saque Nessa Chave PIX"}
 							</Button>
