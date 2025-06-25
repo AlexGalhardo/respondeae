@@ -179,71 +179,81 @@ export const FeedQuestionsFeed = ({ userNickname, userId }: FeedQuestionsFeedPro
 
 	if (isLoading) {
 		return (
-			<div className="flex justify-center items-center py-12">
-				<Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-				<span className="ml-2 text-gray-500">Carregando...</span>
+			<div className="space-y-4 sm:space-y-6">
+				<div className="bg-white dark:bg-gray-900 pb-4 border-b border-gray-200 dark:border-gray-700">
+					<FeedTabs activeTab={activeTab} onTabChange={handleTabChange} isLoggedIn={!!userNickname} />
+				</div>
+				<div className="flex justify-center items-center py-12">
+					<Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+					<span className="ml-2 text-gray-500">Carregando...</span>
+				</div>
 			</div>
 		);
 	}
 
 	if (isError) {
 		return (
-			<div className="text-center py-12">
-				<p className="text-red-500 text-lg">
-					Erro ao carregar perguntas: {error?.message || "Erro desconhecido"}
-				</p>
+			<div className="space-y-4 sm:space-y-6">
+				<div className="bg-white dark:bg-gray-900 pb-4 border-b border-gray-200 dark:border-gray-700">
+					<FeedTabs activeTab={activeTab} onTabChange={handleTabChange} isLoggedIn={!!userNickname} />
+				</div>
+				<div className="text-center py-12">
+					<p className="text-red-500 text-lg">
+						Erro ao carregar perguntas: {error?.message || "Erro desconhecido"}
+					</p>
+				</div>
 			</div>
 		);
 	}
 
-	const showTabs = questions.length > 0;
-
 	if (questions.length === 0) {
 		return (
-			<div className="text-center py-12">
-				{activeTab === "following" ? (
-					<>
-						<FeedTabs
-							activeTab={activeTab}
-							onTabChange={handleTabChange}
-							isLoggedIn={!!userNickname}
-							className="mb-8"
-						/>
+			<div className="space-y-4 sm:space-y-6">
+				<div className=" bg-white dark:bg-gray-900 pb-4 border-b border-gray-200 dark:border-gray-700">
+					<FeedTabs activeTab={activeTab} onTabChange={handleTabChange} isLoggedIn={!!userNickname} />
+				</div>
+				<div className="text-center py-12">
+					{activeTab === "following" ? (
 						<p className="text-gray-500 text-lg">
 							Você ainda não segue ninguém ou as pessoas que você segue não têm perguntas respondidas.
 						</p>
-					</>
-				) : (
-					<p className="text-gray-500 text-lg">Nenhuma pergunta encontrada no momento.</p>
-				)}
+					) : (
+						<p className="text-gray-500 text-lg">Nenhuma pergunta encontrada no momento.</p>
+					)}
+				</div>
 			</div>
 		);
 	}
 
 	return (
 		<div className="space-y-4 sm:space-y-6">
-			{showTabs && <FeedTabs activeTab={activeTab} onTabChange={handleTabChange} isLoggedIn={!!userNickname} />}
+			<div className=" bg-white dark:bg-gray-900">
+				<FeedTabs activeTab={activeTab} onTabChange={handleTabChange} isLoggedIn={!!userNickname} />
+			</div>
 
-			{questions.map((question) => {
-				const optimisticState = optimisticStates[question.id];
+			<div className="min-h-[400px]">
+				{questions.map((question) => {
+					const optimisticState = optimisticStates[question.id];
 
-				return (
-					<FeedQuestionCard
-						key={question.id}
-						question={question}
-						userNickname={userNickname}
-						userId={userId}
-						onLike={handleLike}
-						onDislike={handleDislike}
-						hasUserLiked={hasUserLiked(question)}
-						hasUserDisliked={hasUserDisliked(question)}
-						optimisticLikeCount={optimisticState?.likeCount}
-						optimisticDislikeCount={optimisticState?.dislikeCount}
-						optimisticHasUserLiked={optimisticState?.hasUserLiked}
-						optimisticHasUserDisliked={optimisticState?.hasUserDisliked}
-					/>
-				);
-			})}
+					return (
+						<div key={question.id} className="mb-4 sm:mb-6">
+							<FeedQuestionCard
+								question={question}
+								userNickname={userNickname}
+								userId={userId}
+								onLike={handleLike}
+								onDislike={handleDislike}
+								hasUserLiked={hasUserLiked(question)}
+								hasUserDisliked={hasUserDisliked(question)}
+								optimisticLikeCount={optimisticState?.likeCount}
+								optimisticDislikeCount={optimisticState?.dislikeCount}
+								optimisticHasUserLiked={optimisticState?.hasUserLiked}
+								optimisticHasUserDisliked={optimisticState?.hasUserDisliked}
+							/>
+						</div>
+					);
+				})}
+			</div>
 
 			{isFetchingNextPage && (
 				<div className="flex justify-center items-center py-8">

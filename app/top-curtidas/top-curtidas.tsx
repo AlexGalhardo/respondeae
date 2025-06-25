@@ -13,9 +13,8 @@ import { useSession } from "next-auth/react";
 import LoadingScreen from "@/components/loading-screen";
 import { getInitials } from "@/lib/functions";
 import { QuestionInterface } from "@/lib/interfaces";
-
-type DateStringOrDate = string | Date;
-type DateStringOrDateOrNull = string | Date | null;
+import { useLikeQuestion, useDislikeQuestion } from "@/hooks/use-profile-queries";
+import { useToast } from "@/components/ui/use-toast";
 
 interface TopCurtidasProps {
 	today: QuestionInterface[];
@@ -26,12 +25,22 @@ interface TopCurtidasProps {
 }
 
 export default function TopCurtidasClient({ today, week, month, year, allTime }: TopCurtidasProps) {
+	const { data: session } = useSession();
+	const { toast } = useToast();
+	const likeMutation = useLikeQuestion();
+	const dislikeMutation = useDislikeQuestion();
 	const { status } = useSession();
 	const [activeTab, setActiveTab] = useState("today");
 	const [displayedQuestions, setDisplayedQuestions] = useState<QuestionInterface[]>([]);
 	const [currentData, setCurrentData] = useState<QuestionInterface[]>([]);
 	const [isLoadingMore, setIsLoadingMore] = useState(false);
 	const [hasMoreQuestions, setHasMoreQuestions] = useState(true);
+
+	const [todayQuestions, setTodayQuestions] = useState<QuestionInterface[]>(today);
+	const [weekQuestions, setWeekQuestions] = useState<QuestionInterface[]>(week);
+	const [monthQuestions, setMonthQuestions] = useState<QuestionInterface[]>(month);
+	const [yearQuestions, setYearQuestions] = useState<QuestionInterface[]>(year);
+	const [allTimeQuestions, setAllTimeQuestions] = useState<QuestionInterface[]>(allTime);
 
 	const questionsPerLoad = 10;
 
@@ -43,24 +52,35 @@ export default function TopCurtidasClient({ today, week, month, year, allTime }:
 		});
 	};
 
+	const updateQuestionInAllStates = (updatedQuestion: QuestionInterface) => {
+		const updateQuestion = (questions: QuestionInterface[]) =>
+			questions.map((q) => (q.id === updatedQuestion.id ? updatedQuestion : q));
+
+		setTodayQuestions((prev) => updateQuestion(prev));
+		setWeekQuestions((prev) => updateQuestion(prev));
+		setMonthQuestions((prev) => updateQuestion(prev));
+		setYearQuestions((prev) => updateQuestion(prev));
+		setAllTimeQuestions((prev) => updateQuestion(prev));
+	};
+
 	useEffect(() => {
 		let newData: QuestionInterface[] = [];
 
 		switch (activeTab) {
 			case "today":
-				newData = sortQuestionsByLikes([...today]);
+				newData = sortQuestionsByLikes([...todayQuestions]);
 				break;
 			case "week":
-				newData = sortQuestionsByLikes([...week]);
+				newData = sortQuestionsByLikes([...weekQuestions]);
 				break;
 			case "month":
-				newData = sortQuestionsByLikes([...month]);
+				newData = sortQuestionsByLikes([...monthQuestions]);
 				break;
 			case "year":
-				newData = sortQuestionsByLikes([...year]);
+				newData = sortQuestionsByLikes([...yearQuestions]);
 				break;
 			case "allTime":
-				newData = sortQuestionsByLikes([...allTime]);
+				newData = sortQuestionsByLikes([...allTimeQuestions]);
 				break;
 		}
 
@@ -68,7 +88,7 @@ export default function TopCurtidasClient({ today, week, month, year, allTime }:
 		const initialQuestions = newData.slice(0, questionsPerLoad);
 		setDisplayedQuestions(initialQuestions);
 		setHasMoreQuestions(newData.length > questionsPerLoad);
-	}, [activeTab, today, week, month, year, allTime]);
+	}, [activeTab, todayQuestions, weekQuestions, monthQuestions, yearQuestions, allTimeQuestions]);
 
 	const loadMoreQuestions = useCallback(() => {
 		if (isLoadingMore || !hasMoreQuestions) return;
@@ -117,6 +137,96 @@ export default function TopCurtidasClient({ today, week, month, year, allTime }:
 
 		return () => window.removeEventListener("resize", checkMobile);
 	}, []);
+
+	const hasUserLiked = (question: QuestionInterface) => {
+		if (!session?.user?.nickname) return false;
+		const likedUsers = JSON.parse(question.liked_by_users || "[]");
+		return likedUsers.includes(session.user.nickname);
+	};
+
+	const hasUserDisliked = (question: QuestionInterface) => {
+		if (!session?.user?.nickname) return false;
+		const dislikedUsers = JSON.parse(question.desliked_by_users || "[]");
+		return dislikedUsers.includes(session.user.nickname);
+	};
+
+	const handleLike = async (question: QuestionInterface) => {
+		if (!session?.user?.nickname) return;
+
+		try {
+			await likeMutation.mutateAsync({
+				questionId: question.id,
+				nickname: session.user.nickname,
+			});
+
+			const currentLikedUsers = JSON.parse(question.liked_by_users || "[]");
+			const currentDislikedUsers = JSON.parse(question.desliked_by_users || "[]");
+			const userNickname = session.user.nickname;
+
+			let updatedLikedUsers = [...currentLikedUsers];
+			let updatedDislikedUsers = [...currentDislikedUsers];
+
+			if (currentLikedUsers.includes(userNickname)) {
+				updatedLikedUsers = updatedLikedUsers.filter((nick) => nick !== userNickname);
+			} else {
+				updatedLikedUsers.push(userNickname);
+				updatedDislikedUsers = updatedDislikedUsers.filter((nick) => nick !== userNickname);
+			}
+
+			const updatedQuestion = {
+				...question,
+				liked_by_users: JSON.stringify(updatedLikedUsers),
+				desliked_by_users: JSON.stringify(updatedDislikedUsers),
+			};
+
+			updateQuestionInAllStates(updatedQuestion);
+		} catch (error) {
+			toast({
+				title: "Erro ao curtir pergunta!",
+				description: "Tente novamente mais tarde",
+				variant: "error",
+			});
+		}
+	};
+
+	const handleDislike = async (question: QuestionInterface) => {
+		if (!session?.user?.nickname) return;
+
+		try {
+			await dislikeMutation.mutateAsync({
+				questionId: question.id,
+				nickname: session.user.nickname,
+			});
+
+			const currentLikedUsers = JSON.parse(question.liked_by_users || "[]");
+			const currentDislikedUsers = JSON.parse(question.desliked_by_users || "[]");
+			const userNickname = session.user.nickname;
+
+			let updatedLikedUsers = [...currentLikedUsers];
+			let updatedDislikedUsers = [...currentDislikedUsers];
+
+			if (currentDislikedUsers.includes(userNickname)) {
+				updatedDislikedUsers = updatedDislikedUsers.filter((nick) => nick !== userNickname);
+			} else {
+				updatedDislikedUsers.push(userNickname);
+				updatedLikedUsers = updatedLikedUsers.filter((nick) => nick !== userNickname);
+			}
+
+			const updatedQuestion = {
+				...question,
+				liked_by_users: JSON.stringify(updatedLikedUsers),
+				desliked_by_users: JSON.stringify(updatedDislikedUsers),
+			};
+
+			updateQuestionInAllStates(updatedQuestion);
+		} catch (error) {
+			toast({
+				title: "Erro ao descurtir pergunta!",
+				description: "Tente novamente mais tarde",
+				variant: "error",
+			});
+		}
+	};
 
 	if (status === "loading") return <LoadingScreen />;
 
@@ -218,12 +328,17 @@ export default function TopCurtidasClient({ today, week, month, year, allTime }:
 					<Button
 						variant="ghost"
 						size="sm"
-						className={`p-2 h-auto text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20
-														`}
-						disabled
-						// onClick={() => handleLike(question)}
+						className={`p-2 h-auto ${
+							hasUserLiked(question)
+								? "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30"
+								: "text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
+						}`}
+						disabled={
+							!session?.user?.nickname || session.user.id === question.owner.id || likeMutation.isPending
+						}
+						onClick={() => handleLike(question)}
 					>
-						<ThumbsUp className={`h-4 w-4 mr-2`} />
+						<ThumbsUp className={`h-4 w-4 mr-2 ${hasUserLiked(question) ? "fill-current" : ""}`} />
 						{question.owner.privacy_show_likes_each_answer_public && (
 							<span className="text-sm font-medium">
 								{JSON.parse(question.liked_by_users || "[]").length}
@@ -234,14 +349,19 @@ export default function TopCurtidasClient({ today, week, month, year, allTime }:
 					<Button
 						variant="ghost"
 						size="sm"
-						className={`p-2 h-auto ${"text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"}`}
-						disabled
-						// onClick={() => handleDislike(question)}
+						className={`p-2 h-auto ${
+							hasUserDisliked(question)
+								? "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30"
+								: "text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+						}`}
+						disabled={
+							!session?.user?.nickname ||
+							session.user.id === question.owner.id ||
+							dislikeMutation.isPending
+						}
+						onClick={() => handleDislike(question)}
 					>
-						<ThumbsDown
-							className={`h-4 w-4 mr-2 ""
-															}`}
-						/>
+						<ThumbsDown className={`h-4 w-4 mr-2 ${hasUserDisliked(question) ? "fill-current" : ""}`} />
 						{question.owner.privacy_show_dislikes_each_answer_public && (
 							<span className="text-sm font-medium">
 								{JSON.parse(question.desliked_by_users || "[]").length}

@@ -10,6 +10,7 @@ import { UserPlus, UserCheck, Clock, Loader } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { ProfileBlockUserButton } from "./profile-block-user-button";
 import { ProfileSocialLinks } from "./profile-social-linkts";
+import { QuestionInterface } from "@/types/QuestionInterface";
 
 interface ProfileHeaderProps {
 	profile: any;
@@ -177,41 +178,76 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 						</div>
 					)}
 
-					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 w-full max-w-2xl">
-						<div className="text-center">
-							<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
-								{profile.questions_received?.filter((q: any) => q.question_answered).length || 0}
+					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 w-full max-w-2xl">
+						{profile.privacy_show_total_questions_answered_public && (
+							<div className="text-center">
+								<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
+									{profile.questions_received?.filter((q: any) => q.question_answered).length || 0}
+								</div>
+								<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
+									respondidas
+								</div>
 							</div>
-							<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
-								respondidas
+						)}
+
+						{profile.privacy_show_total_questions_received_public && (
+							<div className="text-center">
+								<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
+									{profile.questions_received?.length || 0}
+								</div>
+								<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
+									recebidas
+								</div>
 							</div>
-						</div>
-						<div className="text-center">
-							<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
-								{profile.questions_received?.length || 0}
+						)}
+
+						{profile.privacy_show_total_questions_sent_public && (
+							<div className="text-center">
+								<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
+									{profile.questions_sent?.length || 0}
+								</div>
+								<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
+									enviadas
+								</div>
 							</div>
-							<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">recebidas</div>
-						</div>
-						<div className="text-center">
-							<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
-								{profile.questions_sent?.length || 0}
+						)}
+
+						{profile.privacy_show_total_followers_public && (
+							<div className="text-center">
+								<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
+									{profile.followers?.length || 0}
+								</div>
+								<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
+									seguidores
+								</div>
 							</div>
-							<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">enviadas</div>
-						</div>
-						<div className="text-center">
-							<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
-								{profile.followers?.length || 0}
+						)}
+
+						{profile.privacy_show_total_followers_public && (
+							<div className="text-center">
+								<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
+									{profile.following?.length || 0}
+								</div>
+								<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
+									seguindo
+								</div>
 							</div>
-							<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
-								seguidores
+						)}
+
+						{profile.privacy_show_total_likes_all_answers_public && (
+							<div className="text-center">
+								<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
+									{profile.questions_received
+										?.filter((q: QuestionInterface) => q.question_answered)
+										.reduce(
+											(acc: number, q: QuestionInterface) =>
+												acc + (JSON.parse(q.liked_by_users || "[]").length || 0),
+											0,
+										) || 0}
+								</div>
+								<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">Likes</div>
 							</div>
-						</div>
-						<div className="text-center">
-							<div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
-								{profile.following?.length || 0}
-							</div>
-							<div className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">seguindo</div>
-						</div>
+						)}
 					</div>
 				</div>
 			</CardContent>

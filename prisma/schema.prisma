@@ -52,6 +52,7 @@ model User {
   privacy_show_questions_answered_only_to_followers   Boolean @default(false)
   privacy_show_value_received_from_answering_question Boolean @default(false)
   privacy_show_date_questions_was_answered            Boolean @default(false)
+  privacy_show_total_following_public                 Boolean @default(false)
   privacy_show_total_followers_public                 Boolean @default(false)
   privacy_show_total_questions_sent_public            Boolean @default(false)
   privacy_show_likes_each_answer_public               Boolean @default(false)

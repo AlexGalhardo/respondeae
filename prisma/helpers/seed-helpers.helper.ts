@@ -22,6 +22,13 @@ export class SeedHelpers {
 		}
 	}
 
+	static generateAnsweredAtAfter(createdAt: Date): Date {
+		const min = 1 * 60 * 1000;
+		const max = 6 * 24 * 60 * 60 * 1000;
+		const offset = faker.number.int({ min, max });
+		return new Date(createdAt.getTime() + offset);
+	}
+
 	static generateRandomAmount(): number {
 		return faker.number.int({ min: 2, max: 50 }) * 100;
 	}
@@ -31,7 +38,7 @@ export class SeedHelpers {
 	}
 
 	static generateSocialMediaUrl(platform: string, nickname: string): string | null {
-		if (!faker.datatype.boolean({ probability: 0.2 })) return null;
+		if (!faker.datatype.boolean({ probability: 0 })) return null;
 
 		const urls = {
 			twitter: `https://twitter.com/${nickname}`,

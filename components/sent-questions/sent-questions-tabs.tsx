@@ -3,7 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SentQuestionInterface } from "@/types/SentQuestion";
 import { SentQuestionsList } from "./sent-questions-list";
-import { QuestionsPagination } from "../questions/questions-pagination";
+import { QuestionsPagination } from "../questions-received/questions-pagination";
 import { filterSentQuestionsByStatus, paginateSentQuestions } from "@/lib/utils/sent-question-utils";
 
 interface SentQuestionsTabsProps {

@@ -68,12 +68,12 @@ export function PaymentWithdrawModal({
 
 						<div className="mt-4 space-y-2">
 							<label htmlFor="confirmPixKey" className="text-base font-medium">
-								Digite a chave PIX acima para confirmar:
+								Digite a chave PIX acima para confirmar o saque:
 							</label>
 							<Input
 								id="confirmPixKey"
 								type="text"
-								placeholder="Digite exatamente como está acima"
+								placeholder={pixKey as string}
 								value={confirmationInput}
 								onChange={(e) => setConfirmationInput(e.target.value)}
 								className="text-lg"

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import TelegramLog from "@/lib/telegram-logger";
 import { formatCurrency } from "@/lib/utils";
 import { prisma } from "@/prisma/prisma-client";
+import { randomUUID } from "node:crypto";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
 		} else {
 			webhook = await prisma.webhookAbacatePay.create({
 				data: {
-					pix_id,
+					pix_id: `pix_char_DEVMODE_${randomUUID()}`,
 					status: "completed",
 					amount: amount_paid,
 					fee: 0,
@@ -185,6 +186,9 @@ export async function POST(request: NextRequest) {
 		);
 	} catch (error: any) {
 		await TelegramLog.error(`Question Create catch error: ${error?.message}`);
-		return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
+		return NextResponse.json(
+			{ success: false, error: error?.message ?? "Erro interno do servidor" },
+			{ status: 500 },
+		);
 	}
 }
