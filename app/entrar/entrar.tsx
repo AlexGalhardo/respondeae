@@ -21,6 +21,8 @@ export default function EntrarClient() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [password, setPassword] = useState("");
 	const [showPasswordCriteria, setShowPasswordCriteria] = useState(false);
+	const [turnstileReady, setTurnstileReady] = useState(false);
+	const [turnstileRendered, setTurnstileRendered] = useState(false);
 
 	const { data: session } = useSession();
 
@@ -88,7 +90,7 @@ export default function EntrarClient() {
 			setError("Ocorreu um erro ao fazer login. Tente novamente.");
 		} finally {
 			setLoading(false);
-			(window as any).turnstile?.reset(); // Reseta o CAPTCHA após o envio
+			(window as any).turnstile?.reset();
 		}
 	};
 
@@ -105,13 +107,46 @@ export default function EntrarClient() {
 
 	const turnstileRef = useRef<HTMLDivElement>(null);
 
-	useEffect(() => {
-		if ((window as any).turnstile && turnstileRef.current) {
-			(window as any).turnstile.render(turnstileRef.current, {
+	const renderTurnstile = () => {
+		if (turnstileReady && turnstileRef.current && !turnstileRendered) {
+			const turnstileInstance = (window as any).turnstile.render(turnstileRef.current, {
 				sitekey: "0x4AAAAAABiCEoK5rM8dg1Xm",
 				callback: function (token: string) {},
 			});
+			setTurnstileRendered(true);
 		}
+	};
+
+	const handleTurnstileLoad = () => {
+		setTurnstileReady(true);
+	};
+
+	useEffect(() => {
+		if (turnstileReady) {
+			renderTurnstile();
+		}
+	}, [turnstileReady]);
+
+	useEffect(() => {
+		const checkTurnstileAvailability = () => {
+			if ((window as any).turnstile && !turnstileReady) {
+				setTurnstileReady(true);
+			}
+		};
+
+		const interval = setInterval(checkTurnstileAvailability, 100);
+
+		return () => clearInterval(interval);
+	}, [turnstileReady]);
+
+	useEffect(() => {
+		(window as any).onloadTurnstileCallback = () => {
+			setTurnstileReady(true);
+		};
+
+		return () => {
+			delete (window as any).onloadTurnstileCallback;
+		};
 	}, []);
 
 	return (
@@ -120,7 +155,8 @@ export default function EntrarClient() {
 				src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback"
 				async
 				defer
-				onLoad={() => console.log("Turnstile script carregado")}
+				onLoad={handleTurnstileLoad}
+				strategy="afterInteractive"
 			/>
 			<div className="min-h-screen flex items-center justify-center p-4">
 				<Card className="w-full max-w-md border-none">

@@ -86,7 +86,7 @@ export function QuestionCard({
 	return (
 		<Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
 			<CardHeader>
-				<div className="flex justify-between items-start">
+				<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
 					<div className="flex items-center gap-3">
 						{question.asker_sent_anonymous_question ? (
 							<div className="flex items-center gap-2">
@@ -118,11 +118,11 @@ export function QuestionCard({
 							</div>
 						)}
 					</div>
-					<div className="flex items-center gap-2">
-						<Badge className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xl hover:bg-green-100 dark:hover:bg-green-800 border-green-200 dark:border-green-700">
+					<div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+						<Badge className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs sm:text-sm hover:bg-green-100 dark:hover:bg-green-800 border-green-200 dark:border-green-700">
 							Pagou {formatCurrency(question.amount_paid)}
 						</Badge>
-						<span className="text-gray-500 dark:text-gray-400">
+						<span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
 							{formatDate(
 								typeof question.created_at === "string"
 									? question.created_at
@@ -178,7 +178,7 @@ export function QuestionCard({
 						<p className="text-gray-700 dark:text-gray-200">{question.answer_text}</p>
 						{question.answered_at && (
 							<p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-								Você respondeu em{" "}
+								Você respondeu{" "}
 								{formatDate(
 									typeof question.answered_at === "string"
 										? question.answered_at
@@ -210,7 +210,7 @@ export function QuestionCard({
 								{answerText.length}/512
 							</small>
 						</div>
-						<div className="flex justify-between items-center w-full">
+						<div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 w-full">
 							<Button
 								onClick={handleAnswer}
 								className="border bg-white dark:bg-gray-800 border-green-700 dark:border-green-600 text-black dark:text-gray-200 hover:bg-green-700 dark:hover:bg-green-600 hover:text-white transition-colors"
@@ -220,7 +220,7 @@ export function QuestionCard({
 								{isAnswering ? "Respondendo..." : "Responder"}
 							</Button>
 
-							<div className="flex gap-2">
+							<div className="flex flex-col sm:flex-row gap-2">
 								<Button
 									variant="outline"
 									onClick={() => onDecline?.(question.id)}
@@ -244,7 +244,8 @@ export function QuestionCard({
 					</div>
 				)}
 
-				{(status === "declined" || status === "expired" || status === "reported") && (
+				{/* CORREÇÃO: Perguntas respondidas NÃO devem mostrar badge "Pergunta Expirada" nem botão "Deletar" */}
+				{status !== "answered" && (status === "declined" || status === "expired" || status === "reported") && (
 					<div className="mt-4">
 						{status === "expired" && (
 							<Badge

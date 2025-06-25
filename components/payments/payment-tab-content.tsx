@@ -19,7 +19,6 @@ export function PaymentTabContent({ data, type, onWithdraw, isProcessingWithdraw
 
 	return (
 		<div className="space-y-6 mt-4">
-			{/* Main withdrawal card */}
 			<PaymentCard
 				title={isAnswered ? "Pronto Para Sacar" : "Disponível Para Saque"}
 				amount={data.paymentToWithdraw}
@@ -42,7 +41,6 @@ export function PaymentTabContent({ data, type, onWithdraw, isProcessingWithdraw
 				/>
 			</PaymentCard>
 
-			{/* Pending amount card */}
 			<PaymentCard
 				title={isAnswered ? "Valor Pendente Para Responder" : "Valor Aguardando Resposta"}
 				amount={data.paymentAwaitingAnswer}
@@ -58,7 +56,6 @@ export function PaymentTabContent({ data, type, onWithdraw, isProcessingWithdraw
 				titleColor="text-orange-600 dark:text-foreground"
 			/>
 
-			{/* Sent questions total (only for sent tab) */}
 			{!isAnswered && data.paymentSentAnsweredQuestions !== undefined && (
 				<PaymentCard
 					title="Total Pago em Perguntas Respondidas"
@@ -72,7 +69,6 @@ export function PaymentTabContent({ data, type, onWithdraw, isProcessingWithdraw
 				/>
 			)}
 
-			{/* Transaction history */}
 			<TransactionHistory transactions={data.paymentWithdrawHistory} />
 		</div>
 	);

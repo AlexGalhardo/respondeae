@@ -15,7 +15,7 @@ interface QuestionsTabsProps {
 	onDecline?: (questionId: string) => void;
 	onDelete?: (questionId: string) => void;
 	onReport?: (questionId: string) => void;
-	onExpire?: (questionId: string) => void; // NOVO
+	onExpire?: (questionId: string) => void;
 	loadingStates?: {
 		answering?: string;
 		declining?: string;
@@ -32,7 +32,7 @@ export function QuestionsTabs({
 	onDecline,
 	onDelete,
 	onReport,
-	onExpire, // NOVO
+	onExpire,
 	loadingStates = {},
 }: QuestionsTabsProps) {
 	const validQuestions = Array.isArray(questions) ? questions : [];
@@ -63,7 +63,7 @@ export function QuestionsTabs({
 					onDecline={onDecline}
 					onDelete={onDelete}
 					onReport={onReport}
-					onExpire={onExpire} // NOVO
+					onExpire={onExpire}
 					loadingStates={loadingStates}
 				/>
 				<QuestionsPagination
@@ -77,23 +77,41 @@ export function QuestionsTabs({
 
 	return (
 		<Tabs defaultValue="pending" className="w-full" onValueChange={() => onPageChange(1)}>
-			<TabsList className="w-full flex overflow-x-auto no-scrollbar sm:grid sm:grid-cols-5 gap-2 sm:gap-0 px-1 sm:px-0">
-				<TabsTrigger className="flex-1 min-w-max sm:min-w-0 text-sm px-4 py-2" value="pending">
-					Aguardando ({pendingQuestions.length})
-				</TabsTrigger>
-				<TabsTrigger className="flex-1 min-w-max sm:min-w-0 text-sm px-4 py-2" value="answered">
-					Respondidas ({answeredQuestions.length})
-				</TabsTrigger>
-				<TabsTrigger className="flex-1 min-w-max sm:min-w-0 text-sm px-4 py-2" value="declined">
-					Recusadas ({declinedQuestions.length})
-				</TabsTrigger>
-				<TabsTrigger className="flex-1 min-w-max sm:min-w-0 text-sm px-4 py-2" value="expired">
-					Expiradas ({expiredQuestions.length})
-				</TabsTrigger>
-				<TabsTrigger className="flex-1 min-w-max sm:min-w-0 text-sm px-4 py-2" value="reported">
-					Reportadas ({reportedQuestions.length})
-				</TabsTrigger>
-			</TabsList>
+			{/* CORREÇÃO: TabList mais responsivo para mobile */}
+			<div className="w-full overflow-x-auto">
+				<TabsList className="w-full min-w-max flex h-auto p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+					<TabsTrigger
+						className="flex-1 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 min-w-0 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700"
+						value="pending"
+					>
+						<span className="truncate">Aguardando ({pendingQuestions.length})</span>
+					</TabsTrigger>
+					<TabsTrigger
+						className="flex-1 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 min-w-0 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700"
+						value="answered"
+					>
+						<span className="truncate">Respondidas ({answeredQuestions.length})</span>
+					</TabsTrigger>
+					<TabsTrigger
+						className="flex-1 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 min-w-0 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700"
+						value="declined"
+					>
+						<span className="truncate">Recusadas ({declinedQuestions.length})</span>
+					</TabsTrigger>
+					<TabsTrigger
+						className="flex-1 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 min-w-0 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700"
+						value="expired"
+					>
+						<span className="truncate">Expiradas ({expiredQuestions.length})</span>
+					</TabsTrigger>
+					<TabsTrigger
+						className="flex-1 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 min-w-0 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700"
+						value="reported"
+					>
+						<span className="truncate">Reportadas ({reportedQuestions.length})</span>
+					</TabsTrigger>
+				</TabsList>
+			</div>
 
 			<TabsContent value="pending" className="space-y-6">
 				{renderTabContent(pendingQuestions, true, "Nenhuma pergunta pendente no momento.")}

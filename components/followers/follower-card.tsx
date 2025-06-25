@@ -8,6 +8,8 @@ import { getInitials } from "@/lib/functions";
 import Link from "next/link";
 import { useRemoveFollower } from "@/hooks/use-follower";
 import { FollowerUserInterface } from "@/types/FollowerUserInterface";
+import { toast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FollowerCardProps {
 	follower: FollowerUserInterface;
@@ -16,6 +18,7 @@ interface FollowerCardProps {
 
 export function FollowerCard({ follower, onRemove }: FollowerCardProps) {
 	const removeFollowerMutation = useRemoveFollower();
+	const isMobile = useIsMobile();
 
 	const handleRemove = async () => {
 		try {
@@ -25,7 +28,11 @@ export function FollowerCard({ follower, onRemove }: FollowerCardProps) {
 			});
 			onRemove(follower.follower.id);
 		} catch (error) {
-			// Erro já tratado no hook
+			toast({
+				title: "Erro ao remover seguidor",
+				description: "Tente novamente mais tarde",
+				variant: "error",
+			});
 		}
 	};
 
@@ -57,8 +64,12 @@ export function FollowerCard({ follower, onRemove }: FollowerCardProps) {
 						onClick={handleRemove}
 						disabled={removeFollowerMutation.isPending}
 					>
-						<UserMinus className="h-4 w-4 mr-1" />
-						{removeFollowerMutation.isPending ? "Removendo..." : "Remover Seguidor"}
+						<UserMinus className="h-4 w-4" />
+						{!isMobile && (
+							<span className="ml-1">
+								{removeFollowerMutation.isPending ? "Removendo..." : "Remover Seguidor"}
+							</span>
+						)}
 					</Button>
 				</div>
 			</CardContent>

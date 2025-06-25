@@ -1,4 +1,3 @@
-// components/profile/question-form.tsx
 "use client";
 
 import { useState } from "react";

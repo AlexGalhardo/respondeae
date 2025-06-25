@@ -3,7 +3,7 @@ import { QuestionInterface, QuestionStatus } from "@/types/QuestionInterface";
 export function isQuestionExpired(createdAt: string | Date): boolean {
 	const created = new Date(createdAt);
 	const now = new Date();
-	const diffInHours = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 7);
+	const diffInHours = (now.getTime() - created.getTime()) / (1000 * 60 * 60);
 	return diffInHours >= 168; // 7 dias em horas
 }
 
@@ -15,7 +15,7 @@ export function getTimeRemaining(createdAt: string | Date): {
 } {
 	const created = new Date(createdAt);
 	const now = new Date();
-	const expirationTime = new Date(created.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias corridos
+	const expirationTime = new Date(created.getTime() + 7 * 24 * 60 * 60 * 1000);
 	const timeLeft = expirationTime.getTime() - now.getTime();
 
 	if (timeLeft <= 0) {
@@ -44,69 +44,67 @@ export function paginateQuestions(questions: QuestionInterface[], currentPage: n
 	};
 }
 
+// CORREÇÃO: Ordem de prioridade corrigida
 export function getQuestionStatus(question: QuestionInterface): QuestionStatus {
-	// Verificar se foi reportada
+	// PRIMEIRO: Verifica se foi respondida (prioridade máxima)
 	if (
-		question.owner_reported_offensive_question ||
-		question.onwer_reported_inadequate_question ||
-		question.onwer_reported_question_at
-	) {
-		return "reported";
-	}
-
-	// Verificar se foi recusada
-	if (question.question_answer_was_recused || question.question_answer_recused_at) {
-		return "declined";
-	}
-
-	// Verificar se expirou
-	if (question.question_answer_was_expired || question.question_answer_expired_at) {
-		return "expired";
-	}
-
-	// Verificar se expirou por tempo (24h)
-	if (isQuestionExpired(question.created_at)) {
-		return "expired";
-	}
-
-	// Verificar se foi respondida
-	if (
-		question.question_answered &&
-		!question.question_is_awaiting_answer &&
-		question.answer_text &&
-		question.answered_at
+		question.question_answered === true &&
+		question.question_is_awaiting_answer === false &&
+		question.answer_text !== null &&
+		question.answered_at !== null &&
+		!question.onwer_reported_question_at &&
+		!question.question_answer_recused_at &&
+		!question.question_answer_expired_at &&
+		question.question_answer_was_recused === false &&
+		question.question_answer_was_expired === false &&
+		question.owner_reported_offensive_question === false &&
+		question.onwer_reported_inadequate_question === false
 	) {
 		return "answered";
 	}
 
-	// Se está aguardando resposta
+	// SEGUNDO: Verifica se é reportada
 	if (
-		question.question_is_awaiting_answer &&
-		!question.question_answered &&
-		!question.question_answer_was_recused &&
-		!question.question_answer_was_expired
+		question.owner_reported_offensive_question === true ||
+		question.onwer_reported_inadequate_question === true ||
+		question.onwer_reported_question_at !== null
+	) {
+		return "reported";
+	}
+
+	// TERCEIRO: Verifica se foi recusada
+	if (question.question_answer_was_recused === true || question.question_answer_recused_at !== null) {
+		return "declined";
+	}
+
+	// QUARTO: Verifica se expirou explicitamente
+	if (question.question_answer_was_expired === true || question.question_answer_expired_at !== null) {
+		return "expired";
+	}
+
+	// QUINTO: Verifica se expirou por tempo (só se não foi respondida, reportada, recusada)
+	if (isQuestionExpired(question.created_at)) {
+		return "expired";
+	}
+
+	// SEXTO: Verifica se está pendente
+	if (
+		question.question_is_awaiting_answer === true &&
+		question.question_answered === false &&
+		question.question_answer_was_recused === false &&
+		question.question_answer_was_expired === false &&
+		question.owner_reported_offensive_question === false &&
+		question.onwer_reported_inadequate_question === false &&
+		!question.onwer_reported_question_at &&
+		!question.question_answer_recused_at &&
+		!question.question_answer_expired_at
 	) {
 		return "pending";
 	}
 
+	// Fallback para pending se não se encaixar em nenhuma categoria
 	return "pending";
 }
-
-// export function getTimeRemaining(createdAt: string): string {
-// 	const now = new Date().getTime();
-// 	const created = new Date(createdAt).getTime();
-// 	const expiryTime = created + 168 * 60 * 60 * 1000; // 7 dias
-// 	const diff = expiryTime - now;
-
-// 	if (diff <= 0) return "Expirado";
-
-// 	const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-// 	const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-// 	const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-// 	const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-// 	return `${days}d ${hours}h ${minutes}m ${seconds}s restantes para responder essa pergunta`;
-// }
 
 export function getDeleteTimer(declinedAt: string): string {
 	const now = new Date().getTime();
@@ -132,21 +130,18 @@ export function sortQuestionsByDate(questions: QuestionInterface[]): QuestionInt
 			return dateB.getTime() - dateA.getTime(); // DESC
 		}
 
-		// Para perguntas recusadas, usar question_answer_recused_at ou created_at
 		if (a.question_answer_was_recused && b.question_answer_was_recused) {
 			const dateA = new Date(a.question_answer_recused_at || a.created_at);
 			const dateB = new Date(b.question_answer_recused_at || b.created_at);
 			return dateB.getTime() - dateA.getTime(); // DESC
 		}
 
-		// Para perguntas expiradas, usar question_answer_expired_at ou created_at
 		if (a.question_answer_was_expired && b.question_answer_was_expired) {
 			const dateA = new Date(a.question_answer_expired_at || a.created_at);
 			const dateB = new Date(b.question_answer_expired_at || b.created_at);
 			return dateB.getTime() - dateA.getTime(); // DESC
 		}
 
-		// Para perguntas reportadas, usar onwer_reported_question_at ou created_at
 		if (
 			(a.owner_reported_offensive_question || a.onwer_reported_inadequate_question) &&
 			(b.owner_reported_offensive_question || b.onwer_reported_inadequate_question)
@@ -168,49 +163,83 @@ export function filterQuestionsByStatus(questions: QuestionInterface[], status: 
 	let filteredQuestions: QuestionInterface[] = [];
 
 	switch (status) {
-		case "pending":
-			filteredQuestions = questions.filter(
-				(q) =>
-					q.question_is_awaiting_answer === true &&
-					q.question_answered === false &&
-					q.question_answer_was_recused === false &&
-					q.question_answer_was_expired === false &&
-					q.owner_reported_offensive_question === false &&
-					q.onwer_reported_inadequate_question === false &&
-					!q.onwer_reported_question_at &&
-					!q.question_answer_recused_at &&
-					!q.question_answer_expired_at,
-			);
-			break;
-
 		case "answered":
+			// PRIORIDADE: Perguntas respondidas (independente do tempo)
 			filteredQuestions = questions.filter(
 				(q) =>
 					q.question_answered === true &&
 					q.question_is_awaiting_answer === false &&
 					q.answer_text !== null &&
-					q.answered_at !== null,
-			);
-			break;
-
-		case "declined":
-			filteredQuestions = questions.filter(
-				(q) => q.question_answer_was_recused === true || q.question_answer_recused_at !== null,
-			);
-			break;
-
-		case "expired":
-			filteredQuestions = questions.filter(
-				(q) => q.question_answer_was_expired === true || q.question_answer_expired_at !== null,
+					q.answered_at !== null &&
+					!q.onwer_reported_question_at &&
+					!q.question_answer_recused_at &&
+					!q.question_answer_expired_at &&
+					q.question_answer_was_recused === false &&
+					q.question_answer_was_expired === false &&
+					q.owner_reported_offensive_question === false &&
+					q.onwer_reported_inadequate_question === false,
 			);
 			break;
 
 		case "reported":
+			// Perguntas reportadas (não respondidas, não recusadas, não expiradas)
 			filteredQuestions = questions.filter(
 				(q) =>
-					q.owner_reported_offensive_question === true ||
-					q.onwer_reported_inadequate_question === true ||
-					q.onwer_reported_question_at !== null,
+					!q.question_answered &&
+					!q.question_answer_was_recused &&
+					!q.question_answer_was_expired &&
+					(q.owner_reported_offensive_question === true ||
+						q.onwer_reported_inadequate_question === true ||
+						q.onwer_reported_question_at !== null),
+			);
+			break;
+
+		case "declined":
+			// Perguntas recusadas (não respondidas, não expiradas)
+			filteredQuestions = questions.filter(
+				(q) =>
+					!q.question_answered &&
+					!q.question_answer_was_expired &&
+					(q.question_answer_was_recused === true || q.question_answer_recused_at !== null),
+			);
+			break;
+
+		case "expired":
+			// Perguntas expiradas (não respondidas, não reportadas, não recusadas)
+			filteredQuestions = questions.filter((q) => {
+				// Não pode estar respondida
+				if (q.question_answered) return false;
+
+				// Não pode estar reportada
+				if (
+					q.owner_reported_offensive_question ||
+					q.onwer_reported_inadequate_question ||
+					q.onwer_reported_question_at
+				)
+					return false;
+
+				// Não pode estar recusada
+				if (q.question_answer_was_recused || q.question_answer_recused_at) return false;
+
+				// Deve estar expirada (explicitamente ou por tempo)
+				return q.question_answer_was_expired || q.question_answer_expired_at || isQuestionExpired(q.created_at);
+			});
+			break;
+
+		case "pending":
+			// Perguntas pendentes (não respondidas, não reportadas, não recusadas, não expiradas)
+			filteredQuestions = questions.filter(
+				(q) =>
+					!q.question_answered &&
+					!q.question_answer_was_recused &&
+					!q.question_answer_was_expired &&
+					!q.owner_reported_offensive_question &&
+					!q.onwer_reported_inadequate_question &&
+					!q.onwer_reported_question_at &&
+					!q.question_answer_recused_at &&
+					!q.question_answer_expired_at &&
+					!isQuestionExpired(q.created_at) &&
+					q.question_is_awaiting_answer === true,
 			);
 			break;
 

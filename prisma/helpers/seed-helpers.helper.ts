@@ -22,6 +22,13 @@ export class SeedHelpers {
 		}
 	}
 
+	static generateAnsweredAtAfter(createdAt: Date): Date {
+		const min = 1 * 60 * 1000;
+		const max = 6 * 24 * 60 * 60 * 1000;
+		const offset = faker.number.int({ min, max });
+		return new Date(createdAt.getTime() + offset);
+	}
+
 	static generateRandomAmount(): number {
 		return faker.number.int({ min: 2, max: 50 }) * 100;
 	}

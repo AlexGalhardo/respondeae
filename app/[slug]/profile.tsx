@@ -23,7 +23,7 @@ export default function ProfileClient() {
 	const router = useRouter();
 	const params = useParams();
 	const slug = params?.slug as string;
-	const { data: session, status } = useSession();
+	const { data: session, status, update } = useSession();
 
 	const { data: profileFound, isLoading, error } = useProfile(slug);
 
@@ -39,8 +39,6 @@ export default function ProfileClient() {
 	const hasPendingRequest = profileFound?.hasPendingRequest ?? false;
 
 	const canViewQuestions = useMemo(() => {
-		// if (!profileFound?.privacy_is_private_profile) return true;
-
 		if (session?.user?.id === profileFound?.id) return true;
 
 		if (isFollowing && profileFound?.privacy_show_questions_answered_only_to_followers) return true;
@@ -161,24 +159,24 @@ export default function ProfileClient() {
 
 			{canViewQuestions ? (
 				<Tabs defaultValue="answered" className="w-full" onValueChange={handleTabChange}>
-					<TabsList className="flex flex-wrap justify-between gap-2 w-full bg-gray-100 dark:bg-neutral-800 rounded-lg p-1">
+					<TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-neutral-800 rounded-lg p-1 h-auto">
 						<TabsTrigger
 							value="answered"
-							className="flex-1 text-[0.7rem] sm:text-xs py-2 px-2 rounded-md text-center font-medium"
+							className="text-xs sm:text-sm py-2.5 px-1 rounded-md text-center font-medium whitespace-nowrap data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700 transition-all"
 						>
-							Últimas Respostas
-						</TabsTrigger>
-						<TabsTrigger
-							value="top"
-							className="flex-1 text-[0.7rem] sm:text-xs py-2 px-2 rounded-md text-center font-medium"
-						>
-							Top Respostas Pagas
+							Últimas
 						</TabsTrigger>
 						<TabsTrigger
 							value="liked"
-							className="flex-1 text-[0.7rem] sm:text-xs py-2 px-2 rounded-md text-center font-medium"
+							className="text-xs sm:text-sm py-2.5 px-1 rounded-md text-center font-medium whitespace-nowrap data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700 transition-all"
 						>
-							Top Respostas Curtidas
+							Top Curtidas
+						</TabsTrigger>
+						<TabsTrigger
+							value="top"
+							className="text-xs sm:text-sm py-2.5 px-1 rounded-md text-center font-medium whitespace-nowrap data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700 transition-all"
+						>
+							Top Pagas
 						</TabsTrigger>
 					</TabsList>
 
@@ -186,12 +184,12 @@ export default function ProfileClient() {
 						{renderQuestionsList(publicQuestions)}
 					</TabsContent>
 
-					<TabsContent value="top" className="mt-4">
-						{renderQuestionsList(topPaidQuestions)}
-					</TabsContent>
-
 					<TabsContent value="liked" className="mt-4">
 						{renderQuestionsList(topLikedQuestions)}
+					</TabsContent>
+
+					<TabsContent value="top" className="mt-4">
+						{renderQuestionsList(topPaidQuestions)}
 					</TabsContent>
 				</Tabs>
 			) : (
@@ -212,6 +210,7 @@ export default function ProfileClient() {
 				question={newQuestion}
 				profile={profileFound}
 				session={session}
+				update={update}
 			/>
 		</main>
 	);

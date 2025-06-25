@@ -11,6 +11,7 @@ import { useUpdatePrivacySettings } from "@/hooks/use-account-mutations";
 
 interface PrivacySettingsFormProps {
 	user: {
+		privacy_is_private_profile?: boolean;
 		privacy_accept_anonymous_questions?: boolean;
 		privacy_show_anonymous_questions_public?: boolean;
 		privacy_show_total_questions_received_public?: boolean;
@@ -29,6 +30,8 @@ interface PrivacySettingsFormProps {
 export function PrivacySettingsForm({ user }: any) {
 	const [isPending, startTransition] = useTransition();
 	const updatePrivacySettingsMutation = useUpdatePrivacySettings();
+
+	const [isPrivateProfile, setIsPrivateProfile] = useState(user.privacy_is_private_profile ?? false);
 
 	const [acceptAnonymousQuestions, setAcceptAnonymousQuestions] = useState(
 		user.privacy_accept_anonymous_questions ?? true,
@@ -60,7 +63,7 @@ export function PrivacySettingsForm({ user }: any) {
 	const [showTotalLikes, setShowTotalLikes] = useState(user.privacy_show_total_likes_all_answers_public ?? true);
 
 	const handleSubmit = (formData: FormData) => {
-		// Adicionar todos os valores ao FormData
+		formData.set("isPrivateProfile", isPrivateProfile.toString());
 		formData.set("acceptAnonymousQuestions", acceptAnonymousQuestions.toString());
 		formData.set("showQuestionsAnonymousAnsweredPublic", showQuestionsAnonymousAnsweredPublic.toString());
 		formData.set("showTotalQuestionsReceived", showTotalQuestionsReceived.toString());
@@ -88,6 +91,18 @@ export function PrivacySettingsForm({ user }: any) {
 			</CardHeader>
 			<CardContent>
 				<form action={handleSubmit} className="space-y-6">
+					<div className="flex items-center justify-between">
+						<div className="space-y-0.5">
+							<Label>Meu Perfil Será Privado</Label>
+							<p className="text-sm text-gray-500">
+								Pessoas não poderão seguir você livremente, elas vão pedir uma soliticação para te
+								seguir primeiro. <br />
+								Apenas seguidores conseguem ver suas respostas públicas.
+							</p>
+						</div>
+						<Switch checked={isPrivateProfile} onCheckedChange={setIsPrivateProfile} />
+					</div>
+
 					<div className="flex items-center justify-between">
 						<div className="space-y-0.5">
 							<Label>Aceitar perguntas anônimas</Label>
