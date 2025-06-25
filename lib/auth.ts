@@ -10,6 +10,8 @@ import {
 } from "./repositories/users.repository";
 import slugify from "slugify";
 import { QuestionInterface } from "./interfaces";
+import { isQuestionExpired } from "./utils/question-utils";
+import TelegramLog from "./telegram-logger";
 
 interface ExtendedUser {
 	id: string;
@@ -31,6 +33,7 @@ interface ExtendedUser {
 	facebook?: string | null;
 	github?: any;
 	api_key?: string;
+	privacy_is_private_profile?: boolean;
 	privacy_accept_anonymous_questions?: boolean;
 	privacy_show_anonymous_questions_public?: boolean;
 	privacy_show_questions_answered_only_to_followers?: boolean;
@@ -65,6 +68,25 @@ declare module "next-auth" {
 	}
 }
 
+const processExpiredQuestions = (questions: any[]): any[] => {
+	return questions.map((question) => {
+		if (
+			question.question_is_awaiting_answer &&
+			!question.question_answered &&
+			!question.question_answer_was_expired &&
+			isQuestionExpired(question.created_at)
+		) {
+			return {
+				...question,
+				question_answer_was_expired: true,
+				question_is_awaiting_answer: false,
+				question_answer_expired_at: new Date(),
+			};
+		}
+		return question;
+	});
+};
+
 const mapUserToSession = (dbUser: any): Partial<ExtendedUser> => ({
 	id: dbUser?.id,
 	avatar_url: dbUser?.avatar_url,
@@ -85,6 +107,7 @@ const mapUserToSession = (dbUser: any): Partial<ExtendedUser> => ({
 	facebook: dbUser?.facebook,
 	github: dbUser?.github,
 	api_key: dbUser?.api_key,
+	privacy_is_private_profile: dbUser?.privacy_is_private_profile,
 	privacy_accept_anonymous_questions: dbUser?.privacy_accept_anonymous_questions,
 	privacy_show_anonymous_questions_public: dbUser?.privacy_show_anonymous_questions_public,
 	privacy_show_questions_answered_only_to_followers: dbUser?.privacy_show_questions_answered_only_to_followers,
@@ -103,7 +126,6 @@ const mapUserToSession = (dbUser: any): Partial<ExtendedUser> => ({
 });
 
 const generateUniqueNickname = (name: string, email: string): string => {
-	// const baseNickname = slugify(name, { lower: true, strict: true }).replace(/-/g, "");
 	const emailPrefix = slugify(email.split("@")[0], { lower: true, strict: true }).replace(/-/g, "");
 	return `${emailPrefix}`;
 };
@@ -154,22 +176,18 @@ export const authOptions: NextAuthOptions = {
 
 						const data = await res.json();
 
-						if (!data.success) {
-							console.warn("Captcha inválido", data);
-							return null;
-						}
-					} catch (err) {
-						console.error("Erro na verificação do CAPTCHA: ", err);
-						return null;
+						if (!data.success) return null;
+					} catch (error: any) {
+						TelegramLog.error(
+							`Erro na autenticação auth.ts providers authorize cloudflare captcha: ${error?.message}`,
+						);
 					}
 				}
 
 				try {
 					const user = await verifyCredentials(credentials.email, credentials.password);
 
-					if (!user?.id) {
-						return null;
-					}
+					if (!user?.id) return null;
 
 					await handleDeletedAccount(user);
 
@@ -186,7 +204,7 @@ export const authOptions: NextAuthOptions = {
 							"This user does not have a registered password. Entre com sua conta Google e crie sua senha",
 						);
 					}
-					console.error("Authorization error:", error);
+					TelegramLog.error(`Erro na autenticação auth.ts providers authorize: ${error?.message}`);
 					return null;
 				}
 			},
@@ -211,9 +229,7 @@ export const authOptions: NextAuthOptions = {
 			try {
 				const dbUser = await getUserByEmail(token.email);
 
-				if (!dbUser) {
-					return session;
-				}
+				if (!dbUser) return session;
 
 				await handleDeletedAccount(dbUser);
 
@@ -221,24 +237,26 @@ export const authOptions: NextAuthOptions = {
 
 				Object.assign(session.user, mapUserToSession(dbUser));
 
-				session.user.questions_received =
+				session.user.questions_received = processExpiredQuestions(
 					dbUser.questions_received?.map((q: any) => ({
 						...q,
 						owner: q.owner ?? null,
-					})) ?? [];
+					})) ?? [],
+				);
 
-				session.user.questions_sent =
+				session.user.questions_sent = processExpiredQuestions(
 					dbUser.questions_sent?.map((q: any) => ({
 						...q,
 						asked_by: q.asked_by ?? null,
-					})) ?? [];
+					})) ?? [],
+				);
 
 				session.user.followers = dbUser.followers ?? [];
 				session.user.following = dbUser.following ?? [];
 				session.user.blocked_users = dbUser.blocked_users ?? [];
 				session.user.blocked_by_users = dbUser.blocked_by_users ?? [];
-			} catch (error) {
-				console.error("Session callback error:", error);
+			} catch (error: any) {
+				TelegramLog.error(`Erro na autenticação auth.ts callbacks session: ${error?.message}`);
 			}
 
 			return session;

@@ -7,6 +7,8 @@ import { UserMinus } from "lucide-react";
 import { useUnfollowUser } from "@/hooks/use-following";
 import { FollowingUserInterface } from "@/types/FollowingUserInterface";
 import { getInitials } from "@/lib/functions";
+import { toast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface UserCardProps {
 	user: FollowingUserInterface;
@@ -15,6 +17,7 @@ interface UserCardProps {
 
 export function FollowingUserCard({ user, onUnfollow }: UserCardProps) {
 	const unfollowMutation = useUnfollowUser();
+	const isMobile = useIsMobile();
 
 	const handleUnfollow = async () => {
 		try {
@@ -22,10 +25,13 @@ export function FollowingUserCard({ user, onUnfollow }: UserCardProps) {
 				followingId: user.following.id,
 				userName: user.following.name,
 			});
-			// Remove da lista local imediatamente
 			onUnfollow(user.following.id);
 		} catch (error) {
-			// Erro já tratado no hook
+			toast({
+				title: "Erro ao deixar de seguir",
+				description: "Tente novamente mais tarde",
+				variant: "error",
+			});
 		}
 	};
 
@@ -61,8 +67,12 @@ export function FollowingUserCard({ user, onUnfollow }: UserCardProps) {
 						onClick={handleUnfollow}
 						disabled={unfollowMutation.isPending}
 					>
-						<UserMinus className="h-4 w-4 mr-1" />
-						{unfollowMutation.isPending ? "Deixando..." : "Deixar de Seguir"}
+						<UserMinus className="h-4 w-4" />
+						{!isMobile && (
+							<span className="ml-1">
+								{unfollowMutation.isPending ? "Deixando..." : "Deixar de Seguir"}
+							</span>
+						)}
 					</Button>
 				</div>
 			</CardContent>

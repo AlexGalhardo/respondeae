@@ -19,23 +19,28 @@ interface PaymentModalProps {
 	question: string;
 	profile: any;
 	session: any;
+	update: any;
 }
 
-export function ProfilePaymentModal({ currentStep, onStepChange, question, profile, session }: PaymentModalProps) {
+export function ProfilePaymentModal({
+	currentStep,
+	onStepChange,
+	question,
+	profile,
+	session,
+	update,
+}: PaymentModalProps) {
 	const { toast } = useToast();
 
-	// Payment states
 	const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
 	const [customAmount, setCustomAmount] = useState<string>("");
 	const [useCustomAmount, setUseCustomAmount] = useState(false);
 	const [isLoadingPayment, setIsLoadingPayment] = useState(false);
 
-	// Question options
 	const [isAnonymousNewQuestion, setIsAnonymousNewQuestion] = useState(false);
 	const [isPrivateAnswer, setIsPrivateAnswer] = useState(false);
 	const [questionAmountPaidIsPrivate, setQuestionAmountPaidIsPrivate] = useState(false);
 
-	// PIX states
 	const [pixData, setPixData] = useState<any>(null);
 	const [copied, setCopied] = useState(false);
 	const [paymentStatus, setPaymentStatus] = useState<"PENDING" | "PAID" | "EXPIRED" | "CANCELLED" | "REFUNDED">(
@@ -43,8 +48,8 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 	);
 	const [timeRemaining, setTimeRemaining] = useState<number>(0);
 	const [canClose, setCanClose] = useState(false);
+	const [countdownSeconds, setCountdownSeconds] = useState<number>(10);
 
-	// PIX monitoring effect
 	useEffect(() => {
 		if (!pixData || currentStep !== "pix") return;
 
@@ -100,7 +105,6 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 		checkPaymentStatus();
 		statusInterval = setInterval(checkPaymentStatus, 5000);
 
-		// Test mode simulation
 		if (process.env.NEXT_PUBLIC_TEST_MODE === "true") {
 			setTimeout(() => {
 				fetch(`/api/pix/simulate-payment`, {
@@ -124,14 +128,30 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 		};
 	}, [pixData, currentStep]);
 
-	// Close permission effect
 	useEffect(() => {
 		if (paymentStatus === "PAID") {
-			const timer = setTimeout(() => {
-				setCanClose(true);
-			}, 10000); // 10 seconds
+			setCountdownSeconds(10);
+			const countdownTimer = setInterval(() => {
+				setCountdownSeconds((prev) => {
+					if (prev <= 1) {
+						clearInterval(countdownTimer);
+						return 0;
+					}
+					return prev - 1;
+				});
+			}, 1000);
 
-			return () => clearTimeout(timer);
+			const closeTimer = setTimeout(async () => {
+				clearInterval(countdownTimer);
+				setCanClose(true);
+				closeModal();
+				await update();
+			}, 10000);
+
+			return () => {
+				clearInterval(countdownTimer);
+				clearTimeout(closeTimer);
+			};
 		}
 
 		if (paymentStatus !== "PENDING") {
@@ -139,7 +159,7 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 		} else {
 			setCanClose(false);
 		}
-	}, [paymentStatus]);
+	}, [paymentStatus, update]);
 
 	const isGenerateButtonEnabled =
 		(useCustomAmount && customAmount && Number.parseFloat(customAmount) >= 2) ||
@@ -265,7 +285,6 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 				variant: "success",
 			});
 
-			// fechar modal
 			onStepChange("closed");
 		} catch (error: any) {
 			toast({
@@ -320,26 +339,12 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 		}
 	};
 
-	// const resetForm = () => {
-	// 	setSelectedAmount(null);
-	// 	setCustomAmount("");
-	// 	setUseCustomAmount(false);
-	// 	setPixData(null);
-	// 	setPaymentStatus();
-	// 	setCopied(false);
-	// 	setIsAnonymousNewQuestion(false);
-	// 	setIsPrivateAnswer(false);
-	// 	setQuestionAmountPaidIsPrivate(false);
-	// };
-
 	const closeModal = () => {
 		onStepChange("closed");
-		// resetForm();
 	};
 
 	return (
 		<>
-			{/* Payment Step Modal */}
 			<Dialog open={currentStep === "payment"} onOpenChange={closeModal}>
 				<DialogContent className="sm:max-w-md">
 					<DialogHeader>
@@ -349,7 +354,6 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 					</DialogHeader>
 
 					<div className="py-4">
-						{/* Anonymous Question Option */}
 						<div className="flex items-center justify-between mb-6 p-4 rounded-lg bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-neutral-100">
 							{!profile?.privacy_accept_anonymous_questions ? (
 								<span className="text-sm text-gray-500 dark:text-gray-400">
@@ -377,7 +381,6 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 							)}
 						</div>
 
-						{/* Private Answer Option */}
 						<div className="flex items-center justify-between mb-6 p-4 rounded-lg bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-neutral-100">
 							<div className="space-y-0.5">
 								<Label className="text-sm font-medium">Quero que a resposta seja privada</Label>
@@ -392,7 +395,6 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 							/>
 						</div>
 
-						{/* Private Amount Option */}
 						<div className="flex items-center justify-between mb-6 p-4 rounded-lg bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-neutral-100">
 							<div className="space-y-0.5">
 								<Label className="text-sm font-medium">
@@ -409,7 +411,6 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 							/>
 						</div>
 
-						{/* Amount Selection */}
 						<div className="grid grid-cols-3 gap-2 mb-6">
 							{PRESET_AMOUNTS.map((amount) => (
 								<Button
@@ -432,7 +433,6 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 							</Button>
 						</div>
 
-						{/* Custom Amount Input */}
 						{useCustomAmount && (
 							<div className="space-y-2 mb-6">
 								<Label htmlFor="custom-amount">Digite o valor</Label>
@@ -468,7 +468,6 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 				</DialogContent>
 			</Dialog>
 
-			{/* PIX Step Modal */}
 			<Dialog open={currentStep === "pix"} onOpenChange={handleOpenChangeModal}>
 				<DialogContent className="sm:max-w-md">
 					<DialogHeader>
@@ -485,12 +484,11 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 								</div>
 								<p className="text-orange-500 text-center">Sua pergunta foi enviada com sucesso!</p>
 								<p className="text-gray-600 text-center dark:text-white">
-									Esse modal se fechará automaticamente em 10 segundos.
+									Esse modal se fechará automaticamente em {countdownSeconds} segundos.
 								</p>
 							</div>
 						) : (
 							<>
-								{/* QR Code */}
 								<div className="bg-white p-4 rounded-lg mb-4 w-64 h-64 flex items-center justify-center border">
 									{pixData?.brCodeBase64 ? (
 										<img src={pixData.brCodeBase64} alt="QR Code PIX" width={240} height={240} />
@@ -502,20 +500,17 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 								</div>
 
 								<div className="w-full space-y-4">
-									{/* Status */}
 									<div className="flex items-center justify-center space-x-2">
 										<Clock className="w-4 h-4 text-orange-600" />
 										<span className={`font-semibold ${getStatusColor()}`}>{getStatusText()}</span>
 									</div>
 
-									{/* Amount */}
 									<div className="text-center">
 										<p className="text-sm text-gray-600 dark:text-white">
 											Valor a Pagar: {formatCurrency((selectedAmount ?? 0) * 100)}
 										</p>
 									</div>
 
-									{/* Timer */}
 									{paymentStatus === "PENDING" && (
 										<div className="text-center">
 											<p className="text-sm text-gray-600 dark:text-red-500">
@@ -525,7 +520,6 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 										</div>
 									)}
 
-									{/* Copy Button */}
 									{paymentStatus === "PENDING" && (
 										<div className="flex items-center gap-2">
 											<Button
@@ -539,14 +533,12 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 										</div>
 									)}
 
-									{/* Instructions */}
 									{paymentStatus === "PENDING" && (
 										<p className="text-sm text-center text-muted-foreground dark:text-white">
 											Escaneie o QR code ou copie o código PIX para pagar.
 										</p>
 									)}
 
-									{/* Test Mode Notice */}
 									{process.env.NEXT_PUBLIC_TEST_MODE === "true" && (
 										<p className="text-sm text-center text-muted-foreground">
 											Você está em teste mode. Esse PIX será pago automaticamente em alguns
@@ -554,7 +546,6 @@ export function ProfilePaymentModal({ currentStep, onStepChange, question, profi
 										</p>
 									)}
 
-									{/* Error Actions */}
 									{(paymentStatus === "EXPIRED" || paymentStatus === "CANCELLED") && (
 										<Button variant="destructive" className="w-full" onClick={closeModal}>
 											Fechar e tentar novamente

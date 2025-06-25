@@ -225,6 +225,7 @@ export async function updatePrivacySettings(data: FormData) {
 		}
 
 		const privacyData = {
+			isPrivateProfile: data.get("isPrivateProfile") === "true",
 			acceptAnonymousQuestions: data.get("acceptAnonymousQuestions") === "true",
 			showQuestionsAnonymousAnsweredPublic: data.get("showQuestionsAnonymousAnsweredPublic") === "true",
 			showTotalQuestionsReceived: data.get("showTotalQuestionsReceived") === "true",
@@ -244,6 +245,7 @@ export async function updatePrivacySettings(data: FormData) {
 				id: session.user.id,
 			},
 			data: {
+				privacy_is_private_profile: privacyData.isPrivateProfile,
 				privacy_accept_anonymous_questions: privacyData.acceptAnonymousQuestions,
 				privacy_show_anonymous_questions_public: privacyData.showQuestionsAnonymousAnsweredPublic,
 				privacy_show_total_questions_received_public: privacyData.showTotalQuestionsReceived,
@@ -265,7 +267,6 @@ export async function updatePrivacySettings(data: FormData) {
 
 		return { success: true };
 	} catch (error: any) {
-		console.error("Erro ao atualizar configurações de privacidade:", error);
 		return { error: error.message || "Erro interno do servidor" };
 	}
 }
@@ -273,11 +274,8 @@ export async function updatePrivacySettings(data: FormData) {
 export async function deleteAccount() {
 	try {
 		const session = await getServerSession(authOptions);
-		if (!session?.user?.id) {
-			return { error: "Não autorizado" };
-		}
+		if (!session?.user?.id) return { error: "Não autorizado" };
 
-		// Buscar dados do usuário antes de marcar para exclusão
 		const user = await prisma.user.findUnique({
 			where: { id: session.user.id },
 			select: {
@@ -293,7 +291,6 @@ export async function deleteAccount() {
 			return { error: "Usuário não encontrado" };
 		}
 
-		// Criar registro na tabela de contas deletadas
 		await prisma.deletedAccount.create({
 			data: {
 				user_id_was: user.id,
@@ -304,7 +301,6 @@ export async function deleteAccount() {
 			},
 		});
 
-		// Marcar conta para exclusão (soft delete)
 		await prisma.user.update({
 			where: {
 				id: session.user.id,
@@ -317,7 +313,6 @@ export async function deleteAccount() {
 
 		return { success: true };
 	} catch (error: any) {
-		console.error("Erro ao deletar conta:", error);
 		return { error: error.message || "Erro interno do servidor" };
 	}
 }
@@ -356,11 +351,8 @@ export const getUserByNicknameAction = async (nickname: string) => {
 export const followUserAction = async (followingId: string, followerId: string) => {
 	try {
 		const session = await getServerSession(authOptions);
-		if (!session?.user?.id) {
-			return { error: "Não autorizado" };
-		}
+		if (!session?.user?.id) return { error: "Não autorizado" };
 
-		// Verificar se já está seguindo
 		const existingFollow = await prisma.follower.findUnique({
 			where: {
 				followerId_followingId: {
@@ -370,7 +362,6 @@ export const followUserAction = async (followingId: string, followerId: string) 
 			},
 		});
 
-		// Verificar se há solicitação pendente (se o perfil for privado)
 		const followRequest = await prisma.followRequest.findUnique({
 			where: {
 				senderId_receiverId: {
@@ -380,7 +371,6 @@ export const followUserAction = async (followingId: string, followerId: string) 
 			},
 		});
 
-		// Buscar dados do usuário que está sendo seguido para verificar se é privado
 		const targetUser = await prisma.user.findUnique({
 			where: { id: followingId },
 			select: { privacy_is_private_profile: true },
@@ -391,7 +381,6 @@ export const followUserAction = async (followingId: string, followerId: string) 
 		let message = "";
 
 		if (existingFollow) {
-			// Unfollow
 			await prisma.follower.delete({
 				where: {
 					followerId_followingId: {
@@ -405,10 +394,8 @@ export const followUserAction = async (followingId: string, followerId: string) 
 			hasPendingRequest = false;
 			message = "Você parou de seguir este usuário";
 		} else {
-			// Verificar se o perfil é privado
 			if (targetUser?.privacy_is_private_profile) {
 				if (followRequest) {
-					// Cancelar solicitação existente
 					await prisma.followRequest.delete({
 						where: {
 							senderId_receiverId: {
@@ -420,7 +407,6 @@ export const followUserAction = async (followingId: string, followerId: string) 
 					hasPendingRequest = false;
 					message = "Solicitação cancelada";
 				} else {
-					// Criar nova solicitação
 					await prisma.followRequest.create({
 						data: {
 							senderId: followerId,
@@ -432,7 +418,6 @@ export const followUserAction = async (followingId: string, followerId: string) 
 				}
 				isFollowing = false;
 			} else {
-				// Perfil público - seguir diretamente
 				await prisma.follower.create({
 					data: {
 						followerId: followerId,

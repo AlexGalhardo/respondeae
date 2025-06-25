@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import LoadingScreen from "@/components/loading-screen";
-import { QuestionsTabs } from "@/components/questions/questions-tabs";
+import { QuestionsTabs } from "@/components/questions-received/questions-tabs";
 import {
 	useReceivedQuestions,
 	useAnswerQuestion,
@@ -14,7 +14,7 @@ import {
 	useMarkQuestionExpired,
 } from "@/hooks/use-questions";
 import { QuestionInterface } from "@/types/QuestionInterface";
-import { ConfirmationModals } from "@/components/questions/question-confirmation-modals";
+import { ConfirmationModals } from "@/components/questions-received/question-confirmation-modals";
 import { isQuestionExpired } from "@/lib/utils/question-utils";
 import { toast } from "@/hooks/use-toast";
 

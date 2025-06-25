@@ -9,6 +9,8 @@ import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { FollowRequestInterface } from "@/types/FollowerUserInterface";
 import { useAcceptFollowRequest, useRejectFollowRequest } from "@/hooks/use-follower";
+import { toast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FollowRequestCardProps {
 	request: FollowRequestInterface;
@@ -19,13 +21,18 @@ interface FollowRequestCardProps {
 export function FollowRequestCard({ request, onAccept, onReject }: FollowRequestCardProps) {
 	const acceptMutation = useAcceptFollowRequest();
 	const rejectMutation = useRejectFollowRequest();
+	const isMobile = useIsMobile();
 
 	const handleAccept = async () => {
 		try {
 			await acceptMutation.mutateAsync(request.id);
 			onAccept(request.id);
 		} catch (error) {
-			// Erro já tratado no hook
+			toast({
+				title: "Erro ao aceitar solicitação",
+				description: "Tente novamente mais tarde",
+				variant: "error",
+			});
 		}
 	};
 
@@ -34,7 +41,11 @@ export function FollowRequestCard({ request, onAccept, onReject }: FollowRequest
 			await rejectMutation.mutateAsync(request.id);
 			onReject(request.id);
 		} catch (error) {
-			// Erro já tratado no hook
+			toast({
+				title: "Erro ao rejeitar solicitação",
+				description: "Tente novamente mais tarde",
+				variant: "error",
+			});
 		}
 	};
 
@@ -74,8 +85,10 @@ export function FollowRequestCard({ request, onAccept, onReject }: FollowRequest
 							className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white"
 							disabled={acceptMutation.isPending}
 						>
-							<UserCheck className="h-4 w-4 mr-1" />
-							{acceptMutation.isPending ? "Aceitando..." : "Aceitar"}
+							<UserCheck className="h-4 w-4" />
+							{!isMobile && (
+								<span className="ml-1">{acceptMutation.isPending ? "Aceitando..." : "Aceitar"}</span>
+							)}
 						</Button>
 						<Button
 							onClick={handleReject}
@@ -84,8 +97,10 @@ export function FollowRequestCard({ request, onAccept, onReject }: FollowRequest
 							className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950"
 							disabled={rejectMutation.isPending}
 						>
-							<UserX className="h-4 w-4 mr-1" />
-							{rejectMutation.isPending ? "Rejeitando..." : "Rejeitar"}
+							<UserX className="h-4 w-4" />
+							{!isMobile && (
+								<span className="ml-1">{rejectMutation.isPending ? "Rejeitando..." : "Rejeitar"}</span>
+							)}
 						</Button>
 					</div>
 				</div>
