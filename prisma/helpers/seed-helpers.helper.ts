@@ -38,7 +38,7 @@ export class SeedHelpers {
 	}
 
 	static generateSocialMediaUrl(platform: string, nickname: string): string | null {
-		if (!faker.datatype.boolean({ probability: 0.2 })) return null;
+		if (!faker.datatype.boolean({ probability: 0 })) return null;
 
 		const urls = {
 			twitter: `https://twitter.com/${nickname}`,

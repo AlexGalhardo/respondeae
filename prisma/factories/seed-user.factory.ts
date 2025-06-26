@@ -150,7 +150,7 @@ export class SeedUserFactory {
 						email,
 						password: await hash("senhaBR@123", 10),
 						description: null,
-						website: faker.datatype.boolean() ? `https://${nickname}.com` : null,
+						website: null,
 						pix_key: `${nickname}@gmail.com`,
 						avatar_url,
 						twitter: SeedHelpers.generateSocialMediaUrl("twitter", nickname),

@@ -25,7 +25,7 @@ export function PaymentTabContent({ data, type, onWithdraw, isProcessingWithdraw
 				description={
 					isAnswered
 						? "Valor das perguntas que você respondeu e foram aprovadas"
-						: "Perguntas pagas que você enviou e foram expiradas ou recusadas a responder, você pode sacar a partir de R$ 100"
+						: "Perguntas pagas que você enviou e foram expiradas ou recusadas a responder"
 				}
 				icon={DollarSign}
 				iconBgColor="bg-green-600 dark:bg-foreground"
