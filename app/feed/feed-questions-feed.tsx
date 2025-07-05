@@ -10,6 +10,7 @@ import { FeedQuestionCard } from "./feed-question-card";
 interface FeedQuestionsFeedProps {
 	userNickname?: string;
 	userId?: string;
+	session?: any;
 }
 
 interface FeedOptimisticState {
@@ -22,7 +23,7 @@ interface FeedOptimisticState {
 	};
 }
 
-export const FeedQuestionsFeed = ({ userNickname, userId }: FeedQuestionsFeedProps) => {
+export const FeedQuestionsFeed = ({ userNickname, userId, session }: FeedQuestionsFeedProps) => {
 	const [activeTab, setActiveTab] = useState<FeedType>("community");
 	const [optimisticStates, setOptimisticStates] = useState<FeedOptimisticState>({});
 
@@ -34,11 +35,31 @@ export const FeedQuestionsFeed = ({ userNickname, userId }: FeedQuestionsFeedPro
 	const likeQuestionMutation = useLikeQuestion();
 	const dislikeQuestionMutation = useDislikeQuestion();
 
+	const blockedNicknames = useMemo(() => {
+		const blockedByUser = session?.user?.blocked_users?.map((block: any) => block.blocked.nickname) || [];
+		const blockedByOthers = session?.user?.blocked_by_users?.map((block: any) => block.blocked.nickname) || [];
+		const allBlocked = [...blockedByUser, ...blockedByOthers];
+
+		return allBlocked;
+	}, [session?.user?.blocked_users, session?.user?.blocked_by_users]);
+
 	const questions = useMemo(() => {
-		return (
-			(data?.pages as { questions: QuestionInterface[] }[] | undefined)?.flatMap((page) => page.questions) || []
-		);
-	}, [data]);
+		const allQuestions =
+			(data?.pages as { questions: QuestionInterface[] }[] | undefined)?.flatMap((page) => page.questions) || [];
+
+		if (!userNickname || blockedNicknames.length === 0) {
+			return allQuestions;
+		}
+
+		const filteredQuestions = allQuestions.filter((question) => {
+			const isOwnerBlocked = blockedNicknames.includes(question.owner.nickname);
+			const isAskerBlocked = blockedNicknames.includes(question.asked_by.nickname);
+
+			return !isOwnerBlocked && !isAskerBlocked;
+		});
+
+		return filteredQuestions;
+	}, [data, userNickname, blockedNicknames]);
 
 	const hasUserLiked = useCallback(
 		(question: QuestionInterface) => {

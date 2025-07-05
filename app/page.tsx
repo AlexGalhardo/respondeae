@@ -15,7 +15,11 @@ export default function HomePage() {
 		<main className="p-4 lg:p-6">
 			<div className="min-h-screen">
 				<div className="container mx-auto px-3 py-4 max-w-6xl">
-					<FeedQuestionsFeed userNickname={session?.user?.nickname ?? undefined} userId={session?.user?.id} />
+					<FeedQuestionsFeed
+						userNickname={session?.user?.nickname ?? undefined}
+						userId={session?.user?.id}
+						session={session}
+					/>
 				</div>
 			</div>
 		</main>

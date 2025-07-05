@@ -109,7 +109,7 @@ export default function EntrarClient() {
 
 	const renderTurnstile = () => {
 		if (turnstileReady && turnstileRef.current && !turnstileRendered) {
-			const turnstileInstance = (window as any).turnstile.render(turnstileRef.current, {
+			(window as any).turnstile.render(turnstileRef.current, {
 				sitekey: "0x4AAAAAABiCEoK5rM8dg1Xm",
 				callback: function (token: string) {},
 			});

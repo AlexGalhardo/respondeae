@@ -22,8 +22,8 @@ class UsersRepository {
 		following: { include: { following: true } },
 		questions_received: { include: { asked_by: true, owner: true } },
 		questions_sent: { include: { owner: true, asked_by: true } },
-		blocked_by_users: { include: { blocked: true } },
-		blocked_users: { include: { blocked: true } },
+		blocked_by_users: { include: { blocked: { select: { nickname: true } } } },
+		blocked_users: { include: { blocked: { select: { nickname: true } } } },
 		follow_requests_sent: true,
 		follow_requests_received: true,
 	};

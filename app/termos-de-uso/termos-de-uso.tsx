@@ -124,11 +124,7 @@ export default function TermosDeUsoClient() {
 					<h2 className="text-xl font-bold text-foreground mb-4">13. Contato</h2>
 					<p className="mb-4">
 						Em caso de dúvidas, sugestões ou problemas relacionados a estes Termos de Uso, entre em contato
-						com nossa equipe de suporte através do e-mail:{" "}
-						<a href="mailto:contato@respondeae.com.br" className="text-blue-600 underline">
-							contato@respondeae.com.br
-						</a>
-						.
+						com nossa equipe no <a href="/contato">formulário de contato</a>.
 					</p>
 				</CardContent>
 			</Card>

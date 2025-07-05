@@ -10,8 +10,13 @@ import { toast } from "@/hooks/use-toast";
 import { useEffect, useRef, useState } from "react";
 import { contactSchema } from "@/app/api/send-contact-email/route";
 import Script from "next/script";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function ContatoClient() {
+	const [error, setError] = useState("");
+	const [turnstileReady, setTurnstileReady] = useState(false);
+	const [turnstileRendered, setTurnstileRendered] = useState(false);
+
 	const [formData, setFormData] = useState({
 		name: "",
 		email: "",
@@ -64,11 +69,16 @@ export default function ContatoClient() {
 
 		setLoading(true);
 
-		const token = (window as any).turnstile?.getResponse?.();
+		let token = null;
 
-		if (!token) {
-			setLoading(false);
-			return;
+		if (process.env.NEXT_PUBLIC_NODE_ENV === "production") {
+			token = (window as any).turnstile?.getResponse?.();
+
+			if (!token) {
+				setError("Por favor, verifique o CAPTCHA.");
+				setLoading(false);
+				return;
+			}
 		}
 
 		try {
@@ -109,6 +119,7 @@ export default function ContatoClient() {
 			});
 		} finally {
 			setLoading(false);
+			(window as any).turnstile?.reset();
 		}
 	};
 
@@ -135,13 +146,46 @@ export default function ContatoClient() {
 
 	const turnstileRef = useRef<HTMLDivElement>(null);
 
-	useEffect(() => {
-		if ((window as any).turnstile && turnstileRef.current) {
+	const renderTurnstile = () => {
+		if (turnstileReady && turnstileRef.current && !turnstileRendered) {
 			(window as any).turnstile.render(turnstileRef.current, {
 				sitekey: "0x4AAAAAABiCEoK5rM8dg1Xm",
 				callback: function (token: string) {},
 			});
+			setTurnstileRendered(true);
 		}
+	};
+
+	const handleTurnstileLoad = () => {
+		setTurnstileReady(true);
+	};
+
+	useEffect(() => {
+		if (turnstileReady) {
+			renderTurnstile();
+		}
+	}, [turnstileReady]);
+
+	useEffect(() => {
+		const checkTurnstileAvailability = () => {
+			if ((window as any).turnstile && !turnstileReady) {
+				setTurnstileReady(true);
+			}
+		};
+
+		const interval = setInterval(checkTurnstileAvailability, 100);
+
+		return () => clearInterval(interval);
+	}, [turnstileReady]);
+
+	useEffect(() => {
+		(window as any).onloadTurnstileCallback = () => {
+			setTurnstileReady(true);
+		};
+
+		return () => {
+			delete (window as any).onloadTurnstileCallback;
+		};
 	}, []);
 
 	return (
@@ -150,7 +194,8 @@ export default function ContatoClient() {
 				src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback"
 				async
 				defer
-				onLoad={() => console.log("Turnstile script carregado")}
+				onLoad={handleTurnstileLoad}
+				strategy="afterInteractive"
 			/>
 			<main className="p-4 lg:p-6">
 				<div className="max-w-6xl mx-auto">
@@ -243,6 +288,15 @@ export default function ContatoClient() {
 								</div>
 
 								<div className="w-full" ref={turnstileRef}></div>
+
+								{error && error !== "Callback" && (
+									<Alert
+										variant="destructive"
+										className="font-bold text-center bg-red-300 text-red-900 dark:bg-red-800 dark:text-red-100"
+									>
+										<AlertDescription>{error}</AlertDescription>
+									</Alert>
+								)}
 
 								<Button
 									type="submit"

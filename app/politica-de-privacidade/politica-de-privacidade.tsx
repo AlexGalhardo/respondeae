@@ -64,10 +64,7 @@ export default function PoliticaDePrivacidadeClient() {
 					<h2 className="text-xl font-bold text-foreground mb-4">6. Contato</h2>
 					<p className="mb-4">
 						Caso tenha dúvidas, solicitações ou queira exercer seus direitos de privacidade, entre em
-						contato com nossa equipe através do email:{" "}
-						<a href="mailto:suporte@respondeae.com.br" className="text-blue-600 underline">
-							suporte@respondeae.com.br
-						</a>
+						contato com nossa equipe no <a href="/contato">formulário de contato</a>
 					</p>
 				</CardContent>
 			</Card>

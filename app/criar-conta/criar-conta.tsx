@@ -106,12 +106,16 @@ export default function CriarContaClient() {
 			return;
 		}
 
-		const token = (window as any).turnstile?.getResponse?.();
+		let token = null;
 
-		if (!token) {
-			setError("Por favor, verifique o CAPTCHA.");
-			setLoading(false);
-			return;
+		if (process.env.NEXT_PUBLIC_NODE_ENV === "production") {
+			token = (window as any).turnstile?.getResponse?.();
+
+			if (!token) {
+				setError("Por favor, verifique o CAPTCHA.");
+				setLoading(false);
+				return;
+			}
 		}
 
 		try {
