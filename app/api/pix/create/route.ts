@@ -1,24 +1,29 @@
 import TelegramLog from "@/lib/telegram-logger";
 import { NextResponse } from "next/server";
 
+export const ABACATEPAY_API_KEY =
+	process.env.NEXT_PUBLIC_TEST_MODE === "false"
+		? process.env.NEXT_PUBLIC_TEST_ABACATEPAY_API_KEY_PROD
+		: process.env.NEXT_PUBLIC_ABACATEPAY_API_KEY_DEV;
+
 export async function POST(request: Request) {
 	try {
 		const { amount, nickname, question_text } = await request.json();
 
 		if (!amount || amount < 200) {
-			return NextResponse.json({ error: "O valor mínimo é R$ 2,00 (200 centavos)" }, { status: 400 });
+			return NextResponse.json({ error: "O valor mínimo é R$ 2,00 reais" }, { status: 400 });
 		}
 
 		const response = await fetch("https://api.abacatepay.com/v1/pixQrCode/create", {
 			method: "POST",
 			headers: {
-				Authorization: `Bearer ${process.env.NEXT_PUBLIC_ABACATEPAY_API_KEY}`,
+				Authorization: `Bearer ${ABACATEPAY_API_KEY}`,
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
 				amount,
 				expiresIn: 600,
-				description: `Respondeae: Estou pergutando a @${nickname}: ${question_text}`,
+				description: `Respondeae: Enviar pergunta a @${nickname}: ${question_text}`,
 			}),
 		});
 

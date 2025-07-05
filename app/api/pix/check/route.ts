@@ -1,5 +1,6 @@
 import TelegramLog from "@/lib/telegram-logger";
 import { NextResponse } from "next/server";
+import { ABACATEPAY_API_KEY } from "../create/route";
 
 export async function GET(request: Request) {
 	try {
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
 		const response = await fetch(`https://api.abacatepay.com/v1/pixQrCode/check?id=${pixId}`, {
 			method: "GET",
 			headers: {
-				Authorization: `Bearer ${process.env.NEXT_PUBLIC_ABACATEPAY_API_KEY}`,
+				Authorization: `Bearer ${ABACATEPAY_API_KEY}`,
 				"Content-Type": "application/json",
 			},
 		});

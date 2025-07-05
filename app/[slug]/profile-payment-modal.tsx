@@ -1,4 +1,4 @@
-// components/profile/payment-modal.tsx
+// /app/[slug]/profile-question-modal.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { Clock, Check, Copy, Loader } from "lucide-react";
+import { ABACATEPAY_API_KEY } from "../api/pix/create/route";
 
 const PRESET_AMOUNTS = [2, 5, 10, 20, 50];
 
@@ -110,7 +111,7 @@ export function ProfilePaymentModal({
 				fetch(`/api/pix/simulate-payment`, {
 					method: "POST",
 					headers: {
-						Authorization: `Bearer ${process.env.NEXT_PUBLIC_ABACATEPAY_API_KEY}`,
+						Authorization: `Bearer ${ABACATEPAY_API_KEY}`,
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({ pixId: pixData.id }),
