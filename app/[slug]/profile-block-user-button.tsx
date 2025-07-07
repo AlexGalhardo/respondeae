@@ -27,9 +27,15 @@ interface BlockUserButtonProps {
 		nickname: string;
 	};
 	onBlockSuccess?: () => void;
+	onUnblockSuccess?: () => void;
 }
 
-export function ProfileBlockUserButton({ sessionUser, profileFound, onBlockSuccess }: BlockUserButtonProps) {
+export function ProfileBlockUserButton({
+	sessionUser,
+	profileFound,
+	onBlockSuccess,
+	onUnblockSuccess,
+}: BlockUserButtonProps) {
 	const [isLoading, setIsLoading] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 	const [isBlocked, setIsBlocked] = useState(false);
@@ -38,6 +44,7 @@ export function ProfileBlockUserButton({ sessionUser, profileFound, onBlockSucce
 	useEffect(() => {
 		if (!sessionUser) {
 			setCheckingBlockStatus(false);
+			setIsBlocked(false);
 			return;
 		}
 
@@ -47,9 +54,12 @@ export function ProfileBlockUserButton({ sessionUser, profileFound, onBlockSucce
 				if (response.ok) {
 					const data = await response.json();
 					setIsBlocked(data.isBlocked);
+				} else {
+					setIsBlocked(false);
 				}
 			} catch (error: any) {
 				await TelegramLog.error(`Catch Error profile-block-user-button.ts checkBlockStatus: ${error?.message}`);
+				setIsBlocked(false);
 			} finally {
 				setCheckingBlockStatus(false);
 			}
@@ -87,7 +97,12 @@ export function ProfileBlockUserButton({ sessionUser, profileFound, onBlockSucce
 			toast.success(`@${profileFound.nickname} foi ${action} com sucesso`);
 			setIsBlocked(!isBlocked);
 			setIsOpen(false);
-			onBlockSuccess?.();
+
+			if (isBlocked) {
+				onUnblockSuccess?.();
+			} else {
+				onBlockSuccess?.();
+			}
 		} catch (error: any) {
 			await TelegramLog.error(`Catch Error profile-block-user-button.ts handleBlockAction: ${error?.message}`);
 			toast.error(
@@ -155,7 +170,7 @@ export function ProfileBlockUserButton({ sessionUser, profileFound, onBlockSucce
 								<br />
 								Quando você desbloqueia alguém:
 								<br />
-								<br />• Essa pessoa poderá te ver seu perfil, enviar perguntas e seguir você novamente
+								<br />• Essa pessoa poderá ver seu perfil, enviar perguntas e seguir você novamente
 								<br />• Você verá o conteúdo dela novamente no feed
 								<br />
 							</>
@@ -178,11 +193,7 @@ export function ProfileBlockUserButton({ sessionUser, profileFound, onBlockSucce
 					<AlertDialogAction
 						onClick={handleBlockAction}
 						disabled={isLoading}
-						className={
-							isBlocked
-								? "bg-red-600 hover:bg-red-700 focus:ring-red-600 text-white"
-								: "bg-red-600 hover:bg-red-700 focus:ring-red-600 text-white"
-						}
+						className="bg-red-600 hover:bg-red-700 focus:ring-red-600 text-white"
 					>
 						{isLoading
 							? `${isBlocked ? "Desbloqueando" : "Bloqueando"}...`

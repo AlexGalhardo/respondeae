@@ -15,20 +15,28 @@ import TelegramLog from "@/lib/telegram-logger";
 
 interface ProfileHeaderProps {
 	profile: any;
+	isBlocked?: boolean;
+	onBlockSuccess?: () => void;
+	onUnblockSuccess?: () => void;
 }
 
-export function ProfileHeader({ profile }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, isBlocked = false, onBlockSuccess, onUnblockSuccess }: ProfileHeaderProps) {
 	const { data: session } = useSession();
 	const { toast } = useToast();
 	const followMutation = useFollowUser() as ReturnType<typeof useFollowUser>;
 
 	const [localIsFollowing, setLocalIsFollowing] = useState(profile.isFollowing || false);
 	const [localHasPendingRequest, setLocalHasPendingRequest] = useState(profile.hasPendingRequest || false);
+	const [localIsBlocked, setLocalIsBlocked] = useState(isBlocked);
 
 	useEffect(() => {
 		setLocalIsFollowing(profile.isFollowing || false);
 		setLocalHasPendingRequest(profile.hasPendingRequest || false);
 	}, [profile.isFollowing, profile.hasPendingRequest]);
+
+	useEffect(() => {
+		setLocalIsBlocked(isBlocked);
+	}, [isBlocked]);
 
 	const handleFollow = async () => {
 		if (!session?.user?.id) {
@@ -70,6 +78,16 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 				variant: "error",
 			});
 		}
+	};
+
+	const handleBlockSuccess = () => {
+		setLocalIsBlocked(true);
+		onBlockSuccess?.();
+	};
+
+	const handleUnblockSuccess = () => {
+		setLocalIsBlocked(false);
+		onUnblockSuccess?.();
 	};
 
 	const getFollowButtonContent = () => {
@@ -153,15 +171,17 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 
 					{shouldShowActionButtons && (
 						<div className="flex flex-wrap justify-center items-center gap-2 mb-5">
-							<Button
-								variant={getFollowButtonVariant()}
-								onClick={handleFollow}
-								disabled={followMutation.isPending || !session}
-								className="px-3 py-1 text-sm font-medium flex items-center gap-1"
-								title={!session ? "Faça login para seguir usuários" : ""}
-							>
-								{getFollowButtonContent()}
-							</Button>
+							{!localIsBlocked && (
+								<Button
+									variant={getFollowButtonVariant()}
+									onClick={handleFollow}
+									disabled={followMutation.isPending || !session}
+									className="px-3 py-1 text-sm font-medium flex items-center gap-1"
+									title={!session ? "Faça login para seguir usuários" : ""}
+								>
+									{getFollowButtonContent()}
+								</Button>
+							)}
 
 							{session?.user && (
 								<ProfileBlockUserButton
@@ -173,7 +193,8 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 										id: profile.id,
 										nickname: profile.nickname ?? "",
 									}}
-									onBlockSuccess={() => {}}
+									onBlockSuccess={handleBlockSuccess}
+									onUnblockSuccess={handleUnblockSuccess}
 								/>
 							)}
 						</div>

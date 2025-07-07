@@ -1,7 +1,6 @@
-// /app/[slug]/profile.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
@@ -20,6 +19,7 @@ export default function ProfileClient() {
 	const [currentPage, setCurrentPage] = useState(1);
 	const [currentStep, setCurrentStep] = useState<"closed" | "payment" | "pix">("closed");
 	const [newQuestion, setNewQuestion] = useState("");
+	const [isBlocked, setIsBlocked] = useState(false);
 
 	const router = useRouter();
 	const params = useParams();
@@ -27,6 +27,17 @@ export default function ProfileClient() {
 	const { data: session, status, update } = useSession();
 
 	const { data: profileFound, isLoading, error } = useProfile(slug);
+
+	useEffect(() => {
+		if (session?.user?.blocked_users && profileFound) {
+			const blocked = session.user.blocked_users.some(
+				(block) => block.blocked.nickname === profileFound.nickname,
+			);
+			setIsBlocked(blocked);
+		} else {
+			setIsBlocked(false);
+		}
+	}, [session?.user?.blocked_users, profileFound]);
 
 	const questionsData = useMemo(() => {
 		if (!profileFound?.questions_received) return [];
@@ -90,6 +101,14 @@ export default function ProfileClient() {
 		setCurrentPage(1);
 	};
 
+	const handleBlockSuccess = () => {
+		setIsBlocked(true);
+	};
+
+	const handleUnblockSuccess = () => {
+		setIsBlocked(false);
+	};
+
 	if (status === "loading" || isLoading) {
 		return <LoadingScreen />;
 	}
@@ -140,79 +159,92 @@ export default function ProfileClient() {
 
 	return (
 		<main className="p-4 lg:p-6">
-			<ProfileHeader profile={profileFound} />
-
-			<ProfileQuestionForm profile={profileFound} session={session} onSubmitQuestion={handleSubmitQuestion} />
-
-			{session?.user?.id === profileFound.id && (
-				<div className="text-center py-4 rounded-lg border-2 border-blue-500 bg-blue-500 text-white shadow mb-6">
-					<p className="text-sm md:text-base font-medium">Esse é seu perfil público</p>
-				</div>
-			)}
-
-			{!session?.user?.id && (
-				<div className="text-center py-4 rounded-lg dark:text-white mb-6 font-bold text-gray-700">
-					<p className="md:text-base font-bold">
-						Entre na sua conta para poder fazer perguntas a esse usuário.
-					</p>
-				</div>
-			)}
-
-			{canViewQuestions ? (
-				<Tabs defaultValue="answered" className="w-full" onValueChange={handleTabChange}>
-					<TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-neutral-800 rounded-lg p-1 h-auto">
-						<TabsTrigger
-							value="answered"
-							className="text-xs sm:text-sm py-2.5 px-1 rounded-md text-center font-medium whitespace-nowrap data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700 transition-all"
-						>
-							Últimas
-						</TabsTrigger>
-						<TabsTrigger
-							value="liked"
-							className="text-xs sm:text-sm py-2.5 px-1 rounded-md text-center font-medium whitespace-nowrap data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700 transition-all"
-						>
-							Top Curtidas
-						</TabsTrigger>
-						<TabsTrigger
-							value="top"
-							className="text-xs sm:text-sm py-2.5 px-1 rounded-md text-center font-medium whitespace-nowrap data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700 transition-all"
-						>
-							Top Pagas
-						</TabsTrigger>
-					</TabsList>
-
-					<TabsContent value="answered" className="mt-4">
-						{renderQuestionsList(publicQuestions)}
-					</TabsContent>
-
-					<TabsContent value="liked" className="mt-4">
-						{renderQuestionsList(topLikedQuestions)}
-					</TabsContent>
-
-					<TabsContent value="top" className="mt-4">
-						{renderQuestionsList(topPaidQuestions)}
-					</TabsContent>
-				</Tabs>
-			) : (
-				<div className="text-center py-4 px-4  text-gray-700 mb-6 dark:text-white">
-					<p className="text-sm md:text-base font-bold">
-						{isFollowing
-							? "Aguardando aprovação para ver as respostas deste perfil privado."
-							: hasPendingRequest
-								? "Solicitação para seguir esse perfil enviada. Aguardando aprovação."
-								: "Esse perfil é privado. Você precisa ser seguidor para ver as respostas desse perfil."}
-					</p>
-				</div>
-			)}
-
-			<ProfilePaymentModal
-				currentStep={currentStep}
-				onStepChange={setCurrentStep}
-				question={newQuestion}
+			<ProfileHeader
 				profile={profileFound}
-				session={session}
-				update={update}
+				isBlocked={isBlocked}
+				onBlockSuccess={handleBlockSuccess}
+				onUnblockSuccess={handleUnblockSuccess}
 			/>
+
+			{!isBlocked && (
+				<>
+					<ProfileQuestionForm
+						profile={profileFound}
+						session={session}
+						onSubmitQuestion={handleSubmitQuestion}
+					/>
+
+					{session?.user?.id === profileFound.id && (
+						<div className="text-center py-4 rounded-lg border-2 border-blue-500 bg-blue-500 text-white shadow mb-6">
+							<p className="text-sm md:text-base font-medium">Esse é seu perfil público</p>
+						</div>
+					)}
+
+					{!session?.user?.id && (
+						<div className="text-center py-4 rounded-lg dark:text-white mb-6 font-bold text-gray-700">
+							<p className="md:text-base font-bold">
+								Entre na sua conta para poder fazer perguntas a esse usuário.
+							</p>
+						</div>
+					)}
+
+					{canViewQuestions ? (
+						<Tabs defaultValue="answered" className="w-full" onValueChange={handleTabChange}>
+							<TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-neutral-800 rounded-lg p-1 h-auto">
+								<TabsTrigger
+									value="answered"
+									className="text-xs sm:text-sm py-2.5 px-1 rounded-md text-center font-medium whitespace-nowrap data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700 transition-all"
+								>
+									Últimas
+								</TabsTrigger>
+								<TabsTrigger
+									value="liked"
+									className="text-xs sm:text-sm py-2.5 px-1 rounded-md text-center font-medium whitespace-nowrap data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700 transition-all"
+								>
+									Top Curtidas
+								</TabsTrigger>
+								<TabsTrigger
+									value="top"
+									className="text-xs sm:text-sm py-2.5 px-1 rounded-md text-center font-medium whitespace-nowrap data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700 transition-all"
+								>
+									Top Pagas
+								</TabsTrigger>
+							</TabsList>
+
+							<TabsContent value="answered" className="mt-4">
+								{renderQuestionsList(publicQuestions)}
+							</TabsContent>
+
+							<TabsContent value="liked" className="mt-4">
+								{renderQuestionsList(topLikedQuestions)}
+							</TabsContent>
+
+							<TabsContent value="top" className="mt-4">
+								{renderQuestionsList(topPaidQuestions)}
+							</TabsContent>
+						</Tabs>
+					) : (
+						<div className="text-center py-4 px-4  text-gray-700 mb-6 dark:text-white">
+							<p className="text-sm md:text-base font-bold">
+								{isFollowing
+									? "Aguardando aprovação para ver as respostas deste perfil privado."
+									: hasPendingRequest
+										? "Solicitação para seguir esse perfil enviada. Aguardando aprovação."
+										: "Esse perfil é privado. Você precisa ser seguidor para ver as respostas desse perfil."}
+							</p>
+						</div>
+					)}
+
+					<ProfilePaymentModal
+						currentStep={currentStep}
+						onStepChange={setCurrentStep}
+						question={newQuestion}
+						profile={profileFound}
+						session={session}
+						update={update}
+					/>
+				</>
+			)}
 		</main>
 	);
 }
