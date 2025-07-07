@@ -7,14 +7,15 @@ import {
 	getUserQuestionsAnsweredPaymentDetails,
 	getUserQuestionsSentPaymentDetails,
 } from "@/lib/repositories/questions.repository";
+import TelegramLog from "@/lib/telegram-logger";
 
 export async function getAnsweredPaymentDetails(nickname: string) {
 	try {
 		const data = await getUserQuestionsAnsweredPaymentDetails(nickname);
 		return { success: true, data };
-	} catch (error) {
-		console.error("Erro ao buscar dados de pagamento respondidas:", error);
-		throw new Error("Erro ao carregar dados de pagamento");
+	} catch (error: any) {
+		await TelegramLog.error(`Erro payment-actions.ts getAnsweredPaymentDetails: ${error?.message}`);
+		throw new Error(error?.messsage);
 	}
 }
 
@@ -22,9 +23,9 @@ export async function getSentPaymentDetails(nickname: string) {
 	try {
 		const data = await getUserQuestionsSentPaymentDetails(nickname);
 		return { success: true, data };
-	} catch (error) {
-		console.error("Erro ao buscar dados de pagamento enviadas:", error);
-		throw new Error("Erro ao carregar dados de pagamento");
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error payment-actions.ts getSentPaymentDetails: ${error?.message}`);
+		throw new Error(error?.messsage);
 	}
 }
 
@@ -39,6 +40,7 @@ export async function processWithdraw(params: {
 		const session = await getServerSession(authOptions);
 
 		if (!session?.user?.id) {
+			TelegramLog.error(`Error payment-actions.ts usuário não autenticado`);
 			throw new Error("Usuário não autenticado");
 		}
 
@@ -52,12 +54,14 @@ export async function processWithdraw(params: {
 
 		if (!response.ok) {
 			const errorData = await response.json();
+			TelegramLog.error(`Error payment-actions.ts processWithdraw: ${errorData.error}`);
 			throw new Error(errorData.error || "Erro ao processar saque");
 		}
 
 		const result = await response.json();
 
 		if (!result.success) {
+			TelegramLog.error(`Error payment-actions.ts processWithdraw: ${result.error}`);
 			throw new Error(result.error || "Erro desconhecido");
 		}
 
@@ -65,8 +69,8 @@ export async function processWithdraw(params: {
 		revalidateTag(`payment-data-${params.nickname}`);
 
 		return { success: true, data: result };
-	} catch (error) {
-		console.error("Erro ao processar saque:", error);
-		throw error;
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error payment-actions.ts processWithdraw: ${error?.message}`);
+		throw new Error(error?.message);
 	}
 }

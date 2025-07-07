@@ -3,6 +3,7 @@
 import { revalidateTag } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import TelegramLog from "@/lib/telegram-logger";
 
 export async function reportAnswer(questionId: string, reason: "offensive" | "inappropriate") {
 	try {
@@ -31,9 +32,9 @@ export async function reportAnswer(questionId: string, reason: "offensive" | "in
 		revalidateTag("user-session");
 
 		return { success: true };
-	} catch (error) {
-		console.error("Erro ao reportar resposta:", error);
-		throw error;
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file sent-question-actions.ts reportAnswer: ${error?.message}`);
+		throw new Error(error?.message);
 	}
 }
 
@@ -64,9 +65,9 @@ export async function likeAnswer(questionId: string, nickname: string) {
 		revalidateTag("user-session");
 
 		return { success: true };
-	} catch (error) {
-		console.error("Erro ao curtir resposta:", error);
-		throw error;
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file sent-question-actions.ts likeAnswer: ${error?.message}`);
+		throw new Error(error?.message);
 	}
 }
 
@@ -97,9 +98,9 @@ export async function dislikeAnswer(questionId: string, nickname: string) {
 		revalidateTag("user-session");
 
 		return { success: true };
-	} catch (error) {
-		console.error("Erro ao descurtir resposta:", error);
-		throw error;
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file sent-question-actions.ts dislikeAnswer: ${error?.message}`);
+		throw new Error(error?.message);
 	}
 }
 
@@ -126,8 +127,8 @@ export async function withdrawUnanswered() {
 		revalidateTag("user-session");
 
 		return { success: true };
-	} catch (error) {
-		console.error("Erro ao processar saque:", error);
-		throw error;
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file sent-question-actions.ts withdrawUnanswered: ${error?.message}`);
+		throw new Error(error?.message);
 	}
 }

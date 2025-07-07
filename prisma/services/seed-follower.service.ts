@@ -69,7 +69,7 @@ export class SeedFollowerService {
 
 						relations.length = 0;
 						SeedLogger.progress(created, actualCount, "Relações de seguidores criadas");
-					} catch (error) {
+					} catch (error: any) {
 						SeedLogger.error(`❌ Erro ao salvar lote: ${error}`);
 						for (const rel of relations) {
 							try {

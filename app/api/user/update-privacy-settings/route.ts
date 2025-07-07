@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/prisma/prisma-client";
+import TelegramLog from "@/lib/telegram-logger";
 
 export async function POST(req: NextRequest) {
 	try {
@@ -107,6 +108,7 @@ export async function POST(req: NextRequest) {
 			{ status: 200 },
 		);
 	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file update-privacy-settings.ts: ${error?.message}`);
 		return NextResponse.json({ error: error?.message ?? "Erro interno do servidor" }, { status: 500 });
 	}
 }

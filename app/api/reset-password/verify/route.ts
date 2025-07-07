@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 
 		return NextResponse.json({ success: true, valid: true });
 	} catch (error: any) {
-		TelegramLog.error(`Error verifying reset password token: ${error?.message}`);
+		await TelegramLog.error(`Error verifying reset password token: ${error?.message}`);
 		return NextResponse.json({ error: "Erro ao verificar token" }, { status: 500 });
 	}
 }

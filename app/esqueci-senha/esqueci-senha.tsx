@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import TelegramLog from "@/lib/telegram-logger";
 
 export default function EsqueciSenhaClient() {
 	const router = useRouter();
@@ -55,9 +56,9 @@ export default function EsqueciSenhaClient() {
 
 			setSuccessAlert(true);
 			setEmail("");
-		} catch (error) {
+		} catch (error: any) {
+			await TelegramLog.error(`Error esqueci-senha.ts handleSubmitForgetPassword: ${error.message}`);
 			setError("Erro ao enviar email de recuperação de senha");
-			console.error("ERROR:", error);
 		} finally {
 			setLoading(false);
 		}

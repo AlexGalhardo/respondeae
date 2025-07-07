@@ -8,6 +8,7 @@ import { SentQuestionsTabs } from "@/components/sent-questions/sent-questions-ta
 import { ReportModal } from "@/components/sent-questions/report-modal";
 import { useSentQuestions, useReportAnswer, useLikeAnswer, useDislikeAnswer } from "@/hooks/use-sent-questions";
 import { SentQuestionInterface } from "@/types/SentQuestion";
+import TelegramLog from "@/lib/telegram-logger";
 
 export default function PerguntasEnviadasPage() {
 	const router = useRouter();
@@ -74,8 +75,8 @@ export default function PerguntasEnviadasPage() {
 						: q,
 				),
 			);
-		} catch (error) {
-			// Error handled by mutation
+		} catch (error: any) {
+			await TelegramLog.error(`Error perguntas-enviadas.ts handleConfirmReport: ${error?.message}`);
 		} finally {
 			setLoadingStates((prev) => ({ ...prev, reporting: "" }));
 			setIsReportModalOpen(false);
@@ -118,8 +119,8 @@ export default function PerguntasEnviadasPage() {
 				questionId,
 				nickname: session.user.nickname,
 			});
-		} catch (error) {
-			// Revert changes on error
+		} catch (error: any) {
+			await TelegramLog.error(`Error perguntas-enviadas.ts handleLike: ${error?.message}`);
 			setUserInteractions((prev) => ({
 				...prev,
 				[questionId]: currentInteraction,
@@ -174,8 +175,8 @@ export default function PerguntasEnviadasPage() {
 				questionId,
 				nickname: session.user.nickname,
 			});
-		} catch (error) {
-			// Revert changes on error
+		} catch (error: any) {
+			await TelegramLog.error(`Error perguntas-enviadas.ts handleDislike: ${error?.message}`);
 			setUserInteractions((prev) => ({
 				...prev,
 				[questionId]: currentInteraction,

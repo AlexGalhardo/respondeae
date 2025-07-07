@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 					return NextResponse.json({ error: "Captcha inválido" }, { status: 500 });
 				}
 			} catch (err) {
-				console.error("Erro na verificação do CAPTCHA: ", err);
+				await TelegramLog.error(`Error sending email via Resend: ${JSON.stringify(err)}`);
 				return NextResponse.json({ error: "Erro na verificação do CAPTCHA" }, { status: 500 });
 			}
 		}

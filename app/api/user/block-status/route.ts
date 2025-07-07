@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/prisma/prisma-client";
+import TelegramLog from "@/lib/telegram-logger";
 
 export async function GET(request: NextRequest) {
 	try {
@@ -18,7 +19,6 @@ export async function GET(request: NextRequest) {
 			return NextResponse.json({ message: "Nickname do usuário é obrigatório" }, { status: 400 });
 		}
 
-		// Verificar se o usuário alvo existe
 		const targetUser = await prisma.user.findUnique({
 			where: { nickname: targetNickname },
 			select: { id: true },
@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
 			return NextResponse.json({ message: "Usuário não encontrado" }, { status: 404 });
 		}
 
-		// Verificar se existe bloqueio
 		const blockExists = await prisma.userBlock.findUnique({
 			where: {
 				blocker_id_blocked_id: {
@@ -41,8 +40,8 @@ export async function GET(request: NextRequest) {
 		return NextResponse.json({
 			isBlocked: !!blockExists,
 		});
-	} catch (error) {
-		console.error("Erro ao verificar status de bloqueio:", error);
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file user-block-status.ts: ${error?.message}`);
 		return NextResponse.json({ message: "Erro interno do servidor" }, { status: 500 });
 	}
 }

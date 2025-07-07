@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 			{ status: 200 },
 		);
 	} catch (error: any) {
-		TelegramLog.error(`Error updating pix key: ${error?.message}`);
+		await TelegramLog.error(`Error updating pix key: ${error?.message}`);
 		return NextResponse.json({ error: "Erro ao atualizar chave pix" }, { status: 500 });
 	}
 }

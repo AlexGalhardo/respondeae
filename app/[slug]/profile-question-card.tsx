@@ -13,6 +13,7 @@ import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/use-toast";
 import { QuestionInterface } from "@/lib/interfaces";
 import { getInitials } from "@/lib/functions";
+import TelegramLog from "@/lib/telegram-logger";
 
 interface QuestionCardProps {
 	question: QuestionInterface;
@@ -44,7 +45,8 @@ export function ProfileQuestionCard({ question }: QuestionCardProps) {
 				questionId: question.id,
 				nickname: session.user.nickname,
 			});
-		} catch (error) {
+		} catch (error: any) {
+			TelegramLog.error(`Error profile-question-card.ts handleLike: ${error?.message}`);
 			toast({
 				title: "Erro ao curtir pergunta!",
 				description: "Tente novamente mais tarde",
@@ -61,7 +63,8 @@ export function ProfileQuestionCard({ question }: QuestionCardProps) {
 				questionId: question.id,
 				nickname: session.user.nickname,
 			});
-		} catch (error) {
+		} catch (error: any) {
+			TelegramLog.error(`Error profile-question-card.ts handleDislike: ${error?.message}`);
 			toast({
 				title: "Erro ao descurtir pergunta!",
 				description: "Tente novamente mais tarde",

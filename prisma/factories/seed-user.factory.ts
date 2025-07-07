@@ -4,6 +4,7 @@ import slugify from "slugify";
 import { SeedUniqueTracker } from "../helpers/seed-unique-tracker.helper";
 import { SeedHelpers } from "../helpers/seed-helpers.helper";
 import { SeedUserInterface } from "../helpers/seed-interfaces.helper";
+import TelegramLog from "@/lib/telegram-logger";
 
 function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
@@ -183,6 +184,7 @@ export class SeedUserFactory {
 					console.log(`🔄 Usuário duplicado encontrado: nickname = ${nickname}, tentando novamente...`);
 				}
 			} catch (err: any) {
+				TelegramLog.error(`Catch error seed-user.factory createRandomUser: ${err?.message}`);
 				console.error("❌ Erro ao buscar ou processar dados da API:", err?.message);
 			}
 		}

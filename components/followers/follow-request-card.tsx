@@ -11,6 +11,7 @@ import { FollowRequestInterface } from "@/types/FollowerUserInterface";
 import { useAcceptFollowRequest, useRejectFollowRequest } from "@/hooks/use-follower";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import TelegramLog from "@/lib/telegram-logger";
 
 interface FollowRequestCardProps {
 	request: FollowRequestInterface;
@@ -27,7 +28,8 @@ export function FollowRequestCard({ request, onAccept, onReject }: FollowRequest
 		try {
 			await acceptMutation.mutateAsync(request.id);
 			onAccept(request.id);
-		} catch (error) {
+		} catch (error: any) {
+			await TelegramLog.error(`Error follower-actions.ts ${error?.message}`);
 			toast({
 				title: "Erro ao aceitar solicitação",
 				description: "Tente novamente mais tarde",
@@ -40,7 +42,8 @@ export function FollowRequestCard({ request, onAccept, onReject }: FollowRequest
 		try {
 			await rejectMutation.mutateAsync(request.id);
 			onReject(request.id);
-		} catch (error) {
+		} catch (error: any) {
+			await TelegramLog.error(`Error follower-actions.ts ${error?.message}`);
 			toast({
 				title: "Erro ao rejeitar solicitação",
 				description: "Tente novamente mais tarde",

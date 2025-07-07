@@ -1,4 +1,5 @@
 import { authOptions } from "@/lib/auth";
+import TelegramLog from "@/lib/telegram-logger";
 import { prisma } from "@/prisma/prisma-client";
 import { getServerSession } from "next-auth";
 import { type NextRequest, NextResponse } from "next/server";
@@ -52,6 +53,7 @@ export async function POST(req: NextRequest) {
 			message: "Conta marcada para exclusão",
 		});
 	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file user-actions.ts delete account: ${error?.message}`);
 		return NextResponse.json({ error: error?.message ?? "Erro interno do servidor" }, { status: 500 });
 	}
 }

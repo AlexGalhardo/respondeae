@@ -17,6 +17,7 @@ import { QuestionInterface } from "@/types/QuestionInterface";
 import { ConfirmationModals } from "@/components/questions-received/question-confirmation-modals";
 import { isQuestionExpired } from "@/lib/utils/question-utils";
 import { toast } from "@/hooks/use-toast";
+import TelegramLog from "@/lib/telegram-logger";
 
 export default function PerguntasRecebidasPage() {
 	const router = useRouter();
@@ -85,7 +86,8 @@ export default function PerguntasRecebidasPage() {
 						: q,
 				),
 			);
-		} catch (error) {
+		} catch (error: any) {
+			await TelegramLog.error(`Error perguntas-recebidas.ts handleConfirmAnswer: ${error?.message}`);
 			toast({
 				title: "Ocorreu um erro ao responder a pergunta. Por favor, tente novamente.",
 				variant: "error",
@@ -129,7 +131,8 @@ export default function PerguntasRecebidasPage() {
 						: q,
 				),
 			);
-		} catch (error) {
+		} catch (error: any) {
+			await TelegramLog.error(`Error perguntas-recebidas.ts handleConfirmDecline: ${error?.message}`);
 			toast({
 				title: "Ocorreu um erro ao recusar a pergunta. Por favor, tente novamente.",
 				variant: "error",
@@ -161,7 +164,8 @@ export default function PerguntasRecebidasPage() {
 			});
 
 			setQuestions((prev) => prev.filter((q) => q.id !== selectedQuestion.id));
-		} catch (error) {
+		} catch (error: any) {
+			await TelegramLog.error(`Error perguntas-recebidas.ts handleConfirmDelete: ${error?.message}`);
 			toast({
 				title: "Ocorreu um erro ao deletar a pergunta. Por favor, tente novamente.",
 				variant: "error",
@@ -211,7 +215,8 @@ export default function PerguntasRecebidasPage() {
 						: q,
 				),
 			);
-		} catch (error) {
+		} catch (error: any) {
+			await TelegramLog.error(`Error perguntas-recebidas.ts handleConfirmReport: ${error?.message}`);
 			toast({
 				title: "Ocorreu um erro ao reportar a pergunta. Por favor, tente novamente.",
 				variant: "error",

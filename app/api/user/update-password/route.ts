@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/prisma/prisma-client";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import TelegramLog from "@/lib/telegram-logger";
 
 export const passwordSchema = z
 	.object({
@@ -77,6 +78,7 @@ export async function POST(req: NextRequest) {
 			{ status: 200 },
 		);
 	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file update-password.ts: ${error?.message}`);
 		return NextResponse.json({ error: error?.message || "Erro interno do servidor" }, { status: 500 });
 	}
 }

@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ProfileBlockUserButton } from "./profile-block-user-button";
 import { ProfileSocialLinks } from "./profile-social-linkts";
 import { QuestionInterface } from "@/types/QuestionInterface";
+import TelegramLog from "@/lib/telegram-logger";
 
 interface ProfileHeaderProps {
 	profile: any;
@@ -61,8 +62,8 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 				title: result.message,
 				variant: "default",
 			});
-		} catch (error) {
-			console.error("Erro no handleFollow:", error);
+		} catch (error: any) {
+			await TelegramLog.error(`Catch Error file profile-header.ts handleFollow: ${error?.message}`);
 			toast({
 				title: `Erro ao seguir @${profile?.nickname}`,
 				description: "Tente novamente mais tarde",

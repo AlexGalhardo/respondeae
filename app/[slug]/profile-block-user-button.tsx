@@ -15,6 +15,7 @@ import {
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import TelegramLog from "@/lib/telegram-logger";
 
 interface BlockUserButtonProps {
 	sessionUser: {
@@ -47,8 +48,8 @@ export function ProfileBlockUserButton({ sessionUser, profileFound, onBlockSucce
 					const data = await response.json();
 					setIsBlocked(data.isBlocked);
 				}
-			} catch (error) {
-				console.error("Erro ao verificar status de bloqueio:", error);
+			} catch (error: any) {
+				await TelegramLog.error(`Catch Error profile-block-user-button.ts checkBlockStatus: ${error?.message}`);
 			} finally {
 				setCheckingBlockStatus(false);
 			}
@@ -87,8 +88,8 @@ export function ProfileBlockUserButton({ sessionUser, profileFound, onBlockSucce
 			setIsBlocked(!isBlocked);
 			setIsOpen(false);
 			onBlockSuccess?.();
-		} catch (error) {
-			console.error(`Erro ao ${isBlocked ? "desbloquear" : "bloquear"} usuário:`, error);
+		} catch (error: any) {
+			await TelegramLog.error(`Catch Error profile-block-user-button.ts handleBlockAction: ${error?.message}`);
 			toast.error(
 				error instanceof Error ? error.message : `Erro ao ${isBlocked ? "desbloquear" : "bloquear"} usuário`,
 			);

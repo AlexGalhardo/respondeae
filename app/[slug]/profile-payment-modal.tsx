@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { Clock, Check, Copy, Loader } from "lucide-react";
 import { ABACATEPAY_API_KEY } from "../api/pix/create/route";
+import TelegramLog from "@/lib/telegram-logger";
 
 const PRESET_AMOUNTS = [2, 5, 10, 20, 50];
 
@@ -98,8 +99,8 @@ export function ProfilePaymentModal({
 					const newRemaining = Math.max(0, Math.floor((newExpires.getTime() - currentTime.getTime()) / 1000));
 					setTimeRemaining(newRemaining);
 				}
-			} catch (error) {
-				console.error("Erro ao verificar status do pagamento:", error);
+			} catch (error: any) {
+				await TelegramLog.error(`Erro ao verificar status do pagamento: ${error?.message}`);
 			}
 		};
 
@@ -238,6 +239,7 @@ export function ProfilePaymentModal({
 			setPaymentStatus("PENDING");
 			onStepChange("pix");
 		} catch (error: any) {
+			await TelegramLog.error(`Erro ao gerar PIX: ${error?.message}`);
 			toast({
 				title: "Erro ao gerar PIX",
 				description: error?.message ?? "Não foi possível gerar o código PIX. Tente novamente.",
@@ -288,6 +290,7 @@ export function ProfilePaymentModal({
 
 			onStepChange("closed");
 		} catch (error: any) {
+			TelegramLog.error(`Erro ao enviar pergunta: ${error?.message}`);
 			toast({
 				title: "Erro ao enviar pergunta",
 				description: error?.message ?? "Houve um erro ao enviar sua pergunta.",

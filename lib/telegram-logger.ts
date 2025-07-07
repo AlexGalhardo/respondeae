@@ -63,7 +63,7 @@ class TelegramLogger {
 	async error(message: string) {
 		try {
 			await this.log(`🚨 ERROR 🚨`, message);
-		} catch (error) {
+		} catch (error: any) {
 			console.error("Failed to send error log to Telegram:", error);
 		}
 	}
@@ -71,7 +71,7 @@ class TelegramLogger {
 	async info(message: string) {
 		try {
 			await this.log(`💬 INFO 💬`, message);
-		} catch (error) {
+		} catch (error: any) {
 			console.error("Failed to send info log to Telegram:", error);
 		}
 	}
@@ -79,7 +79,7 @@ class TelegramLogger {
 	async warning(message: string) {
 		try {
 			await this.log(`⚠️ WARNING ⚠️`, message);
-		} catch (error) {
+		} catch (error: any) {
 			console.error("Failed to send warning log to Telegram:", error);
 		}
 	}
@@ -87,7 +87,7 @@ class TelegramLogger {
 	async success(message: string) {
 		try {
 			await this.log(`✅ SUCCESS ✅`, message);
-		} catch (error) {
+		} catch (error: any) {
 			console.error("Failed to send success log to Telegram:", error);
 		}
 	}

@@ -10,6 +10,7 @@ import { useRemoveFollower } from "@/hooks/use-follower";
 import { FollowerUserInterface } from "@/types/FollowerUserInterface";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import TelegramLog from "@/lib/telegram-logger";
 
 interface FollowerCardProps {
 	follower: FollowerUserInterface;
@@ -27,7 +28,8 @@ export function FollowerCard({ follower, onRemove }: FollowerCardProps) {
 				followerName: follower.follower.name,
 			});
 			onRemove(follower.follower.id);
-		} catch (error) {
+		} catch (error: any) {
+			await TelegramLog.error(`Error follower-actions.ts ${error?.message}`);
 			toast({
 				title: "Erro ao remover seguidor",
 				description: "Tente novamente mais tarde",

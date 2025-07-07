@@ -9,6 +9,7 @@ import { FollowingUserInterface } from "@/types/FollowingUserInterface";
 import { getInitials } from "@/lib/functions";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import TelegramLog from "@/lib/telegram-logger";
 
 interface UserCardProps {
 	user: FollowingUserInterface;
@@ -26,7 +27,8 @@ export function FollowingUserCard({ user, onUnfollow }: UserCardProps) {
 				userName: user.following.name,
 			});
 			onUnfollow(user.following.id);
-		} catch (error) {
+		} catch (error: any) {
+			await TelegramLog.error(`Catch Error file following-user-card.ts handle unfollow: ${error?.message}`);
 			toast({
 				title: "Erro ao deixar de seguir",
 				description: "Tente novamente mais tarde",

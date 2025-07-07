@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ABACATEPAY_API_KEY } from "../api/pix/create/route";
+import TelegramLog from "@/lib/telegram-logger";
 
 interface PixQrCodeData {
 	id: string;
@@ -58,9 +59,9 @@ export default function PixQrCodePage() {
 			} else {
 				setQrData(result.data);
 			}
-		} catch (err) {
+		} catch (err: any) {
+			await TelegramLog.error(`Error creating PIX QR code: ${err?.message}`);
 			setError("Failed to create PIX QR code");
-			console.error(err);
 		} finally {
 			setLoading(false);
 		}

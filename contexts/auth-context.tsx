@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 			return result;
 		} catch (error: any) {
-			TelegramLog.error(`Error logging in with credentials: ${error?.message}`);
+			await TelegramLog.error(`Error logging in with credentials: ${error?.message}`);
 		}
 	};
 

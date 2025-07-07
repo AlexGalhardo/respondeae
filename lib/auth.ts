@@ -178,7 +178,7 @@ export const authOptions: NextAuthOptions = {
 
 						if (!data.success) return null;
 					} catch (error: any) {
-						TelegramLog.error(
+						await TelegramLog.error(
 							`Erro na autenticação auth.ts providers authorize cloudflare captcha: ${error?.message}`,
 						);
 					}
@@ -204,7 +204,7 @@ export const authOptions: NextAuthOptions = {
 							"This user does not have a registered password. Entre com sua conta Google e crie sua senha",
 						);
 					}
-					TelegramLog.error(`Erro na autenticação auth.ts providers authorize: ${error?.message}`);
+					await TelegramLog.error(`Erro na autenticação auth.ts providers authorize: ${error?.message}`);
 					return null;
 				}
 			},
@@ -256,7 +256,7 @@ export const authOptions: NextAuthOptions = {
 				session.user.blocked_users = dbUser.blocked_users ?? [];
 				session.user.blocked_by_users = dbUser.blocked_by_users ?? [];
 			} catch (error: any) {
-				TelegramLog.error(`Erro na autenticação auth.ts callbacks session: ${error?.message}`);
+				await TelegramLog.error(`Erro na autenticação auth.ts callbacks session: ${error?.message}`);
 			}
 
 			return session;
@@ -291,9 +291,9 @@ export const authOptions: NextAuthOptions = {
 					if (!token.avatar_url && (profile as any)?.picture) {
 						token.avatar_url = (profile as any).picture;
 					}
-				} catch (error) {
-					console.error("Google login error:", error);
-					throw new Error("google_signup_required");
+				} catch (error: any) {
+					await TelegramLog.error(`Erro na autenticação auth.ts callbacks jwt: ${error?.message}`);
+					throw new Error(`Erro na autenticação ${error?.message}`);
 				}
 			}
 

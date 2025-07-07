@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { contactSchema } from "@/app/api/send-contact-email/route";
 import Script from "next/script";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import TelegramLog from "@/lib/telegram-logger";
 
 export default function ContatoClient() {
 	const [error, setError] = useState("");
@@ -112,6 +113,7 @@ export default function ContatoClient() {
 				variant: "error",
 			});
 		} catch (error: any) {
+			await TelegramLog.error(`Error contato.tsx handleSubmit: ${error?.message}`);
 			toast({
 				title: "Erro ao enviar mensagem",
 				description: "Por favor, tente novamente mais tarde.",

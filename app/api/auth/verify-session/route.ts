@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getUserById } from "@/lib/repositories/users.repository";
+import TelegramLog from "@/lib/telegram-logger";
 
 export async function GET(_: NextRequest) {
 	try {
@@ -20,8 +21,8 @@ export async function GET(_: NextRequest) {
 			user: session.user,
 			expires: session.expires,
 		});
-	} catch (error) {
-		console.error("Erro ao verificar sessão:", error);
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file auth-actions.ts verify session: ${error?.message}`);
 		return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
 	}
 }

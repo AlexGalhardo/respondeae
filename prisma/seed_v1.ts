@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { faker } from "@faker-js/faker/locale/pt_BR";
 import { hash } from "bcryptjs";
 import slugify from "slugify";
+import TelegramLog from "@/lib/telegram-logger";
 
 const prisma = new PrismaClient();
 
@@ -497,6 +498,7 @@ async function generateRandomUser() {
 				console.log(`🔄 Usuário duplicado encontrado: nickname = ${nickname}, tentando novamente...`);
 			}
 		} catch (err: any) {
+			TelegramLog.error(`Catch Error file seed_v1.ts generateRandomUser: ${err?.message}`);
 			console.error("❌ Erro ao buscar ou processar dados da API:", err?.message);
 		}
 	}
@@ -696,7 +698,7 @@ async function main() {
 						`🚀 Progresso relações: ${followers.length}/${process.env.SEED_TOTAL_FOLLOWERS_RELATIONS} (${Math.round((followers.length / Number(process.env.SEED_TOTAL_FOLLOWERS_RELATIONS)) * 100)}%)`,
 					);
 				}
-			} catch (error) {
+			} catch (error: any) {
 				console.log(`⚠️ Erro ao criar relação de seguidor, tentando novamente...`);
 				continue;
 			}

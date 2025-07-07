@@ -9,6 +9,7 @@ import { PaymentWithdrawModal } from "@/components/payments/payment-withdraw-mod
 import { useAnsweredPaymentDetails, useSentPaymentDetails, useProcessWithdraw } from "@/hooks/use-payments";
 import { PaymentTab } from "@/types/PaymentInterface";
 import { canWithdraw } from "@/lib/utils/payment-utils";
+import TelegramLog from "@/lib/telegram-logger";
 
 export default function PagamentosPage() {
 	const router = useRouter();
@@ -49,8 +50,8 @@ export default function PagamentosPage() {
 			});
 
 			setIsWithdrawModalOpen(false);
-		} catch (error) {
-			// Error handled by mutation
+		} catch (error: any) {
+			await TelegramLog.error(`Erro payment-actions.ts handleConfirmWithdraw: ${error?.message}`);
 		}
 	};
 

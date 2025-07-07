@@ -52,6 +52,7 @@ export default function ResetarSenhaComponent() {
 
 				setTokenValid(true);
 			} catch (error: any) {
+				await TelegramLog.error(`Catch Error file resetar-senha.ts verifyToken: ${error?.message}`);
 				router.push("/");
 			} finally {
 				setTokenChecking(false);
@@ -113,7 +114,7 @@ export default function ResetarSenhaComponent() {
 				router.push("/entrar");
 			}, 3000);
 		} catch (error: any) {
-			TelegramLog.error(`Error resetting password: ${error?.message}`);
+			await TelegramLog.error(`Error resetting password: ${error?.message}`);
 			setError("Ocorreu um erro ao redefinir sua senha. Try again.");
 		} finally {
 			setLoading(false);

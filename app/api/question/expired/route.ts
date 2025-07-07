@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import TelegramLog from "@/lib/telegram-logger";
 
 const prisma = new PrismaClient();
 
@@ -27,6 +28,8 @@ export async function POST(request: NextRequest) {
 			{ status: 201 },
 		);
 	} catch (error: any) {
+		await TelegramLog.error(`Catch Error question-expired.ts: ${error?.message}`);
+
 		if (error.code === "P2002") {
 			return NextResponse.json({ error: "Já existe uma pergunta com este PIX ID" }, { status: 400 });
 		}

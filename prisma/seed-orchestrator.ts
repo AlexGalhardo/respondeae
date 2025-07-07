@@ -39,7 +39,7 @@ export class SeedOrchestrator {
 			await this.questionService.createRandomQuestions(allUsers, this.config.totalQuestions);
 
 			await this.statisticsService.generateReport();
-		} catch (error) {
+		} catch (error: any) {
 			SeedLogger.error("ERRO DURANTE O PROCESSO DE SEED:");
 			SeedLogger.error(`Detalhes: ${error}`);
 			SeedLogger.error(`Stack trace: ${(error as Error).stack}`);

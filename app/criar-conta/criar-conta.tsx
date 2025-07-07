@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import Script from "next/script";
+import TelegramLog from "@/lib/telegram-logger";
 
 const schemaUserSignup = z.object({
 	name: z.string().min(4, "Nome deve ter pelo menos 4 letras").max(32, "Nome deve ter no máximo 32 caracters"),
@@ -80,6 +81,7 @@ export default function CriarContaClient() {
 				acceptTerms,
 			});
 		} catch (err) {
+			await TelegramLog.error(`Error criar-conta.ts: ${err}`);
 			if (err instanceof z.ZodError) {
 				err.errors.forEach((error) => {
 					const path = error.path[0];
@@ -153,6 +155,7 @@ export default function CriarContaClient() {
 				router.push("/minha-conta");
 			}
 		} catch (err: any) {
+			await TelegramLog.error(`Catch Error file criar-conta.ts handleSignup: ${err?.message}`);
 			setError("Ocorreu algum erro ao criar conta. Tente novamente mais tarde.");
 		} finally {
 			setLoading(false);

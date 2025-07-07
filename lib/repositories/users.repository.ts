@@ -128,7 +128,8 @@ class UsersRepository {
 				data: { deleted_at: null, updated_at: new Date() },
 			});
 			return { success: true };
-		} catch (error) {
+		} catch (error: any) {
+			TelegramLog.error(`Catch Error users.repository.ts reactiveDeletedAccount: ${error?.message}`);
 			return { success: false };
 		}
 	}

@@ -34,6 +34,7 @@ import {
 import { useSessionVerification } from "@/hooks/use-session-verification";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MySidebarSkeleton } from "./my-sidebar-skeleton";
+import TelegramLog from "@/lib/telegram-logger";
 
 type SidebarItem = {
 	icon: React.ElementType;
@@ -88,7 +89,7 @@ export function MySidebar() {
 						);
 					}).length;
 				}
-			} catch (error) {
+			} catch (error: any) {
 				pendingQuestions = 0;
 			}
 
@@ -176,27 +177,6 @@ export function MySidebar() {
 	const toggleTheme = () => {
 		setTheme(theme === "light" ? "dark" : "light");
 		setSidebarOpen(false);
-	};
-
-	const getPendingQuestionsCount = (): number => {
-		if (!isAuthenticated || !session?.user) return 0;
-
-		try {
-			if (Array.isArray(session.user.questions_received)) {
-				return session.user.questions_received.filter((question) => {
-					return (
-						question &&
-						typeof question === "object" &&
-						"question_is_awaiting_answer" in question &&
-						question.question_is_awaiting_answer === true
-					);
-				}).length;
-			}
-		} catch (error) {
-			console.warn("Erro ao calcular perguntas pendentes:", error);
-		}
-
-		return 0;
 	};
 
 	const renderNavItems = (items: SidebarItem[], isMobile = false) => (

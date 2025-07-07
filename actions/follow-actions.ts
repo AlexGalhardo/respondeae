@@ -4,16 +4,17 @@ import { revalidateTag } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/prisma/prisma-client";
+import TelegramLog from "@/lib/telegram-logger";
 
 export async function unfollowUser(followingId: string) {
 	try {
 		const session = await getServerSession(authOptions);
 
 		if (!session?.user?.id) {
+			await TelegramLog.error(`Error follow-actions.ts usuário não autenticado`);
 			throw new Error("Usuário não autenticado");
 		}
 
-		// Remove o relacionamento de seguir
 		await prisma.follower.deleteMany({
 			where: {
 				followerId: session.user.id,
@@ -21,12 +22,11 @@ export async function unfollowUser(followingId: string) {
 			},
 		});
 
-		// Revalidate cache para atualizar a sessão
 		revalidateTag("user-session");
 
 		return { success: true };
-	} catch (error) {
-		console.error("Erro ao deixar de seguir:", error);
-		throw error;
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file follow-actions.ts unfollow user: ${error?.message}`);
+		throw new Error(error?.message);
 	}
 }

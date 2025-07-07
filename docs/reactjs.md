@@ -1334,7 +1334,7 @@ const TaskManager: React.FC = () => {
         ];
         
         dispatch({ type: 'LOAD_TASKS', payload: mockTasks });
-      } catch (error) {
+      } catch (error: any) {
         dispatch({ type: 'SET_ERROR', payload: 'Erro ao carregar tarefas' });
       }
     };

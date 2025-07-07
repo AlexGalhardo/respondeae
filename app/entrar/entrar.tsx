@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import TelegramLog from "@/lib/telegram-logger";
 import { ArrowRight, Check, Eye, EyeOff, X } from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
@@ -86,7 +87,8 @@ export default function EntrarClient() {
 				setLoading(false);
 				return;
 			}
-		} catch (error) {
+		} catch (error: any) {
+			await TelegramLog.error(`Error entrar.ts: ${error.message}`);
 			setError("Ocorreu um erro ao fazer login. Tente novamente.");
 		} finally {
 			setLoading(false);

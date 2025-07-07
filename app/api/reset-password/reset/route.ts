@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
 		return NextResponse.json({ success: true });
 	} catch (error: any) {
-		TelegramLog.error(`Error resetting password: ${error?.message}`);
+		await TelegramLog.error(`Error resetting password: ${error?.message}`);
 		return NextResponse.json({ error: "Erro ao redefinir senha" }, { status: 500 });
 	}
 }

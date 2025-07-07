@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/prisma/prisma-client";
+import TelegramLog from "@/lib/telegram-logger";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -37,8 +38,8 @@ export async function POST(request: NextRequest) {
 		return NextResponse.json({
 			message: "Seguidor removido com sucesso",
 		});
-	} catch (error) {
-		console.error("Erro ao remover seguidor:", error);
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file remove-follower.ts: ${error?.message}`);
 		return NextResponse.json({ message: "Erro interno do servidor" }, { status: 500 });
 	}
 }

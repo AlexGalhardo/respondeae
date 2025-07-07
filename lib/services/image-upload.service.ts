@@ -29,7 +29,7 @@ export async function uploadImage(file: File, type: "avatar" | "banner", userId:
 			success: true,
 			url: data.url,
 		};
-	} catch (error) {
+	} catch (error: any) {
 		console.error("Erro no upload:", error);
 		return {
 			success: false,

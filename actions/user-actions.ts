@@ -7,6 +7,7 @@ import { prisma } from "@/prisma/prisma-client";
 import { getUserByNickname } from "@/lib/repositories/users.repository";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import TelegramLog from "@/lib/telegram-logger";
 
 const personalInfoSchema = z.object({
 	name: z
@@ -101,7 +102,7 @@ export async function updatePersonalInfo(data: FormData) {
 			},
 		};
 	} catch (error: any) {
-		console.error("Erro ao atualizar informações pessoais:", error);
+		await TelegramLog.error(`Catch Error file user-actions.ts update personal info: ${error?.message}`);
 		return { error: error.message || "Erro interno do servidor" };
 	}
 }
@@ -148,7 +149,7 @@ export async function updateSocialMedia(data: FormData) {
 
 		return { success: true };
 	} catch (error: any) {
-		console.error("Erro ao atualizar redes sociais:", error);
+		await TelegramLog.error(`Catch Error file user-actions.ts update social media: ${error?.message}`);
 		return { error: error.message || "Erro interno do servidor" };
 	}
 }
@@ -178,7 +179,7 @@ export async function updatePixKey(data: FormData) {
 
 		return { success: true };
 	} catch (error: any) {
-		console.error("Erro ao atualizar chave PIX:", error);
+		await TelegramLog.error(`Catch Error file user-actions.ts update pix key: ${error?.message}`);
 		return { error: error.message || "Erro interno do servidor" };
 	}
 }
@@ -212,7 +213,7 @@ export async function updatePassword(data: FormData) {
 
 		return { success: true };
 	} catch (error: any) {
-		console.error("Erro ao atualizar senha:", error);
+		await TelegramLog.error(`Catch Error file user-actions.ts update password: ${error?.message}`);
 		return { error: error.message || "Erro interno do servidor" };
 	}
 }
@@ -267,6 +268,7 @@ export async function updatePrivacySettings(data: FormData) {
 
 		return { success: true };
 	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file user-actions.ts update privacy settings: ${error?.message}`);
 		return { error: error.message || "Erro interno do servidor" };
 	}
 }
@@ -313,6 +315,7 @@ export async function deleteAccount() {
 
 		return { success: true };
 	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file user-actions.ts delete account: ${error?.message}`);
 		return { error: error.message || "Erro interno do servidor" };
 	}
 }
@@ -342,8 +345,8 @@ export const getUserByNicknameAction = async (nickname: string) => {
 			isFollowing,
 			hasPendingRequest,
 		};
-	} catch (error) {
-		console.error("Erro ao buscar usuário:", error);
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file user-actions.ts get user by nickname: ${error?.message}`);
 		return null;
 	}
 };
@@ -452,7 +455,7 @@ export const followUserAction = async (followingId: string, followerId: string) 
 			message,
 		};
 	} catch (error: any) {
-		console.error("Erro ao seguir/desseguir usuário:", error);
+		await TelegramLog.error(`Catch Error file user-actions.ts follow user: ${error?.message}`);
 		return { error: error.message || "Erro ao seguir usuário" };
 	}
 };
@@ -464,7 +467,6 @@ export const likeQuestionAction = async (questionId: string, nickname: string) =
 			return { error: "Não autorizado" };
 		}
 
-		// Buscar a pergunta
 		const question = await prisma.question.findUnique({
 			where: { id: questionId },
 			select: { liked_by_users: true, desliked_by_users: true },
@@ -474,7 +476,6 @@ export const likeQuestionAction = async (questionId: string, nickname: string) =
 			return { error: "Pergunta não encontrada" };
 		}
 
-		// Parse dos arrays de likes/dislikes (assumindo que são strings JSON)
 		let likedUsers: string[] = [];
 		let dislikedUsers: string[] = [];
 
@@ -490,19 +491,16 @@ export const likeQuestionAction = async (questionId: string, nickname: string) =
 		const hasLiked = likedUsers.includes(userNickname);
 		const hasDisliked = dislikedUsers.includes(userNickname);
 
-		// Remove dislike se existir
 		if (hasDisliked) {
 			dislikedUsers = dislikedUsers.filter((nick) => nick !== userNickname);
 		}
 
-		// Toggle like
 		if (hasLiked) {
 			likedUsers = likedUsers.filter((nick) => nick !== userNickname);
 		} else {
 			likedUsers.push(userNickname);
 		}
 
-		// Atualizar no banco
 		await prisma.question.update({
 			where: { id: questionId },
 			data: {
@@ -515,7 +513,7 @@ export const likeQuestionAction = async (questionId: string, nickname: string) =
 		revalidateTag("user-profile");
 		return { success: true };
 	} catch (error: any) {
-		console.error("Erro ao curtir pergunta:", error);
+		await TelegramLog.error(`Catch Error file user-actions.ts like question: ${error?.message}`);
 		return { error: error.message || "Erro ao curtir pergunta" };
 	}
 };
@@ -527,7 +525,6 @@ export const dislikeQuestionAction = async (questionId: string, nickname: string
 			return { error: "Não autorizado" };
 		}
 
-		// Buscar a pergunta
 		const question = await prisma.question.findUnique({
 			where: { id: questionId },
 			select: { liked_by_users: true, desliked_by_users: true },
@@ -537,7 +534,6 @@ export const dislikeQuestionAction = async (questionId: string, nickname: string
 			return { error: "Pergunta não encontrada" };
 		}
 
-		// Parse dos arrays de likes/dislikes (assumindo que são strings JSON)
 		let likedUsers: string[] = [];
 		let dislikedUsers: string[] = [];
 
@@ -553,19 +549,16 @@ export const dislikeQuestionAction = async (questionId: string, nickname: string
 		const hasLiked = likedUsers.includes(userNickname);
 		const hasDisliked = dislikedUsers.includes(userNickname);
 
-		// Remove like se existir
 		if (hasLiked) {
 			likedUsers = likedUsers.filter((nick) => nick !== userNickname);
 		}
 
-		// Toggle dislike
 		if (hasDisliked) {
 			dislikedUsers = dislikedUsers.filter((nick) => nick !== userNickname);
 		} else {
 			dislikedUsers.push(userNickname);
 		}
 
-		// Atualizar no banco
 		await prisma.question.update({
 			where: { id: questionId },
 			data: {
@@ -578,12 +571,11 @@ export const dislikeQuestionAction = async (questionId: string, nickname: string
 		revalidateTag("user-profile");
 		return { success: true };
 	} catch (error: any) {
-		console.error("Erro ao descurtir pergunta:", error);
+		await TelegramLog.error(`Catch Error file user-actions.ts dislike question: ${error?.message}`);
 		return { error: error.message || "Erro ao descurtir pergunta" };
 	}
 };
 
-// Função para bloquear usuário
 export const blockUserAction = async (blockedUserId: string) => {
 	try {
 		const session = await getServerSession(authOptions);
@@ -591,7 +583,6 @@ export const blockUserAction = async (blockedUserId: string) => {
 			return { error: "Não autorizado" };
 		}
 
-		// Verificar se já está bloqueado
 		const existingBlock = await prisma.userBlock.findUnique({
 			where: {
 				blocker_id_blocked_id: {
@@ -605,7 +596,6 @@ export const blockUserAction = async (blockedUserId: string) => {
 			return { error: "Usuário já está bloqueado" };
 		}
 
-		// Criar bloqueio
 		await prisma.userBlock.create({
 			data: {
 				blocker_id: session.user.id,
@@ -613,7 +603,6 @@ export const blockUserAction = async (blockedUserId: string) => {
 			},
 		});
 
-		// Remover seguimento mútuo se existir
 		await prisma.follower.deleteMany({
 			where: {
 				OR: [
@@ -626,12 +615,11 @@ export const blockUserAction = async (blockedUserId: string) => {
 		revalidateTag("user-profile");
 		return { success: true };
 	} catch (error: any) {
-		console.error("Erro ao bloquear usuário:", error);
+		await TelegramLog.error(`Catch Error file user-actions.ts block user: ${error?.message}`);
 		return { error: error.message || "Erro ao bloquear usuário" };
 	}
 };
 
-// Função para desbloquear usuário
 export const unblockUserAction = async (blockedUserId: string) => {
 	try {
 		const session = await getServerSession(authOptions);
@@ -651,7 +639,7 @@ export const unblockUserAction = async (blockedUserId: string) => {
 		revalidateTag("user-profile");
 		return { success: true };
 	} catch (error: any) {
-		console.error("Erro ao desbloquear usuário:", error);
+		await TelegramLog.error(`Catch Error file user-actions.ts unblock user: ${error?.message}`);
 		return { error: error.message || "Erro ao desbloquear usuário" };
 	}
 };

@@ -1,3 +1,5 @@
+import TelegramLog from "./telegram-logger";
+
 async function createPixPayment(amount: number, description: string) {
 	try {
 		const response = await fetch("/api/pix/create", {
@@ -21,11 +23,13 @@ async function createPixPayment(amount: number, description: string) {
 		const data = await response.json();
 
 		if (!response.ok) {
+			await TelegramLog.error(`Error create-pix-payment.ts createPixPayment: ${JSON.stringify(data?.error)}`);
 			throw new Error("Erro ao gerar PIX");
 		}
 
 		return data;
-	} catch (error) {
+	} catch (error: any) {
+		await TelegramLog.error(`Error create-pix-payment.ts createPixPayment: ${error.message}`);
 		return { error: "Falha ao processar pagamento" };
 	}
 }

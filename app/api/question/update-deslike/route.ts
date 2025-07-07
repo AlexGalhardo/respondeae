@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import TelegramLog from "@/lib/telegram-logger";
 
 const prisma = new PrismaClient();
 
@@ -26,12 +27,9 @@ export async function POST(request: NextRequest) {
 		const userAlreadyDisliked = dislikedUsers.some((slug: string) => slug === nickname);
 
 		if (userAlreadyDisliked) {
-			// Remove o dislike se já não curtiu (toggle)
 			dislikedUsers = dislikedUsers.filter((slug: string) => slug !== nickname);
 		} else {
-			// Adiciona o dislike
 			dislikedUsers.push(nickname);
-			// Remove do like se estava lá
 			likedUsers = likedUsers.filter((slug: string) => slug !== nickname);
 		}
 
@@ -50,8 +48,8 @@ export async function POST(request: NextRequest) {
 			},
 			{ status: 200 },
 		);
-	} catch (error) {
-		console.error("Erro ao processar dislike:", error);
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error question-update-like.ts: ${error?.message}`);
 		return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
 	} finally {
 		await prisma.$disconnect();

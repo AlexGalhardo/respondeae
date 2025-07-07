@@ -15,6 +15,7 @@ import { getInitials } from "@/lib/functions";
 import { QuestionInterface } from "@/lib/interfaces";
 import { useLikeQuestion, useDislikeQuestion } from "@/hooks/use-profile-queries";
 import { useToast } from "@/components/ui/use-toast";
+import TelegramLog from "@/lib/telegram-logger";
 
 interface TopCurtidasProps {
 	today: QuestionInterface[];
@@ -180,7 +181,7 @@ export default function TopCurtidasClient({ today, week, month, year, allTime }:
 			};
 
 			updateQuestionInAllStates(updatedQuestion);
-		} catch (error) {
+		} catch (error: any) {
 			toast({
 				title: "Erro ao curtir pergunta!",
 				description: "Tente novamente mais tarde",
@@ -219,7 +220,8 @@ export default function TopCurtidasClient({ today, week, month, year, allTime }:
 			};
 
 			updateQuestionInAllStates(updatedQuestion);
-		} catch (error) {
+		} catch (error: any) {
+			await TelegramLog.error(`Erro ao descurtir pergunta ${error?.message}`);
 			toast({
 				title: "Erro ao descurtir pergunta!",
 				description: "Tente novamente mais tarde",

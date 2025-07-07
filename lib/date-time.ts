@@ -1,5 +1,5 @@
 export class DateTime {
-	private date: Date;
+	private readonly date: Date;
 
 	constructor(input: Date | string | number | null = null) {
 		if (input === null) {

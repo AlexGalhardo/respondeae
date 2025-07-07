@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "@/hooks/use-toast";
+import TelegramLog from "@/lib/telegram-logger";
 
 export default function BlockedUsersCard() {
 	const { data: session, update } = useSession();
@@ -40,7 +41,8 @@ export default function BlockedUsersCard() {
 				title: "Usuário Desbloqueado",
 				variant: "success",
 			});
-		} catch (error) {
+		} catch (error: any) {
+			await TelegramLog.error(`Error blocked-users-card.ts handleUnblockUser: ${error?.message}`);
 			toast({
 				title: "Erro ao desbloquear usuário",
 				variant: "error",

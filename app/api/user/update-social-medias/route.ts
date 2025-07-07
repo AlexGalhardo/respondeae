@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/prisma/prisma-client";
 import { z } from "zod";
+import TelegramLog from "@/lib/telegram-logger";
 
 export const socialMediaSchema = z.object({
 	instagram: z
@@ -108,6 +109,7 @@ export async function POST(req: NextRequest) {
 			{ status: 200 },
 		);
 	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file update-social-medias.ts: ${error?.message}`);
 		return NextResponse.json({ error: error?.message ?? "Erro interno do servidor" }, { status: 500 });
 	}
 }

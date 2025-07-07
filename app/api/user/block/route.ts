@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/prisma/prisma-client";
+import TelegramLog from "@/lib/telegram-logger";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -87,8 +88,8 @@ export async function POST(request: NextRequest) {
 		});
 
 		return NextResponse.json({ message: "Usuário bloqueado com sucesso" }, { status: 200 });
-	} catch (error) {
-		console.error("Erro ao bloquear usuário:", error);
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error user-block.ts: ${error?.message}`);
 		return NextResponse.json({ message: "Erro interno do servidor" }, { status: 500 });
 	}
 }

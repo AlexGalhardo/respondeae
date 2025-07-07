@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { v4 as uuidv4 } from "uuid";
 import { prisma } from "@/prisma/prisma-client";
 import { ResetPasswordEmail } from "@/emails/reset-password-email";
+import TelegramLog from "@/lib/telegram-logger";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
 
 		return NextResponse.json({ success: true });
 	} catch (error: any) {
+		await TelegramLog.error(`Catch Error file reset-password-actions.ts request: ${error?.message}`);
 		return NextResponse.json({ error: "Erro ao processar solicitação de recuperação de senha" }, { status: 500 });
 	}
 }

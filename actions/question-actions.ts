@@ -3,6 +3,7 @@
 import { revalidateTag } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import TelegramLog from "@/lib/telegram-logger";
 
 export async function answerQuestion(questionId: string, nickname: string, answerText: string) {
 	try {
@@ -31,9 +32,9 @@ export async function answerQuestion(questionId: string, nickname: string, answe
 		revalidateTag("user-session");
 
 		return { success: true };
-	} catch (error) {
-		console.error("Erro ao responder pergunta:", error);
-		throw error;
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error question-actions.ts answerQuestion: ${error?.message}`);
+		throw new Error(error?.message);
 	}
 }
 
@@ -63,9 +64,9 @@ export async function declineQuestion(questionId: string, nickname: string) {
 		revalidateTag("user-session");
 
 		return { success: true };
-	} catch (error) {
-		console.error("Erro ao recusar pergunta:", error);
-		throw error;
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error question-actions.ts declineQuestion: ${error?.message}`);
+		throw new Error(error?.message);
 	}
 }
 
@@ -95,9 +96,9 @@ export async function deleteQuestion(questionId: string, nickname: string) {
 		revalidateTag("user-session");
 
 		return { success: true };
-	} catch (error) {
-		console.error("Erro ao deletar pergunta:", error);
-		throw error;
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error question-actions.ts deleteQuestion: ${error?.message}`);
+		throw new Error(error?.message);
 	}
 }
 
@@ -135,9 +136,9 @@ export async function reportQuestion(
 		revalidateTag("user-session");
 
 		return { success: true };
-	} catch (error) {
-		console.error("Erro ao reportar pergunta:", error);
-		throw error;
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error question-actions.ts reportQuestion: ${error?.message}`);
+		throw new Error(error?.message);
 	}
 }
 
@@ -158,8 +159,8 @@ export async function markQuestionExpired(questionId: string) {
 		revalidateTag("user-session");
 
 		return { success: true };
-	} catch (error) {
-		console.error("Erro ao marcar pergunta como expirada:", error);
-		throw error;
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error question-actions.ts markQuestionExpired: ${error?.message}`);
+		throw new Error(error?.message);
 	}
 }

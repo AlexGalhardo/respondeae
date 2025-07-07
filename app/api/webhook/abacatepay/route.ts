@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
 		`);
 
 		return NextResponse.json({ received: true });
-	} catch (error) {
-		console.error("Erro ao processar o webhook:", error);
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error webhook-abacatepay.ts: ${error?.message}`);
 		return NextResponse.json({ error: "Invalid JSON body or internal error" }, { status: 400 });
 	}
 }

@@ -1,3 +1,4 @@
+import TelegramLog from "@/lib/telegram-logger";
 import { prisma } from "@/prisma/prisma-client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -95,8 +96,8 @@ export async function POST(req: NextRequest) {
 			},
 			{ status: 201 },
 		);
-	} catch (error) {
-		console.error("Erro no saque:", error);
+	} catch (error: any) {
+		await TelegramLog.error(`Catch Error payment-actions.ts withdraw: ${error?.message}`);
 		return NextResponse.json(
 			{
 				success: false,
