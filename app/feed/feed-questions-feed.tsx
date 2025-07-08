@@ -47,16 +47,28 @@ export const FeedQuestionsFeed = ({ userNickname, userId, session }: FeedQuestio
 		const allQuestions =
 			(data?.pages as { questions: QuestionInterface[] }[] | undefined)?.flatMap((page) => page.questions) || [];
 
-		if (!userNickname || blockedNicknames.length === 0) {
-			return allQuestions;
-		}
+		let filteredQuestions = allQuestions;
 
-		const filteredQuestions = allQuestions.filter((question) => {
-			const isOwnerBlocked = blockedNicknames.includes(question.owner.nickname);
-			const isAskerBlocked = blockedNicknames.includes(question.asked_by.nickname);
+		filteredQuestions = filteredQuestions.filter((question) => {
+			if (question.owner.privacy_is_private_profile === true) {
+				const isOwner = userNickname === question.owner.nickname;
+				const isFollowing = session?.user?.following?.some(
+					(follow: any) => follow.following.nickname === question.owner.nickname,
+				);
 
-			return !isOwnerBlocked && !isAskerBlocked;
+				return isOwner || isFollowing;
+			}
+			return true;
 		});
+
+		if (userNickname && blockedNicknames.length > 0) {
+			filteredQuestions = filteredQuestions.filter((question) => {
+				const isOwnerBlocked = blockedNicknames.includes(question.owner.nickname);
+				const isAskerBlocked = blockedNicknames.includes(question.asked_by.nickname);
+
+				return !isOwnerBlocked && !isAskerBlocked;
+			});
+		}
 
 		return filteredQuestions;
 	}, [data, userNickname, blockedNicknames]);

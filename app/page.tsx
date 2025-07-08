@@ -7,9 +7,7 @@ import { FeedQuestionsFeed } from "./feed/feed-questions-feed";
 export default function HomePage() {
 	const { data: session, status } = useSession();
 
-	if (status === "loading") {
-		return <LoadingScreen />;
-	}
+	if (status === "loading") return <LoadingScreen />;
 
 	return (
 		<main className="p-4 lg:p-6">

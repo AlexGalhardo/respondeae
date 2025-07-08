@@ -21,6 +21,7 @@ export interface User {
 	reset_password_token: string | null;
 	reset_password_token_expires_at: string | null;
 	api_key: string;
+	privacy_is_private_profile: boolean;
 	privacy_accept_anonymous_questions: boolean;
 	privacy_show_anonymous_questions_public: boolean;
 	privacy_show_questions_answered_only_to_followers: boolean;

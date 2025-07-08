@@ -59,7 +59,9 @@ export default function ProfileClient() {
 	}, [profileFound, session?.user?.id, isFollowing]);
 
 	const { publicQuestions, topPaidQuestions, topLikedQuestions } = useMemo(() => {
-		const answered = questionsData.filter((q: QuestionInterface) => q.question_answered && canViewQuestions);
+		const answered = questionsData.filter(
+			(q: QuestionInterface) => q.question_answered && canViewQuestions && !q.asker_want_answer_to_be_private,
+		);
 
 		const publicQuestions = [...answered].sort(
 			(a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
