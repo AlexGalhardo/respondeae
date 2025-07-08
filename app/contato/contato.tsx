@@ -310,12 +310,12 @@ export default function ContatoClient() {
 							</form>
 						</CardContent>
 					</Card>
-					<p className="text-sm text-muted-foreground mt-12 text-center">
+					{/* <p className="text-sm text-muted-foreground mt-12 text-center">
 						Rua Pais Leme 215. C1713 E1 VG PINHEIROS THERA FARIA LIMA CEP 05424-150
 					</p>
 					<p className="text-center text-sm text-muted-foreground mt-3">
 						CNPJ 61.414.573/0001-56 Galhardo Tecnologia da Informação LTDA
-					</p>
+					</p> */}
 				</div>
 			</main>
 		</>

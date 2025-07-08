@@ -53,7 +53,14 @@ export default function ProfileClient() {
 	const canViewQuestions = useMemo(() => {
 		if (session?.user?.id === profileFound?.id) return true;
 
-		if (isFollowing && profileFound?.privacy_show_questions_answered_only_to_followers) return true;
+		if (isFollowing && session?.user?.id !== profileFound?.id) return true;
+
+		if (
+			!isFollowing &&
+			profileFound?.privacy_show_questions_answered_only_to_followers &&
+			session?.user?.id !== profileFound?.id
+		)
+			return false;
 
 		return false;
 	}, [profileFound, session?.user?.id, isFollowing]);
@@ -228,11 +235,9 @@ export default function ProfileClient() {
 					) : (
 						<div className="text-center py-4 px-4  text-gray-700 mb-6 dark:text-white">
 							<p className="text-sm md:text-base font-bold">
-								{isFollowing
-									? "Aguardando aprovação para ver as respostas deste perfil privado."
-									: hasPendingRequest
-										? "Solicitação para seguir esse perfil enviada. Aguardando aprovação."
-										: "Esse perfil é privado. Você precisa ser seguidor para ver as respostas desse perfil."}
+								{hasPendingRequest
+									? "Solicitação para seguir esse perfil enviada. Aguardando aprovação."
+									: "Esse perfil é privado. Você precisa ser seguidor para ver as respostas desse perfil."}
 							</p>
 						</div>
 					)}

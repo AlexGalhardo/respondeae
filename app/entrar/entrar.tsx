@@ -212,10 +212,13 @@ export default function EntrarClient() {
 								</Label>
 								<Input
 									id="email"
+									name="email"
+									minLength={12}
+									maxLength={32}
 									type="email"
 									placeholder="seuemail@email.com"
 									value={email}
-									onChange={(e) => setEmail(e.target.value)}
+									onChange={(e) => setEmail(e.target.value.toLowerCase().replace(/\s/g, ""))}
 									className="dark:text-white"
 									required
 								/>

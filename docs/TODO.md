@@ -14,5 +14,5 @@
 
 ## Bugs
 
-- [ ] Perguntas anonimas respondidas -> estão aparecendo quem fez a pergunta no perfil de quem respondeu
-- [ ] Se perfil do usuário for privado -> filtrar no feed, para não mostrar respostas dessas pessoas (e informar isso no /minha-conta)
+- [ ] Pedi solicitação para seguir usuário -> ele aprovou -> botão diz que esta seguindo -> mas não mostra as questions no perfil do usuário
+

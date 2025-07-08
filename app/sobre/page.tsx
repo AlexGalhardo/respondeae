@@ -31,6 +31,6 @@ export const metadata = {
 	},
 };
 
-export default async function TermosDeUsoPage() {
+export default async function SobrePage() {
 	return <SobreClient />;
 }

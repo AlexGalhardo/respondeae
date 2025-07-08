@@ -328,11 +328,12 @@ export default function CriarContaClient() {
 								<Input
 									id="email"
 									type="email"
+									name="email"
 									minLength={12}
 									maxLength={32}
 									placeholder="seuemail@email.com"
 									value={email}
-									onChange={(e) => setEmail(e.target.value)}
+									onChange={(e) => setEmail(e.target.value.toLowerCase().replace(/\s/g, ""))}
 									className="dark:text-white"
 									required
 								/>

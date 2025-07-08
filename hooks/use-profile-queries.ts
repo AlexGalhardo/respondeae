@@ -24,15 +24,12 @@ export const useFollowUser = () => {
 		mutationFn: ({ followingId, followerId }: { followingId: string; followerId: string }) =>
 			followUserAction(followingId, followerId),
 		onSuccess: (data, variables) => {
-			// Se houve erro, não atualiza o cache
 			if (data.error) {
 				return;
 			}
 
-			// Invalida as queries para recarregar os dados
 			queryClient.invalidateQueries({ queryKey: ["profile"] });
 
-			// Atualização otimista do cache (opcional)
 			queryClient.setQueryData(["profile", variables.followingId], (oldData: any) => {
 				if (!oldData) return oldData;
 
@@ -40,7 +37,6 @@ export const useFollowUser = () => {
 
 				let updatedFollowers;
 				if (data.isFollowing) {
-					// Adiciona o seguidor se não existir
 					const followerExists = currentFollowers.some((f: any) => f.followerId === variables.followerId);
 					if (!followerExists) {
 						updatedFollowers = [
@@ -58,7 +54,6 @@ export const useFollowUser = () => {
 						updatedFollowers = currentFollowers;
 					}
 				} else {
-					// Remove o seguidor
 					updatedFollowers = currentFollowers.filter((f: any) => f.followerId !== variables.followerId);
 				}
 

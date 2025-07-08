@@ -150,16 +150,10 @@ export const authOptions: NextAuthOptions = {
 				captchaToken: { label: "Captcha Token", type: "text" },
 			},
 			async authorize(credentials: Record<"email" | "password" | "captchaToken", string> | undefined) {
-				if (!credentials?.email || !credentials?.password) {
-					console.error("Credenciais ausentes");
-					return null;
-				}
+				if (!credentials?.email || !credentials?.password) return null;
 
 				if (process.env.NODE_ENV === "production") {
-					if (!credentials?.captchaToken) {
-						console.error("captchaToken ausentes");
-						return null;
-					}
+					if (!credentials?.captchaToken) return null;
 
 					const turnstileSecret = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
 					const verifyUrl = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
