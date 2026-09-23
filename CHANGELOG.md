@@ -29,6 +29,8 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 - `lib/auth.ts` lê `CLOUDFLARE_TURNSTILE_SECRET_KEY`, mas o env real é `CLOUDFLARE_TURNSTILE_SECRET` — login por credenciais falha silenciosamente em produção. Ver `docs/auth.md`. Correção planejada para a fase de revisão de lógica/OWASP (checkpoint, `TODO.md`).
 - `NEXT_PUBLIC_ABACATEPAY_API_KEY` é exposta no client (`NEXT_PUBLIC_*`). Ver `docs/payments-pix.md`.
+- `next.config.mjs` tem `typescript.ignoreBuildErrors: true` — `bun run build` passa mesmo com ~35 erros reais de tipo hoje presentes no código (`actions/*.ts`, `components/ui/*.tsx`, repositórios Prisma, `tailwind.config.ts`). Rode `bunx tsc --noEmit` para ver a lista completa. Não desliguei a flag nem corrigi os erros agora porque isso quebraria o build até todos serem corrigidos — fica para a Fase 11 (checkpoint).
+- `bun run lint` (sem `--unsafe`) hoje só corrige com segurança (reordenação de imports etc). Existe também `bun run lint:unsafe`, que inclui fixes que mudam comportamento (ex: adicionar dependências faltantes em `useEffect`) — revisar manualmente arquivo por arquivo antes de aplicar, nunca rodar em lote sem revisão.
 
 ## [1.0.0] - 2026-09-23
 
