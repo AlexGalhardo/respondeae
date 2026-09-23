@@ -17,15 +17,16 @@
 
 ## Fase 0 — Housekeeping git
 
-- [ ] Commit da remoção dos 8 arquivos antigos de `docs/` (`docs: remove outdated documentation`)
-- [ ] Commit de `.claude/skills/` e primeira versão do `TODO.md` (`chore: add claude skills and refactor plan`)
+- [x] Commit da remoção dos 8 arquivos antigos de `docs/` (`docs: remove outdated documentation`)
+- [x] Commit de `.claude/skills/` e primeira versão do `TODO.md` (`chore: add claude skills and refactor plan`)
 
 ## Fase 1 — Bun/tooling baseline
 
-- [ ] Adicionar `"packageManager": "bun@1.4.2"` e `engines.bun` no `package.json`
-- [ ] Decidir sobre `package-lock.json` duplicado (remover, manter só `bun.lock`) e documentar fallback npm sem lockfile
-- [ ] Adicionar `.nvmrc`/`.bun-version` se fizer sentido
-- [ ] Ajustar scripts do `package.json` para usar `bun` em vez de `bunx`/`npx` onde aplicável
+- [x] Adicionar `"packageManager": "bun@1.4.2"` e `engines.bun` no `package.json`
+- [x] Remover `package-lock.json` duplicado (mantido só `bun.lock`)
+- [x] Corrigir `biome.json` (schema desatualizado quebrava o hook `pre-commit`) e habilitar `css.parser.tailwindDirectives` para `globals.css` formatar sem erro
+- [~] `.nvmrc`/`.bun-version`: não criado — `engines.bun` no `package.json` já expressa o requisito; adicionar só se surgir necessidade real (ex: CI que dependa de arquivo de versão)
+- [x] Script `husky` renomeado para `prepare` (convenção Husky v9, roda hooks automaticamente após `bun install`)
 
 ## Fase 2 — Upgrade de dependências
 
