@@ -9,6 +9,7 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- Testes: 48 testes unitários (`lib/`), suíte de integração (`tests/integration/`, repositório de usuários contra Postgres real), smoke test (`tests/smoke/`, sobe o servidor de produção e checa `/api/health`) e e2e com Playwright (`tests/e2e/`, home/login/cadastro).
 - `AGENTS.md`/`CLAUDE.md` na raiz e documentação em `docs/` focada em dar contexto para agentes de IA.
 - Pasta `setups/` com scripts de setup local (Windows/Unix × SQLite/Postgres/Postgres+Docker).
 - Pasta `infra/` centralizando Docker/docker-compose (antes na raiz).
@@ -31,6 +32,8 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 - `NEXT_PUBLIC_ABACATEPAY_API_KEY` é exposta no client (`NEXT_PUBLIC_*`). Ver `docs/payments-pix.md`.
 - `next.config.mjs` tem `typescript.ignoreBuildErrors: true` — `bun run build` passa mesmo com ~35 erros reais de tipo hoje presentes no código (`actions/*.ts`, `components/ui/*.tsx`, repositórios Prisma, `tailwind.config.ts`). Rode `bunx tsc --noEmit` para ver a lista completa. Não desliguei a flag nem corrigi os erros agora porque isso quebraria o build até todos serem corrigidos — fica para a Fase 11 (checkpoint).
 - `bun run lint` (sem `--unsafe`) hoje só corrige com segurança (reordenação de imports etc). Existe também `bun run lint:unsafe`, que inclui fixes que mudam comportamento (ex: adicionar dependências faltantes em `useEffect`) — revisar manualmente arquivo por arquivo antes de aplicar, nunca rodar em lote sem revisão.
+- **Crítico:** `app/layout.tsx` renderiza `{children}` duas vezes (uma `<div className="lg:hidden">` para mobile, outra `<div className="hidden lg:block">` para desktop) para simular responsividade. Isso duplica toda a árvore de cada página no DOM — IDs duplicados (quebra acessibilidade/`getElementById`), hooks/`useEffect`/chamadas de API rodando em dobro a cada navegação. Achado testando `tests/e2e/homepage.spec.ts` (`locator('#email')` resolvia para 2 elementos). Correção correta é usar apenas CSS responsivo com uma única árvore renderizada — fica para a Fase 11 (checkpoint), já que `app/layout.tsx` afeta todas as páginas.
+- **Crítico:** `handleSignup` em `app/criar-conta/criar-conta.tsx` (e outros arquivos que usam `err.errors` de um `z.ZodError`, ver a lista de erros de `bunx tsc --noEmit`) quebra com `Cannot read properties of undefined (reading 'forEach')` porque a versão do Zod instalada expõe os issues em `.issues`, não em `.errors`. Achado rodando `tests/e2e/signup.spec.ts` (marcado `test.fixme` até ser corrigido). Isso provavelmente afeta todo formulário validado com Zod no client (contato, atualizar senha, dados pessoais, redes sociais, etc).
 
 ## [1.0.0] - 2026-09-23
 

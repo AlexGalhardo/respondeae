@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import type { SentQuestionInterface } from "@/types/SentQuestion";
-import { calculateFinancialData, filterSentQuestionsByStatus, getSentQuestionStatus, isSentQuestionExpired, paginateSentQuestions } from "./sent-question-utils";
+import {
+	calculateFinancialData,
+	filterSentQuestionsByStatus,
+	getSentQuestionStatus,
+	isSentQuestionExpired,
+	paginateSentQuestions,
+} from "./sent-question-utils";
 
 function makeSentQuestion(overrides: Partial<SentQuestionInterface> = {}): SentQuestionInterface {
 	return {

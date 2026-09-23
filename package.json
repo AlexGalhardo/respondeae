@@ -19,8 +19,8 @@
     "prepare": "husky",
     "test": "bun test lib/ hooks/",
     "test:unit": "bun test lib/",
-    "test:integration": "bun test app/api/ --timeout 20000",
-    "test:smoke": "bun test smoke/ --timeout 30000",
+    "test:integration": "bun test tests/integration --timeout 20000",
+    "test:smoke": "bun test tests/smoke --timeout 30000",
     "test:e2e": "playwright test",
     "prisma:generate:no-engine": "bunx prisma generate --no-engine",
     "prisma:generate": "bunx prisma generate",
@@ -115,6 +115,7 @@
   "devDependencies": {
     "@commitlint/cli": "21.2.3",
     "@commitlint/config-conventional": "21.2.3",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/typography": "0.5.20",
     "@types/bun": "1.4.2",
     "@types/node": "26.6.2",
