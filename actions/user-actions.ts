@@ -77,7 +77,7 @@ export async function updatePersonalInfo(data: FormData) {
 
 		const validatedData = personalInfoSchema.parse(formData);
 
-		await prisma.user.update({
+		const updatedUser = await prisma.user.update({
 			where: {
 				id: session.user.id,
 			},
