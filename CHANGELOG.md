@@ -7,40 +7,62 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Security
+
+- **Saque**: `POST /api/payments/withdraw` não tinha login e aceitava `userId`, valor e chave PIX do body, permitindo sacar o saldo de qualquer usuário para qualquer chave. Agora o saque usa a sessão, calcula o valor no servidor, paga a chave cadastrada do próprio usuário e roda em transação que impede sacar a mesma pergunta duas vezes. A rota foi removida.
+- **Criação de pergunta**: o valor pago vinha do body (pagar R$ 2 e registrar R$ 1.000 inflava saque e reembolso) e o autor também. Agora o valor é o do webhook pago, o autor é o usuário da sessão, e o limite diário é conferido.
+- **8 rotas de pergunta/seguir** (responder, apagar, recusar, reportar, curtir, descurtir, expirar, seguir) não checavam sessão e confiavam no `nickname` do body. Agora exigem login e usam a sessão. Expirar pergunta também confere o prazo e o estado no servidor.
+- **Chave da AbacatePay exposta**: era `NEXT_PUBLIC_*` e importada por componente client, então ia para o bundle público. Agora é server-only (`ABACATEPAY_API_KEY`, `ABACATEPAY_WEBHOOK_SECRET`). **A chave de produção precisa ser rotacionada.**
+- `simulate-payment` só responde em modo de teste; o webhook recusa tudo se o secret não estiver configurado; a página pública `/pix-test` foi removida.
+- **Cron** (`/api/cronjob`, que apaga contas antigas) era público. Agora exige `CRON_SECRET`.
+- Server Actions de dados de pagamento aceitavam qualquer `nickname`, e as de aceitar/rejeitar seguidor aceitavam qualquer solicitação. Agora são restritas ao usuário da sessão.
+- Hash de senha com bcrypt custo 12 em todos os fluxos (cadastro e reset usavam 10).
+- Vulnerabilidades transitivas corrigidas via `overrides` (`effect`, `baseline-browser-mapping`, `mysql2`). `bun audit`: 26 → 1, e essa única, `deepmerge-ts`, só existe no CLI do Prisma e está ignorada com justificativa. O job de auditoria do CI agora bloqueia.
+
 ### Added
 
-- CI/CD com GitHub Actions: `ci.yml` (lint, format, typecheck, `bun audit`, unit, integração, build + smoke), `e2e.yml` (Playwright) e `deploy.yml` (Vercel, só após CI verde em `main`). Ver `docs/deployment.md`.
-- `.editorconfig` na raiz (tab, largura 4, LF; YAML e `package.json` com espaços).
-- Skills de agentes vendorizadas em `.claude/skills/` (impeccable, ponytail, addyosmani/agent-skills, graphify, frontend-design), com agentes em `.claude/agents/` e checklists em `.claude/references/`; origem e commits em `.claude/skills/SOURCES.md`.
+- CI/CD com GitHub Actions: `ci.yml` (lint, format, typecheck, `bun audit`, unit, integração, build + smoke, todos bloqueantes), `e2e.yml` (Playwright) e `deploy.yml` (Vercel, só após CI verde em `main`). Ver `docs/deployment.md`.
+- `lib/session.ts` (`getSessionUser`) e services testados para regras que movem dinheiro: `withdraw.service`, `question-create.service`, `question-expiry.service`.
+- Testes de integração para saque (incluindo concorrência), criação de pergunta, expiração e autorização do cron. Teste e2e de regressão para renderização única do layout. O e2e de cadastro, antes `fixme`, agora passa.
+- `.editorconfig` na raiz (tab, largura 4, LF; YAML e `package.json` com espaços) e `.gitattributes` fixando LF.
+- Skills de agentes vendorizadas em `.claude/skills/` (impeccable, ponytail, addyosmani/agent-skills, graphify, frontend-design), com agentes em `.claude/agents/` e checklists em `.claude/references/`; origem e commits em `.claude/skills/SOURCES.md`. `.graphifyignore` para o knowledge graph.
 - Fase final no `PLAN.md`: auditoria de segurança da aplicação inteira contra o OWASP Top Ten.
-- Testes: 48 testes unitários (`lib/`), suíte de integração (`tests/integration/`, repositório de usuários contra Postgres real), smoke test (`tests/smoke/`, sobe o servidor de produção e checa `/api/health`) e e2e com Playwright (`tests/e2e/`, home/login/cadastro).
+- Testes unitários (`lib/`), integração (`tests/integration/`), smoke (`tests/smoke/`) e e2e com Playwright (`tests/e2e/`).
 - `AGENTS.md`/`CLAUDE.md` na raiz e documentação em `docs/` focada em dar contexto para agentes de IA.
-- Pasta `setups/` com scripts de setup local (Windows/Unix × SQLite/Postgres/Postgres+Docker).
-- Pasta `infra/` centralizando Docker/docker-compose (antes na raiz).
-- `prisma/schema.sqlite.prisma`, schema espelhado para desenvolvimento local sem Postgres.
+- Pasta `setups/` com scripts de setup local (Windows/Unix × SQLite/Postgres/Postgres+Docker) e `infra/` com Docker/docker-compose.
 - Conventional Commits obrigatório via commitlint no hook `commit-msg`.
 
 ### Changed
 
-- Biome passa a ler o `.editorconfig` (`formatter.useEditorconfig`) e formata também `tests/` e configs da raiz; `tsconfig.json`, `components.json`, `vercel.json`, `proxy.ts` e `tailwind.config.ts` convertidos para tab (só whitespace).
+- **Prisma 6 → 7.10.0** com driver adapters (`@prisma/adapter-pg`; `@prisma/adapter-libsql` para SQLite local), `prisma.config.ts`, client gerado em `prisma/generated/` e uma única instância compartilhada. Rode `bun run prisma:generate` após instalar. `SQLITE_DATABASE_URL` deixou de existir: use `DATABASE_URL="file:./dev.db"`.
+- `@react-email/components` 0.0.41 → 1.0.12.
+- `typescript.ignoreBuildErrors` removido: o build volta a checar tipos (0 erros). Lint com 0 erros em todo o código (antes só `app/` era verificado).
+- Server Actions usam `updateTag` (Next 16) no lugar de `revalidateTag` com um argumento.
+- Biome lê o `.editorconfig` e formata também `tests/` e configs da raiz.
 - `TODO.md` renomeado para `PLAN.md`.
-- Playwright gera relatório HTML quando `CI=true` (antes o artifact do CI apontava para uma pasta que nunca era criada).
-- Bun 1.4.2 como package manager oficial (`packageManager`/`engines` no `package.json`).
-- Todas as dependências passaram a usar versão exata pinada (sem `latest`, sem `^` desnecessário).
+- Bun 1.4.2 como package manager oficial; dependências com versão exata pinada.
+
+### Removed
+
+- `framer-motion` (girava um ícone que já girava com `animate-spin`, dobrando a velocidade do spinner).
+- `@prisma/extension-accelerate` (sem efeito com `DATABASE_URL` Postgres comum).
+- 30 componentes shadcn e 28 dependências sem nenhum import; o CLI `vercel` como devDependency (chamado pinado no workflow); código morto (`actions/question-actions.ts`, `lib/create-pix-payment.ts`, `lib/rate-limiter.ts` não usado, rota vazia `report-answer`).
 
 ### Fixed
 
-- `biome.json` estava no schema da versão 1.8.3 enquanto o Biome instalado é 2.5.1, quebrando o hook `pre-commit` (`bun run format`); migrado para o schema correto.
-- `css.parser.tailwindDirectives` habilitado no Biome para `app/globals.css` formatar sem erro.
+- O layout raiz renderizava cada página duas vezes (uma árvore por breakpoint): ids duplicados, efeitos e chamadas de API em dobro, erro de hidratação.
+- Formulários com Zod 4 (cadastro, contato, dados da conta) quebravam lendo `ZodError.errors`; agora usam `.issues`. Cadastro novo redireciona para `/minha-conta` (antes caía em `/feed` por um redirecionamento concorrente).
+- Login por senha e formulário de contato falhavam em produção: o servidor lia `CLOUDFLARE_TURNSTILE_SECRET_KEY` (inexistente) e o client dependia de `NEXT_PUBLIC_NODE_ENV` (nunca definido).
+- Toasts de perfil, pergunta, pagamento e ranking nunca apareciam (usavam uma cópia do store que o `<Toaster>` não escuta).
+- Rotas desconectavam o client Prisma compartilhado ao fim de cada requisição.
+- `biome.json` no schema errado quebrava o hook `pre-commit`.
 
 ### Known issues
 
-- `lib/auth.ts` lê `CLOUDFLARE_TURNSTILE_SECRET_KEY`, mas o env real é `CLOUDFLARE_TURNSTILE_SECRET` — login por credenciais falha silenciosamente em produção. Ver `docs/auth.md`. Correção planejada para a fase de revisão de lógica/OWASP (checkpoint, `PLAN.md`).
-- `NEXT_PUBLIC_ABACATEPAY_API_KEY` é exposta no client (`NEXT_PUBLIC_*`). Ver `docs/payments-pix.md`.
-- `next.config.mjs` tem `typescript.ignoreBuildErrors: true` — `bun run build` passa mesmo com ~35 erros reais de tipo hoje presentes no código (`actions/*.ts`, `components/ui/*.tsx`, repositórios Prisma, `tailwind.config.ts`). Rode `bunx tsc --noEmit` para ver a lista completa. Não desliguei a flag nem corrigi os erros agora porque isso quebraria o build até todos serem corrigidos — fica para a Fase 11 (checkpoint).
-- `bun run lint` (sem `--unsafe`) hoje só corrige com segurança (reordenação de imports etc). Existe também `bun run lint:unsafe`, que inclui fixes que mudam comportamento (ex: adicionar dependências faltantes em `useEffect`) — revisar manualmente arquivo por arquivo antes de aplicar, nunca rodar em lote sem revisão.
-- **Crítico:** `app/layout.tsx` renderiza `{children}` duas vezes (uma `<div className="lg:hidden">` para mobile, outra `<div className="hidden lg:block">` para desktop) para simular responsividade. Isso duplica toda a árvore de cada página no DOM — IDs duplicados (quebra acessibilidade/`getElementById`), hooks/`useEffect`/chamadas de API rodando em dobro a cada navegação. Achado testando `tests/e2e/homepage.spec.ts` (`locator('#email')` resolvia para 2 elementos). Correção correta é usar apenas CSS responsivo com uma única árvore renderizada — fica para a Fase 11 (checkpoint), já que `app/layout.tsx` afeta todas as páginas.
-- **Crítico:** `handleSignup` em `app/criar-conta/criar-conta.tsx` (e outros arquivos que usam `err.errors` de um `z.ZodError`, ver a lista de erros de `bunx tsc --noEmit`) quebra com `Cannot read properties of undefined (reading 'forEach')` porque a versão do Zod instalada expõe os issues em `.issues`, não em `.errors`. Achado rodando `tests/e2e/signup.spec.ts` (marcado `test.fixme` até ser corrigido). Isso provavelmente afeta todo formulário validado com Zod no client (contato, atualizar senha, dados pessoais, redes sociais, etc).
+- Troca de senha não pede a senha atual, e não há rate limit efetivo em login/cadastro (o limitador em memória não funcionaria em serverless). Ambos dependem de decisão: ver `PLAN.md`, Fase 11.
+- "Reportar resposta" e "sacar perguntas não respondidas" chamam rotas que não existem (`/api/question/report-answer` era um arquivo vazio; `/api/withdraw/unanswered` nunca existiu).
+- Seed não roda no SQLite (`createMany({ skipDuplicates })` não é suportado lá).
+- Erro de hidratação no botão de tema (`Moon`/`Sun` dependem do tema, que só é conhecido no client).
 
 ## [1.0.0] - 2026-09-23
 
