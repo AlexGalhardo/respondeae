@@ -99,7 +99,7 @@
 - [x] Commits por tipo de teste
 - [x] `tests/e2e/signup.spec.ts` reativado (o `test.fixme` saiu com a correção do Zod na Fase 11)
 
-### 🐛 Bugs críticos encontrados escrevendo os testes (novos itens para a Fase 11)
+### 🐛 Bugs críticos encontrados escrevendo os testes (corrigidos na Fase 11)
 
 - **`app/layout.tsx` renderiza `{children}` duas vezes** (`lg:hidden` + `hidden lg:block`) — duplica toda página no DOM (IDs duplicados, hooks/efeitos/chamadas de API em dobro). Afeta TODAS as páginas. Ver `CHANGELOG.md`.
 - **`ZodError.errors` não existe na versão do Zod instalada** (é `.issues`) — quebra o tratamento de erro de validação em `handleSignup` (`app/criar-conta/criar-conta.tsx`) e provavelmente em todo formulário/rota que usa esse padrão (ver lista de erros de `bunx tsc --noEmit`: `app/api/send-contact-email`, `app/api/user/delete-account`, `app/api/user/update-password`, `app/api/user/update-personal-info`, `app/api/user/update-social-medias`, `app/contato/contato.tsx`).
