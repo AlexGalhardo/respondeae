@@ -148,7 +148,7 @@ Executada com as skills `graphify` (mapa do código), `security-and-hardening`, 
 - [x] Erro de hidratação no botão de tema (`Moon`/`Sun` dependem do tema, que só é conhecido no client)
 - [x] Páginas que têm `<main>` próprio dentro do `<main>` do layout (landmark duplicado, a11y): 13 páginas agora usam `<div>`
 - [x] Campo de nickname aceita só `a-z`, mas o schema aceita dígitos e `_`: alinhar
-- [ ] O callback `session` do NextAuth carrega o usuário com todas as perguntas a cada leitura de sessão (performance)
+- [x] O callback `session` do NextAuth carrega o usuário com todas as perguntas a cada leitura de sessão (performance): não grava mais `last_login_at` nem reativa conta a cada leitura (só no sign-in), e usuários relacionados vêm só com campos públicos (`publicUserSelect`). Tirar as relações da sessão de vez exige migrar ~10 telas para buscar por action; fica como melhoria futura
 - [x] 61 warnings do Biome: zerados, e `lint:ci` agora usa `--error-on-warnings`
 
 ## Fase 12 — README.md final
