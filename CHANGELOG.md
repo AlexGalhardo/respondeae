@@ -9,6 +9,10 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- CI/CD com GitHub Actions: `ci.yml` (lint, format, typecheck, `bun audit`, unit, integração, build + smoke), `e2e.yml` (Playwright) e `deploy.yml` (Vercel, só após CI verde em `main`). Ver `docs/deployment.md`.
+- `.editorconfig` na raiz (tab, largura 4, LF; YAML e `package.json` com espaços).
+- Skills de agentes vendorizadas em `.claude/skills/` (impeccable, ponytail, addyosmani/agent-skills, graphify, frontend-design), com agentes em `.claude/agents/` e checklists em `.claude/references/`; origem e commits em `.claude/skills/SOURCES.md`.
+- Fase final no `PLAN.md`: auditoria de segurança da aplicação inteira contra o OWASP Top Ten.
 - Testes: 48 testes unitários (`lib/`), suíte de integração (`tests/integration/`, repositório de usuários contra Postgres real), smoke test (`tests/smoke/`, sobe o servidor de produção e checa `/api/health`) e e2e com Playwright (`tests/e2e/`, home/login/cadastro).
 - `AGENTS.md`/`CLAUDE.md` na raiz e documentação em `docs/` focada em dar contexto para agentes de IA.
 - Pasta `setups/` com scripts de setup local (Windows/Unix × SQLite/Postgres/Postgres+Docker).
@@ -18,6 +22,9 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Changed
 
+- Biome passa a ler o `.editorconfig` (`formatter.useEditorconfig`) e formata também `tests/` e configs da raiz; `tsconfig.json`, `components.json`, `vercel.json`, `proxy.ts` e `tailwind.config.ts` convertidos para tab (só whitespace).
+- `TODO.md` renomeado para `PLAN.md`.
+- Playwright gera relatório HTML quando `CI=true` (antes o artifact do CI apontava para uma pasta que nunca era criada).
 - Bun 1.4.2 como package manager oficial (`packageManager`/`engines` no `package.json`).
 - Todas as dependências passaram a usar versão exata pinada (sem `latest`, sem `^` desnecessário).
 
@@ -28,7 +35,7 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Known issues
 
-- `lib/auth.ts` lê `CLOUDFLARE_TURNSTILE_SECRET_KEY`, mas o env real é `CLOUDFLARE_TURNSTILE_SECRET` — login por credenciais falha silenciosamente em produção. Ver `docs/auth.md`. Correção planejada para a fase de revisão de lógica/OWASP (checkpoint, `TODO.md`).
+- `lib/auth.ts` lê `CLOUDFLARE_TURNSTILE_SECRET_KEY`, mas o env real é `CLOUDFLARE_TURNSTILE_SECRET` — login por credenciais falha silenciosamente em produção. Ver `docs/auth.md`. Correção planejada para a fase de revisão de lógica/OWASP (checkpoint, `PLAN.md`).
 - `NEXT_PUBLIC_ABACATEPAY_API_KEY` é exposta no client (`NEXT_PUBLIC_*`). Ver `docs/payments-pix.md`.
 - `next.config.mjs` tem `typescript.ignoreBuildErrors: true` — `bun run build` passa mesmo com ~35 erros reais de tipo hoje presentes no código (`actions/*.ts`, `components/ui/*.tsx`, repositórios Prisma, `tailwind.config.ts`). Rode `bunx tsc --noEmit` para ver a lista completa. Não desliguei a flag nem corrigi os erros agora porque isso quebraria o build até todos serem corrigidos — fica para a Fase 11 (checkpoint).
 - `bun run lint` (sem `--unsafe`) hoje só corrige com segurança (reordenação de imports etc). Existe também `bun run lint:unsafe`, que inclui fixes que mudam comportamento (ex: adicionar dependências faltantes em `useEffect`) — revisar manualmente arquivo por arquivo antes de aplicar, nunca rodar em lote sem revisão.
