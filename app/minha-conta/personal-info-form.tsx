@@ -1,4 +1,3 @@
-// components/account/personal-info-form.tsx
 "use client";
 
 import { Loader2, Upload } from "lucide-react";

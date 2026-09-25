@@ -1,4 +1,3 @@
-// /app/[slug]/profile-question-modal.tsx
 "use client";
 
 import { Check, Clock, Copy, Loader } from "lucide-react";

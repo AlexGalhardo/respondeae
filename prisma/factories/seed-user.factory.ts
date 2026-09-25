@@ -11,7 +11,6 @@ function sleep(ms: number) {
 }
 
 function isValidLatinName(name: string): boolean {
-	// Verifica se o nome só possui letras e espaços
 	return /^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/.test(name);
 }
 
@@ -24,7 +23,6 @@ export class SeedUserFactory {
 	constructor(private readonly uniqueTracker: SeedUniqueTracker) {}
 
 	async createAdminUser(): Promise<Omit<SeedUserInterface, "id">> {
-		// (sem alterações)
 		return {
 			is_admin: true,
 			is_seed: true,
@@ -61,7 +59,6 @@ export class SeedUserFactory {
 	}
 
 	async createOfficialUser(): Promise<Omit<SeedUserInterface, "id">> {
-		// (sem alterações)
 		return {
 			name: "RespondeAê Perfil Oficial",
 			is_seed: true,

@@ -1,4 +1,3 @@
-// hooks/use-profile-queries.ts
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	dislikeQuestionAction,

@@ -78,13 +78,11 @@ export function useAcceptFollowRequest() {
 		onSuccess: (data) => {
 			toast.success("Seguidor aceito");
 
-			// Invalida os perfis específicos envolvidos na solicitação
 			if (data.senderId && data.receiverId) {
 				queryClient.invalidateQueries({ queryKey: ["profile", data.senderId] });
 				queryClient.invalidateQueries({ queryKey: ["profile", data.receiverId] });
 			}
 
-			// Invalida todas as queries de perfil para garantir
 			queryClient.invalidateQueries({ queryKey: ["profile"] });
 		},
 		onSettled: () => {
@@ -124,7 +122,6 @@ export function useRejectFollowRequest() {
 				queryClient.invalidateQueries({ queryKey: ["profile", data.receiverId] });
 			}
 
-			// Invalida todas as queries de perfil para garantir
 			queryClient.invalidateQueries({ queryKey: ["profile"] });
 		},
 		onSettled: () => {

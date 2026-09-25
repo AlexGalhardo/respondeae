@@ -1,4 +1,3 @@
-// /app/[slug]/profile-question-card.tsx
 "use client";
 
 import { ThumbsDown, ThumbsUp } from "lucide-react";
