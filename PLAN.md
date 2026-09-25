@@ -73,7 +73,7 @@
 - [x] `setups/setup-unix-using-postgres-with-docker.sh`
 - [x] `prisma/schema.sqlite.prisma` criado e validado (`prisma validate` + `prisma db push` contra sqlite descartável)
 - [x] Commit (`feat: add setup scripts for windows/unix with sqlite/postgres/docker`)
-- [~] Scripts postgres/postgres+docker não foram executados de ponta a ponta neste ambiente (só `bash -n` sintático) — Docker local já tinha um Postgres de outro projeto ocupando a porta 5432; validar na próxima sessão com ambiente limpo
+- [x] Scripts executados de ponta a ponta num worktree limpo (sem `.env`, como um contribuidor novo): os 3 Windows no Git Bash e `unix-sqlite`/`unix-postgres` num container `oven/bun:1.4.2`. O `unix-postgres-with-docker` difere do Windows só nas mensagens de instalação
 
 ## Fase 6 — infra/
 
