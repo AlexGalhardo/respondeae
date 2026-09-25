@@ -187,7 +187,7 @@ export const useLikeQuestion = () => {
 	const { toast } = useToast();
 
 	return useMutation<ApiResponse, QuestionsError, LikeDislikeParams>({
-		mutationFn: async ({ questionId, nickname }: LikeDislikeParams): Promise<ApiResponse> => {
+		mutationFn: async ({ questionId }: LikeDislikeParams): Promise<ApiResponse> => {
 			const response = await fetch("/api/question/update-like", {
 				method: "POST",
 				headers: {
@@ -195,7 +195,6 @@ export const useLikeQuestion = () => {
 				},
 				body: JSON.stringify({
 					questionId,
-					nickname,
 				}),
 			});
 
@@ -225,7 +224,7 @@ export const useDislikeQuestion = () => {
 	const { toast } = useToast();
 
 	return useMutation<ApiResponse, QuestionsError, LikeDislikeParams>({
-		mutationFn: async ({ questionId, nickname }: LikeDislikeParams): Promise<ApiResponse> => {
+		mutationFn: async ({ questionId }: LikeDislikeParams): Promise<ApiResponse> => {
 			const response = await fetch("/api/question/update-deslike", {
 				method: "POST",
 				headers: {
@@ -233,7 +232,6 @@ export const useDislikeQuestion = () => {
 				},
 				body: JSON.stringify({
 					questionId,
-					nickname,
 				}),
 			});
 
@@ -264,7 +262,6 @@ export function useAnswerQuestion() {
 	return useMutation({
 		mutationFn: async ({
 			questionId,
-			nickname,
 			answerText,
 		}: {
 			questionId: string;
@@ -278,7 +275,6 @@ export function useAnswerQuestion() {
 				},
 				body: JSON.stringify({
 					questionId,
-					nickname,
 					answerText,
 				}),
 			});
@@ -310,7 +306,7 @@ export function useAnswerQuestion() {
 
 export function useDeclineQuestion() {
 	return useMutation({
-		mutationFn: async ({ questionId, nickname }: { questionId: string; nickname: string }) => {
+		mutationFn: async ({ questionId }: { questionId: string; nickname: string }) => {
 			const response = await fetch("/api/question/recused", {
 				method: "POST",
 				headers: {
@@ -318,7 +314,6 @@ export function useDeclineQuestion() {
 				},
 				body: JSON.stringify({
 					questionId,
-					nickname,
 				}),
 			});
 
@@ -339,7 +334,7 @@ export function useDeclineQuestion() {
 
 export function useDeleteQuestion() {
 	return useMutation({
-		mutationFn: async ({ questionId, nickname }: { questionId: string; nickname: string }) => {
+		mutationFn: async ({ questionId }: { questionId: string; nickname: string }) => {
 			const response = await fetch("/api/question/delete", {
 				method: "POST",
 				headers: {
@@ -347,7 +342,6 @@ export function useDeleteQuestion() {
 				},
 				body: JSON.stringify({
 					questionId,
-					nickname,
 				}),
 			});
 
@@ -370,7 +364,6 @@ export function useReportQuestion() {
 	return useMutation({
 		mutationFn: async ({
 			questionId,
-			nickname,
 			isOffensive,
 			isInappropriate,
 		}: {
@@ -386,7 +379,6 @@ export function useReportQuestion() {
 				},
 				body: JSON.stringify({
 					questionId,
-					nickname,
 					isOffensive,
 					isInappropriate,
 				}),
