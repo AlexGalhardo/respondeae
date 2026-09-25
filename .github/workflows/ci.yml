@@ -31,10 +31,7 @@ jobs:
         with:
           bun-version: 1.4.2
       - run: bun install --frozen-lockfile
-      # TODO(Fase 11 do PLAN.md): tirar continue-on-error quando os ~31 erros
-      # de lint pré-existentes (documentados no CHANGELOG.md) forem corrigidos.
       - run: bun run lint:ci
-        continue-on-error: true
       - run: bun run format:ci
 
   typecheck:

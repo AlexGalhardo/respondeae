@@ -4,12 +4,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
-	updatePersonalInfo,
-	updateSocialMedia,
-	updatePixKey,
-	updatePassword,
-	updatePrivacySettings,
 	deleteAccount,
+	updatePassword,
+	updatePersonalInfo,
+	updatePixKey,
+	updatePrivacySettings,
+	updateSocialMedia,
 } from "../actions/user-actions";
 
 export function useUpdatePersonalInfo() {

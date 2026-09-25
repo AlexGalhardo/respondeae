@@ -1,15 +1,15 @@
 "use client";
 
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { QuestionInterface } from "@/types/QuestionInterface";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import {
 	getAllLatestDescPublicQuestionsAnswered,
 	getFollowingQuestionsAnswered,
 } from "@/lib/repositories/questions.repository";
-import { useToast } from "@/hooks/use-toast";
-import { toast } from "sonner";
-import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { QuestionInterface } from "@/types/QuestionInterface";
 
 const QUESTIONS_PER_PAGE = 10;
 
@@ -172,7 +172,7 @@ export function useReceivedQuestions() {
 			setQuestions([]);
 			setIsLoading(false);
 		}
-	}, [session?.user?.questions_received]);
+	}, [session]);
 
 	return {
 		data: questions,

@@ -1,10 +1,10 @@
 import { faker } from "@faker-js/faker/locale/pt_BR";
 import { hash } from "bcryptjs";
 import slugify from "slugify";
-import { SeedUniqueTracker } from "../helpers/seed-unique-tracker.helper";
+import TelegramLog from "@/lib/telegram-logger";
 import { SeedHelpers } from "../helpers/seed-helpers.helper";
 import { SeedUserInterface } from "../helpers/seed-interfaces.helper";
-import TelegramLog from "@/lib/telegram-logger";
+import { SeedUniqueTracker } from "../helpers/seed-unique-tracker.helper";
 
 function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));

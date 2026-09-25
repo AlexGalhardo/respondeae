@@ -9,18 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUpdateSocialMedia } from "@/hooks/use-account-mutations";
 
-interface SocialMediaFormProps {
-	user: {
-		instagram?: string;
-		facebook?: string;
-		youtube?: string;
-		twitter?: string;
-		tiktok?: string;
-		linkedin?: string;
-		twitch?: string;
-	};
-}
-
 export function SocialMediaForm({ user }: any) {
 	const [isPending, startTransition] = useTransition();
 	const updateSocialMediaMutation = useUpdateSocialMedia();

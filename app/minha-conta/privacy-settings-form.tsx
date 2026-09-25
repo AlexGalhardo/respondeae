@@ -9,24 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useUpdatePrivacySettings } from "@/hooks/use-account-mutations";
 
-interface PrivacySettingsFormProps {
-	user: {
-		privacy_is_private_profile?: boolean;
-		privacy_accept_anonymous_questions?: boolean;
-		privacy_show_anonymous_questions_public?: boolean;
-		privacy_show_total_questions_received_public?: boolean;
-		privacy_show_total_questions_answered_public?: boolean;
-		privacy_show_total_questions_sent_public?: boolean;
-		privacy_show_questions_answered_only_to_followers?: boolean;
-		privacy_show_value_received_from_answering_question?: boolean;
-		privacy_show_date_questions_was_answered?: boolean;
-		privacy_show_total_followers_public?: boolean;
-		privacy_show_likes_each_answer_public?: boolean;
-		privacy_show_dislikes_each_answer_public?: boolean;
-		privacy_show_total_likes_all_answers_public?: boolean;
-	};
-}
-
 export function PrivacySettingsForm({ user }: any) {
 	const [isPending, startTransition] = useTransition();
 	const updatePrivacySettingsMutation = useUpdatePrivacySettings();

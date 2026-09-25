@@ -12,17 +12,6 @@ import { useUpdatePersonalInfo } from "@/hooks/use-account-mutations";
 import { useToast } from "@/hooks/use-toast";
 import { UploadButton } from "@/lib/uploadthing";
 
-interface PersonalInfoFormProps {
-	user: {
-		avatar_url?: string;
-		name: string;
-		nickname: string;
-		email: string;
-		website?: string;
-		description?: string;
-	};
-}
-
 export function PersonalInfoForm({ user }: any) {
 	const { toast } = useToast();
 	const [isPending, startTransition] = useTransition();

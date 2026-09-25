@@ -1,10 +1,8 @@
 "use client";
 
+import { signIn, signOut, useSession } from "next-auth/react";
 import type React from "react";
-
 import { createContext, useContext } from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import TelegramLog from "@/lib/telegram-logger";
 
 interface AuthContextType {
@@ -19,7 +17,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const { data: session, status } = useSession();
-	const router = useRouter();
 
 	const loginWithCredentials = async (email: string, password: string) => {
 		try {
