@@ -1,11 +1,11 @@
 "use server";
 
-import bcrypt from "bcryptjs";
 import { revalidatePath, updateTag } from "next/cache";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { getUserByNickname } from "@/lib/repositories/users.repository";
+import { changePassword, PasswordChangeError } from "@/lib/services/password.service";
 import TelegramLog from "@/lib/telegram-logger";
 import { prisma } from "@/prisma/prisma-client";
 
@@ -197,21 +197,13 @@ export async function updatePassword(data: FormData) {
 		};
 
 		const validatedData = passwordSchema.parse(formData);
+		const currentPassword = (data.get("currentPassword") as string | null) || undefined;
 
-		const hashedPassword = await bcrypt.hash(validatedData.newPassword, 12);
-
-		await prisma.user.update({
-			where: {
-				id: session.user.id,
-			},
-			data: {
-				password: hashedPassword,
-				updated_at: new Date(),
-			},
-		});
+		await changePassword(session.user.id, currentPassword, validatedData.newPassword);
 
 		return { success: true };
 	} catch (error: any) {
+		if (error instanceof PasswordChangeError) return { error: error.message };
 		await TelegramLog.error(`Catch Error file user-actions.ts update password: ${error?.message}`);
 		return { error: error.message || "Erro interno do servidor" };
 	}

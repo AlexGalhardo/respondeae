@@ -24,6 +24,8 @@ interface ExtendedUser {
 	public_questions_remaining_today?: number;
 	anonymous_questions_remaining_today?: number;
 	pix_key?: string | null;
+	/** Só um booleano: o hash da senha nunca entra na sessão. */
+	has_password?: boolean;
 	twitter?: string | null;
 	instagram?: string | null;
 	youtube?: string | null;
@@ -89,6 +91,7 @@ const processExpiredQuestions = (questions: any[]): any[] => {
 
 const mapUserToSession = (dbUser: any): Partial<ExtendedUser> => ({
 	id: dbUser?.id,
+	has_password: Boolean(dbUser?.password),
 	avatar_url: dbUser?.avatar_url,
 	name: dbUser?.name,
 	nickname: dbUser?.nickname,

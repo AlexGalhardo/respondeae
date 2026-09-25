@@ -16,6 +16,7 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 - `simulate-payment` só responde em modo de teste; o webhook recusa tudo se o secret não estiver configurado; a página pública `/pix-test` foi removida.
 - **Cron** (`/api/cronjob`, que apaga contas antigas) era público. Agora exige `CRON_SECRET`.
 - Server Actions de dados de pagamento aceitavam qualquer `nickname`, e as de aceitar/rejeitar seguidor aceitavam qualquer solicitação. Agora são restritas ao usuário da sessão.
+- **Troca de senha** (OWASP A07) não pedia a senha atual, então quem tivesse uma sessão aberta tomava a conta. Agora a senha atual é obrigatória; contas criadas pelo Google (sem senha) definem a primeira pela mesma tela. A rota duplicada `app/api/user/update-password`, sem uso, foi removida.
 - Hash de senha com bcrypt custo 12 em todos os fluxos (cadastro e reset usavam 10).
 - Vulnerabilidades transitivas corrigidas via `overrides` (`effect`, `baseline-browser-mapping`, `mysql2`). `bun audit`: 26 → 1, e essa única, `deepmerge-ts`, só existe no CLI do Prisma e está ignorada com justificativa. O job de auditoria do CI agora bloqueia.
 
