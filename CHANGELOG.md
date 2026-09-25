@@ -16,9 +16,20 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 - `simulate-payment` só responde em modo de teste; o webhook recusa tudo se o secret não estiver configurado; a página pública `/pix-test` foi removida.
 - **Cron** (`/api/cronjob`, que apaga contas antigas) era público. Agora exige `CRON_SECRET`.
 - Server Actions de dados de pagamento aceitavam qualquer `nickname`, e as de aceitar/rejeitar seguidor aceitavam qualquer solicitação. Agora são restritas ao usuário da sessão.
+- **Repositórios expostos como endpoints públicos** (crítico): `users`, `questions` e `webhooks-abacatepay.repository.ts` tinham `"use server"`, então qualquer pessoa podia chamar direto, sem login, `getAllUsers` (todos os usuários com hash de senha, email, chave PIX e api_key), `updateUserPassword` (trocar a senha de qualquer conta) e `createWebhookAbacatePay` (forjar pagamento). A diretiva saiu; o feed e o cadastro passaram a usar Server Actions próprias (`actions/feed-actions.ts`, `actions/signup-actions.ts`), e o cadastro agora é validado no servidor. Um teste impede `"use server"` em `lib/`.
+- **Dados privados de usuários indo para o browser** (crítico): feed, top curtidas, perfil público (`getUserByNicknameAction`) e a sessão do NextAuth serializavam linhas inteiras de `User` (hash de senha, email, chave PIX, api_key), inclusive de quem perguntou e de seguidores. Agora só campos públicos saem do servidor.
+- **Autor de pergunta anônima revelado** no feed, no top curtidas, no perfil e na sessão de quem recebeu a pergunta. Agora `asked_by` vem `null` e a tela mostra "Pergunta Anônima". Perguntas anônimas enviadas por alguém não aparecem mais no perfil dessa pessoa para outros visitantes.
+- Feed: respostas de perfis privados eram filtradas só no client (chegavam ao browser de qualquer visitante). Agora o filtro é no servidor.
+- **Chave da Resend no bundle público**: `app/api/send-contact-email/route.ts` tinha a chave hardcoded como fallback, e a página `/contato` (client) importava esse arquivo para usar o schema, levando a chave para o JavaScript do browser. O schema foi para `lib/schemas/contact.ts` e a chave só vem de `RESEND_API_KEY`. **A chave antiga precisa ser rotacionada.**
 - **Troca de senha** (OWASP A07) não pedia a senha atual, então quem tivesse uma sessão aberta tomava a conta. Agora a senha atual é obrigatória; contas criadas pelo Google (sem senha) definem a primeira pela mesma tela. A rota duplicada `app/api/user/update-password`, sem uso, foi removida.
 - Hash de senha com bcrypt custo 12 em todos os fluxos (cadastro e reset usavam 10).
 - Vulnerabilidades transitivas corrigidas via `overrides` (`effect`, `baseline-browser-mapping`, `mysql2`). `bun audit`: 26 → 1, e essa única, `deepmerge-ts`, só existe no CLI do Prisma e está ignorada com justificativa. O job de auditoria do CI agora bloqueia.
+
+### Fixed
+
+- Erro de hidratação no botão de tema: o markup dependia do tema, que só existe no client. Os dois ícones são renderizados e o CSS `dark:` escolhe; isso também acabou com a instabilidade dos e2e de cadastro (o re-render do React apagava campos já preenchidos).
+- Campo de nickname do cadastro agora aceita dígitos e `_`, como o schema (que passou a exigir minúsculas, igual ao campo).
+- Troca de senha: com senha atual errada, os campos não somem mais da tela (o form usava `action`, que o React reseta).
 
 ### Added
 
