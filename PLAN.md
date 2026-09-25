@@ -27,7 +27,7 @@
 - [x] Adicionar `"packageManager": "bun@1.4.2"` e `engines.bun` no `package.json`
 - [x] Remover `package-lock.json` duplicado (mantido só `bun.lock`)
 - [x] Corrigir `biome.json` (schema desatualizado quebrava o hook `pre-commit`) e habilitar `css.parser.tailwindDirectives` para `globals.css` formatar sem erro
-- [~] `.nvmrc`/`.bun-version`: não criado — `engines.bun` no `package.json` já expressa o requisito; adicionar só se surgir necessidade real (ex: CI que dependa de arquivo de versão)
+- [x] `.nvmrc`/`.bun-version`: decidido não criar — `packageManager`/`engines.bun` no `package.json` já fixam o Bun e o CI usa `bun-version: 1.4.2` explícito
 - [x] Script `husky` renomeado para `prepare` (convenção Husky v9, roda hooks automaticamente após `bun install`)
 
 ## Fase 2 — Upgrade de dependências
@@ -43,7 +43,7 @@
 - [x] `@react-email/components` 0.0.41 → 1.0.12 (os dois templates renderizam igual).
 - [x] `framer-motion`: removido em vez de atualizado. Só girava um ícone que já tinha `animate-spin`.
 - [x] TypeScript mantido na 6.x (6.0.3, a mais recente) por decisão do usuário.
-- [~] SQLite nativo do Bun (`bun:sqlite`): o usuário pediu. O único adapter Prisma para ele é comunitário (`prisma-adapter-bun-sqlite@0.8.0`, mantenedor individual), e a instalação foi bloqueada pelo classificador de segurança do Claude Code. Além disso, `bun:sqlite` só existe no runtime Bun, e o Next roda em Node. Depende de decisão do usuário (ver resumo da sessão).
+- [x] SQLite nativo do Bun (`bun:sqlite`): **descartado por inviabilidade técnica**. `bun:sqlite` só existe no runtime Bun, e o Next precisa rodar em Node (a Vercel roda Node, e sob Bun os módulos externalizados pelo Turbopack nem resolvem — ver `docs/deployment.md`). Além disso o único adapter Prisma é comunitário, de um mantenedor só. O SQLite local segue com `@prisma/adapter-libsql`, que funciona em Node e Bun
 
 ## Fase 3 — AGENTS.md e CLAUDE.md (raiz)
 
@@ -59,8 +59,8 @@
 - [x] `docs/email.md` — Resend, templates em `emails/`
 - [x] `docs/uploads.md` — UploadThing
 - [x] `docs/telegram-bot.md` — bot de notificações
-- [~] `docs/testing.md` — escrito como "estado alvo", precisa ser atualizado quando a Fase 8 for implementada de verdade
-- [~] `docs/deployment.md` — escrito como "estado alvo", precisa ser atualizado quando a Fase 10 (CI/CD) for implementada de verdade
+- [x] `docs/testing.md` — atualizado com o estado real (tipos, modos local/CI do e2e, captcha)
+- [x] `docs/deployment.md` — atualizado com o estado real (todos os gates bloqueantes, e2e em produção, Node nos testes)
 - [x] Commit (`docs: add AI-agent-focused documentation`)
 
 ## Fase 5 — setups/
