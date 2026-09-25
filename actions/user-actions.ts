@@ -6,6 +6,7 @@ import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { getUserByNickname } from "@/lib/repositories/users.repository";
 import { changePassword, PasswordChangeError } from "@/lib/services/password.service";
+import { toPublicProfile } from "@/lib/services/profile.service";
 import TelegramLog from "@/lib/telegram-logger";
 import { prisma } from "@/prisma/prisma-client";
 
@@ -332,7 +333,7 @@ export const getUserByNicknameAction = async (nickname: string) => {
 		}
 
 		return {
-			...user,
+			...toPublicProfile(user, session?.user?.id ?? null),
 			isFollowing,
 			hasPendingRequest,
 		};
