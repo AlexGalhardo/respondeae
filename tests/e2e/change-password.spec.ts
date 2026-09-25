@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("changing the password requires the current password", async ({ page }) => {
 	const unique = Date.now();
-	const nickname = `p${String(unique).replace(/\d/g, (d) => String.fromCharCode(97 + Number(d)))}`.slice(0, 16);
+	const nickname = `p_${unique}`;
 
 	await page.goto("/criar-conta");
 	await page.locator("#name").fill("E2E Password User");
