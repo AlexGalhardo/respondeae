@@ -15,7 +15,7 @@
     "lint:next": "next lint",
     "lint": "biome check app/ --fix",
     "lint:unsafe": "biome check app/ --fix --unsafe",
-    "format": "biome format app/ lib/ hooks/ contexts/ components/ prisma/ emails/ actions/ types/ --fix",
+    "format": "biome format app/ lib/ hooks/ contexts/ components/ prisma/ emails/ actions/ types/ tests/ *.ts *.json --fix",
     "prepare": "husky",
     "test": "bun test lib/ hooks/",
     "test:unit": "bun test lib/",
