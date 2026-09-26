@@ -33,6 +33,7 @@ Produção responde em **`https://respondeae.vercel.app`** (público). O projeto
 - **`e2e.yml`** (PR e push em `main`): sobe Postgres em service container, instala o Chromium do Playwright, roda `bun run build` e `bun run test:e2e` (servidor de produção). Em falha, sobe o relatório HTML (`playwright-report/`, gerado só com `CI=true`) como artifact.
 - O deploy **não** passa pelo GitHub Actions: a integração Git da Vercel já faz isso (o antigo `deploy.yml` foi removido para não haver deploy duplicado). Para a produção só subir com o CI verde, ative "Deployment Checks" no projeto da Vercel exigindo os checks `CI` e `E2E`.
 - Todos os workflows usam `concurrency` para cancelar execuções antigas da mesma branch.
+- **Dependabot** (`.github/dependabot.yml`): ecossistema `bun` (o `npm_and_yarn` padrão falhava por não saber atualizar o `bun.lock`) e `github-actions`, semanal, minor/patch agrupados.
 
 ### Todos os jobs bloqueiam
 
