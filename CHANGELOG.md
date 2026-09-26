@@ -24,12 +24,27 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 - **Troca de senha** (OWASP A07) não pedia a senha atual, então quem tivesse uma sessão aberta tomava a conta. Agora a senha atual é obrigatória; contas criadas pelo Google (sem senha) definem a primeira pela mesma tela. A rota duplicada `app/api/user/update-password`, sem uso, foi removida.
 - Hash de senha com bcrypt custo 12 em todos os fluxos (cadastro e reset usavam 10).
 - Vulnerabilidades transitivas corrigidas via `overrides` (`effect`, `baseline-browser-mapping`, `mysql2`). `bun audit`: 26 → 1, e essa única, `deepmerge-ts`, só existe no CLI do Prisma e está ignorada com justificativa. O job de auditoria do CI agora bloqueia.
+- **Rate limit** em login (por IP e por email), cadastro, contato, pedido de reset de senha (por IP) e troca de senha (por usuário). Janela fixa numa tabela `rate_limits` do próprio Postgres (um upsert atômico por requisição, compartilhado por todas as instâncias serverless; sem serviço externo). O cron diário apaga janelas vencidas.
+- **Report de pergunta sem checar o dono**: qualquer usuário logado podia "reportar" a pergunta de outro, o que também a tirava da fila de resposta. Agora só o dono.
+- Validação do captcha no login **falhava aberta**: se a Cloudflare não respondesse, o login seguia sem captcha. Agora falha fechada (`lib/captcha.ts`, compartilhado com o contato).
+- O formulário de contato não loga mais o corpo da mensagem.
+- Server Actions sem uso (`likeAnswer`, `dislikeAnswer`, `withdrawUnanswered`) removidas: toda action é um endpoint público.
 
 ### Fixed
 
 - Erro de hidratação no botão de tema: o markup dependia do tema, que só existe no client. Os dois ícones são renderizados e o CSS `dark:` escolhe; isso também acabou com a instabilidade dos e2e de cadastro (o re-render do React apagava campos já preenchidos).
 - Campo de nickname do cadastro agora aceita dígitos e `_`, como o schema (que passou a exigir minúsculas, igual ao campo).
 - Troca de senha: com senha atual errada, os campos não somem mais da tela (o form usava `action`, que o React reseta).
+- O layout raiz renderizava cada página duas vezes (uma árvore por breakpoint): ids duplicados, efeitos e chamadas de API em dobro, erro de hidratação.
+- Formulários com Zod 4 (cadastro, contato, dados da conta) quebravam lendo `ZodError.errors`; agora usam `.issues`. Cadastro novo redireciona para `/minha-conta` (antes caía em `/feed` por um redirecionamento concorrente).
+- Login por senha e formulário de contato falhavam em produção: o servidor lia `CLOUDFLARE_TURNSTILE_SECRET_KEY` (inexistente) e o client dependia de `NEXT_PUBLIC_NODE_ENV` (nunca definido).
+- Toasts de perfil, pergunta, pagamento e ranking nunca apareciam (usavam uma cópia do store que o `<Toaster>` não escuta).
+- Rotas desconectavam o client Prisma compartilhado ao fim de cada requisição.
+- `biome.json` no schema errado quebrava o hook `pre-commit`.
+- Seed roda no SQLite (`skipDuplicates` só é enviado fora dele).
+- Um único landmark `<main>` por página (13 páginas tinham um `<main>` dentro do do layout).
+- Cadastro por email em produção: o captcha não aparecia no primeiro acesso à página, então todo cadastro falhava. Um `TurnstileWidget` único agora atende login, cadastro e contato.
+- Mensagem de "usuário sem senha" no login nunca aparecia (o servidor lançava um texto em inglês que a tela não reconhecia).
 
 ### Added
 
@@ -43,6 +58,7 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 - `AGENTS.md`/`CLAUDE.md` na raiz e documentação em `docs/` focada em dar contexto para agentes de IA.
 - Pasta `setups/` com scripts de setup local (Windows/Unix × SQLite/Postgres/Postgres+Docker) e `infra/` com Docker/docker-compose.
 - Conventional Commits obrigatório via commitlint no hook `commit-msg`.
+- "Reportar resposta" funciona: quem perguntou pode reportar a resposta recebida (uma vez, só depois de respondida).
 
 ### Changed
 
@@ -53,28 +69,16 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 - Biome lê o `.editorconfig` e formata também `tests/` e configs da raiz.
 - `TODO.md` renomeado para `PLAN.md`.
 - Bun 1.4.2 como package manager oficial; dependências com versão exata pinada.
+- A sessão do NextAuth não grava mais `last_login_at` nem reativa conta a cada leitura (só no sign-in), e usuários relacionados vêm só com campos públicos.
+- Todos os warnings do Biome corrigidos; `lint:ci` falha com warning.
 
 ### Removed
 
 - `framer-motion` (girava um ícone que já girava com `animate-spin`, dobrando a velocidade do spinner).
 - `@prisma/extension-accelerate` (sem efeito com `DATABASE_URL` Postgres comum).
 - 30 componentes shadcn e 28 dependências sem nenhum import; o CLI `vercel` como devDependency (chamado pinado no workflow); código morto (`actions/question-actions.ts`, `lib/create-pix-payment.ts`, `lib/rate-limiter.ts` não usado, rota vazia `report-answer`).
-
-### Fixed
-
-- O layout raiz renderizava cada página duas vezes (uma árvore por breakpoint): ids duplicados, efeitos e chamadas de API em dobro, erro de hidratação.
-- Formulários com Zod 4 (cadastro, contato, dados da conta) quebravam lendo `ZodError.errors`; agora usam `.issues`. Cadastro novo redireciona para `/minha-conta` (antes caía em `/feed` por um redirecionamento concorrente).
-- Login por senha e formulário de contato falhavam em produção: o servidor lia `CLOUDFLARE_TURNSTILE_SECRET_KEY` (inexistente) e o client dependia de `NEXT_PUBLIC_NODE_ENV` (nunca definido).
-- Toasts de perfil, pergunta, pagamento e ranking nunca apareciam (usavam uma cópia do store que o `<Toaster>` não escuta).
-- Rotas desconectavam o client Prisma compartilhado ao fim de cada requisição.
-- `biome.json` no schema errado quebrava o hook `pre-commit`.
-
-### Known issues
-
-- Troca de senha não pede a senha atual, e não há rate limit efetivo em login/cadastro (o limitador em memória não funcionaria em serverless). Ambos dependem de decisão: ver `PLAN.md`, Fase 11.
-- "Reportar resposta" e "sacar perguntas não respondidas" chamam rotas que não existem (`/api/question/report-answer` era um arquivo vazio; `/api/withdraw/unanswered` nunca existiu).
-- Seed não roda no SQLite (`createMany({ skipDuplicates })` não é suportado lá).
-- Erro de hidratação no botão de tema (`Moon`/`Sun` dependem do tema, que só é conhecido no client).
+- "Sacar perguntas não respondidas": não tinha tela, e a rota chamada nunca existiu.
+- Estado e handlers de curtir/descurtir em "Perguntas enviadas", que nunca eram renderizados.
 
 ## [1.0.0] - 2026-09-23
 
