@@ -338,7 +338,7 @@ export const getUserByNicknameAction = async (nickname: string) => {
 		}
 
 		return {
-			...toPublicProfile(user, session?.user?.id ?? null),
+			...toPublicProfile(user, { viewerId: session?.user?.id ?? null, isFollowing }),
 			isFollowing,
 			hasPendingRequest,
 		};
