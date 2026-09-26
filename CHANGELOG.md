@@ -9,6 +9,9 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Security
 
+- **Sessões revogadas na troca/reset de senha**: antes um JWT valia 30 dias de qualquer jeito. Agora `users.session_version` sobe a cada troca e todo token anterior deixa de valer, em todos os aparelhos.
+- **CSP estrito por nonce** (`proxy.ts`, `lib/csp.ts`): scripts só com o nonce da requisição. Todas as páginas passaram a ser renderizadas por requisição (exigência do nonce).
+- **Captcha verificado no servidor no cadastro** (antes só no browser).
 - **Saque**: `POST /api/payments/withdraw` não tinha login e aceitava `userId`, valor e chave PIX do body, permitindo sacar o saldo de qualquer usuário para qualquer chave. Agora o saque usa a sessão, calcula o valor no servidor, paga a chave cadastrada do próprio usuário e roda em transação que impede sacar a mesma pergunta duas vezes. A rota foi removida.
 - **Criação de pergunta**: o valor pago vinha do body (pagar R$ 2 e registrar R$ 1.000 inflava saque e reembolso) e o autor também. Agora o valor é o do webhook pago, o autor é o usuário da sessão, e o limite diário é conferido.
 - **8 rotas de pergunta/seguir** (responder, apagar, recusar, reportar, curtir, descurtir, expirar, seguir) não checavam sessão e confiavam no `nickname` do body. Agora exigem login e usam a sessão. Expirar pergunta também confere o prazo e o estado no servidor.
@@ -42,6 +45,9 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Fixed
 
+- O feed escondia as respostas e perguntas do próprio usuário: a lista de "quem me bloqueou" continha o próprio nickname.
+- O card de usuários bloqueados não tinha nome nem avatar.
+- A sidebar logava todas as perguntas recebidas no console.
 - **Deploy na Vercel**: todo build falhava (`Can't resolve './generated/prisma/client'`), porque o client do Prisma 7 fica fora do git e ninguém o gerava. O script `vercel-build` (`infra/vercel-build.sh`) gera o client, aplica migrations só em produção e builda. Primeiro deploy de produção no ar em `https://respondeae.vercel.app`. O workflow `deploy.yml` saiu: a integração Git da Vercel já faz o deploy.
 - Erro de hidratação no botão de tema: o markup dependia do tema, que só existe no client. Os dois ícones são renderizados e o CSS `dark:` escolhe; isso também acabou com a instabilidade dos e2e de cadastro (o re-render do React apagava campos já preenchidos).
 - Campo de nickname do cadastro agora aceita dígitos e `_`, como o schema (que passou a exigir minúsculas, igual ao campo).
@@ -73,6 +79,7 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Changed
 
+- A sessão do NextAuth carrega só a própria conta. Perguntas, seguidores e bloqueios são buscados por tela (`actions/my-account-actions.ts`); o contador da sidebar virou um `COUNT` no banco.
 - **Prisma 6 → 7.10.0** com driver adapters (`@prisma/adapter-pg`; `@prisma/adapter-libsql` para SQLite local), `prisma.config.ts`, client gerado em `prisma/generated/` e uma única instância compartilhada. Rode `bun run prisma:generate` após instalar. `SQLITE_DATABASE_URL` deixou de existir: use `DATABASE_URL="file:./dev.db"`.
 - `@react-email/components` 0.0.41 → 1.0.12.
 - `typescript.ignoreBuildErrors` removido: o build volta a checar tipos (0 erros). Lint com 0 erros em todo o código (antes só `app/` era verificado).
