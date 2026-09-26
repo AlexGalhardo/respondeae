@@ -164,7 +164,7 @@ Executada com as skills `graphify` (mapa do código), `security-and-hardening`, 
 
 ## Fase 13 — Skills novas (.claude/skills/)
 
-- [ ] Avaliar necessidade de skills específicas do projeto (ex: "como rodar migrations", "como adicionar novo endpoint de pagamento") conforme forem surgindo durante as fases acima
+- [x] Avaliar necessidade de skills específicas do projeto: criadas `respondeae-secure-endpoint` (checklist a partir dos achados reais da auditoria) e `respondeae-local-verification` (validar como o CI: banco descartável, Node, chaves de teste do Turnstile, armadilhas do Prisma 7). Migrations ficaram cobertas pela segunda
 
 ## Fase 14 — [FINAL] Auditoria de segurança OWASP Top Ten (aplicação inteira)
 
