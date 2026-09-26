@@ -42,6 +42,7 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Fixed
 
+- **Deploy na Vercel**: todo build falhava (`Can't resolve './generated/prisma/client'`), porque o client do Prisma 7 fica fora do git e ninguém o gerava. O script `vercel-build` (`infra/vercel-build.sh`) gera o client, aplica migrations só em produção e builda. Primeiro deploy de produção no ar em `https://respondeae.vercel.app`. O workflow `deploy.yml` saiu: a integração Git da Vercel já faz o deploy.
 - Erro de hidratação no botão de tema: o markup dependia do tema, que só existe no client. Os dois ícones são renderizados e o CSS `dark:` escolhe; isso também acabou com a instabilidade dos e2e de cadastro (o re-render do React apagava campos já preenchidos).
 - Campo de nickname do cadastro agora aceita dígitos e `_`, como o schema (que passou a exigir minúsculas, igual ao campo).
 - Troca de senha: com senha atual errada, os campos não somem mais da tela (o form usava `action`, que o React reseta).
