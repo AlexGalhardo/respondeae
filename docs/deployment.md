@@ -23,9 +23,9 @@ Projeto `respondeae` no time "Fitness Projects", ligado ao repositório pela **i
 
 `NODE_ENV` não deve ser definido à mão (a Vercel define), e `SEED_*`/`DANGER_MODE` não são usados em produção.
 
-### Proteção de deploy
+### Domínios e proteção de deploy
 
-O projeto usa **Vercel Authentication** ("todos os deploys exceto domínios customizados"). Webhook da AbacatePay e cron precisam chegar sem login: confira que a URL cadastrada na AbacatePay responde sem redirecionar para o login da Vercel (ou use um domínio customizado).
+Produção responde em **`https://respondeae.vercel.app`** (público). O projeto usa Vercel Authentication, então os outros domínios `*.vercel.app` (ex.: `respondeae-galhardos-projects.vercel.app` e as URLs de cada deploy) redirecionam para o login da Vercel. Por isso o webhook da AbacatePay e o `NEXT_PUBLIC_APP_URL`/`NEXTAUTH_URL` precisam usar `respondeae.vercel.app` (ou um domínio customizado). Verificado em produção: `/api/health` 200, headers de segurança presentes, webhook e cron sem secret respondem 401.
 
 ## CI/CD (GitHub Actions, `.github/workflows/`)
 
