@@ -37,6 +37,7 @@ Infra (Docker/docker-compose) fica em `infra/`.
 - [`docs/telegram-bot.md`](docs/telegram-bot.md) — logger/bot Telegram
 - [`docs/testing.md`](docs/testing.md) — como rodar cada tipo de teste
 - [`docs/deployment.md`](docs/deployment.md) — CI/CD e deploy
+- [`docs/security.md`](docs/security.md) — auditoria OWASP Top 10:2025, riscos aceitos
 
 ## Skills (uso obrigatório)
 

@@ -24,6 +24,16 @@ e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 - **Troca de senha** (OWASP A07) não pedia a senha atual, então quem tivesse uma sessão aberta tomava a conta. Agora a senha atual é obrigatória; contas criadas pelo Google (sem senha) definem a primeira pela mesma tela. A rota duplicada `app/api/user/update-password`, sem uso, foi removida.
 - Hash de senha com bcrypt custo 12 em todos os fluxos (cadastro e reset usavam 10).
 - Vulnerabilidades transitivas corrigidas via `overrides` (`effect`, `baseline-browser-mapping`, `mysql2`). `bun audit`: 26 → 1, e essa única, `deepmerge-ts`, só existe no CLI do Prisma e está ignorada com justificativa. O job de auditoria do CI agora bloqueia.
+- **Auditoria OWASP Top 10:2025** da aplicação inteira, registrada em `docs/security.md`. Correções:
+  - `followUserAction` aceitava o id de quem segue: qualquer usuário fazia qualquer um seguir qualquer um (e furava a solicitação de perfil privado).
+  - Reset de senha mandava o link para um email fixo do dono (usuários nunca recebiam, e quem lesse aquela caixa tomava qualquer conta), guardava o token em texto puro, deixava usar o token duas vezes em corrida e aceitava qualquer senha nova. Remetente agora vem de `RESEND_FROM_EMAIL`.
+  - O rate limit de login por email contava toda tentativa antes do captcha, o que deixava travar o login da vítima de propósito. Agora conta só falhas depois do captcha, e um login certo zera.
+  - Email inexistente respondia em ~3 ms e senha errada em ~260 ms: dava para listar contas. Agora os dois custam um bcrypt.
+  - Perfil público, feed e ranking entregavam ao browser respostas de perfis restritos, respostas privadas, perguntas pendentes, bloqueios e pedidos de seguir, campos internos (`webhook_id`, saque, moderação) e o valor pago mesmo quando o dono o escondia. O servidor agora filtra (`toPublicProfile`, `toPublicQuestion`).
+  - Mensagens internas de erro (Prisma, rede) deixaram de ir para o client (`publicErrorMessage`).
+  - Headers de segurança (nosniff, Referrer-Policy, anti-clickjacking, Permissions-Policy, HSTS).
+  - `simulate-payment` nunca roda num deploy de produção, mesmo com `NEXT_PUBLIC_TEST_MODE` ligado por engano.
+  - Alerta no Telegram na primeira violação de rate limit de cada janela.
 - **Rate limit** em login (por IP e por email), cadastro, contato, pedido de reset de senha (por IP) e troca de senha (por usuário). Janela fixa numa tabela `rate_limits` do próprio Postgres (um upsert atômico por requisição, compartilhado por todas as instâncias serverless; sem serviço externo). O cron diário apaga janelas vencidas.
 - **Report de pergunta sem checar o dono**: qualquer usuário logado podia "reportar" a pergunta de outro, o que também a tirava da fila de resposta. Agora só o dono.
 - Validação do captcha no login **falhava aberta**: se a Cloudflare não respondesse, o login seguia sem captcha. Agora falha fechada (`lib/captcha.ts`, compartilhado com o contato).
