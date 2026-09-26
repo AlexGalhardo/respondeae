@@ -153,14 +153,14 @@ Executada com as skills `graphify` (mapa do código), `security-and-hardening`, 
 
 ## Fase 12 — README.md final
 
-- [ ] Nome do app centralizado
-- [ ] Badges/status (build, licença, versão)
-- [ ] Introdução em português
-- [ ] Tech stack
-- [ ] Links para `setups/*`
-- [ ] Links para `docs/*`
-- [ ] Créditos + licença MIT
-- [ ] Commit (`docs: rewrite README following open source standard`)
+- [x] Nome do app centralizado
+- [x] Badges/status (build, licença, versão)
+- [x] Introdução em português
+- [x] Tech stack
+- [x] Links para `setups/*`
+- [x] Links para `docs/*`
+- [x] Créditos + licença MIT (arquivo `LICENSE` criado; só o `package.json` dizia MIT)
+- [x] Commit (`docs: rewrite README following open source standard`)
 
 ## Fase 13 — Skills novas (.claude/skills/)
 
